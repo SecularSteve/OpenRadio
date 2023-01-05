@@ -68,7 +68,8 @@ class UrlLayerWebRadioImpl : UrlLayer {
     }
 
     override fun getSearchUrl(query: String): Uri {
-        return URI
+        val url = "$URL$KEY_SEARCH_ID$query"
+        return Uri.parse(url)
     }
 
     override fun getAddStationUrl(rsToAdd: RadioStationToAdd): Pair<Uri, List<Pair<String, String>>> {
@@ -90,5 +91,6 @@ class UrlLayerWebRadioImpl : UrlLayer {
 
         const val KEY_CATEGORY_ID = "?categoryId="
         const val KEY_COUNTRY_ID = "?countryId="
+        const val KEY_SEARCH_ID = "?searchId="
     }
 }

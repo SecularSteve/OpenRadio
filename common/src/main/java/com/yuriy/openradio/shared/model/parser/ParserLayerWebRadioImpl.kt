@@ -72,6 +72,7 @@ class ParserLayerWebRadioImpl(private val mCountriesCache:Set<Country>) : Parser
         }
         val categoryId = getCategoryId(uri)
         val countryId = getCountryId(uri)
+        val searchId = getSearchId(uri)
         val result = TreeSet<RadioStation>()
         for (uuid in jsonData.keys()) {
             val jsonObject = try {
@@ -93,6 +94,11 @@ class ParserLayerWebRadioImpl(private val mCountriesCache:Set<Country>) : Parser
                     }
                 }
                 val radioStation = getRadioStationByCountry(uuid, jsonObject, countryName)
+                if (radioStation.isInvalid().not()) {
+                    result.add(radioStation)
+                }
+            } else if (searchId != AppUtils.EMPTY_STRING) {
+                val radioStation = getRadioStationByName(uuid, jsonObject, searchId)
                 if (radioStation.isInvalid().not()) {
                     result.add(radioStation)
                 }
@@ -188,6 +194,10 @@ class ParserLayerWebRadioImpl(private val mCountriesCache:Set<Country>) : Parser
         return getBrowseId(uri, UrlLayerWebRadioImpl.KEY_COUNTRY_ID)
     }
 
+    private fun getSearchId(uri: Uri): String {
+        return getBrowseId(uri, UrlLayerWebRadioImpl.KEY_SEARCH_ID)
+    }
+
     private fun getBrowseId(uri: Uri, key: String): String {
         val pair = uri.toString().split(key)
         if (pair.size != 2) {
@@ -227,6 +237,22 @@ class ParserLayerWebRadioImpl(private val mCountriesCache:Set<Country>) : Parser
             return RadioStation.INVALID_INSTANCE
         }
         if (countryName != country) {
+            return RadioStation.INVALID_INSTANCE
+        }
+        return getRadioStation(jsonObject, uuid)
+    }
+
+    private fun getRadioStationByName(uuid: String, jsonObject: JSONObject, searchId: String): RadioStation {
+        if (jsonObject.has(KEY_COUNTRY).not()) {
+            return RadioStation.INVALID_INSTANCE
+        }
+        val name = try {
+            jsonObject.getString(KEY_NAME)
+        } catch (e: Exception) {
+            AppLogger.e("$TAG get name", e)
+            return RadioStation.INVALID_INSTANCE
+        }
+        if (name.lowercase().contains(searchId.lowercase()).not()) {
             return RadioStation.INVALID_INSTANCE
         }
         return getRadioStation(jsonObject, uuid)
