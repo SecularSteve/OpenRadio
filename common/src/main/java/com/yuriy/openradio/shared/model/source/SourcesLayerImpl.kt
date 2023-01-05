@@ -17,22 +17,17 @@
 package com.yuriy.openradio.shared.model.source
 
 import android.content.Context
-import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.model.storage.SourceStorage
 import com.yuriy.openradio.shared.utils.AppLogger
 import java.lang.ref.WeakReference
 
 class SourcesLayerImpl(context: Context) : SourcesLayer {
 
-    private val mSources: Set<Source>
+    private val mSources = Source.values().toSet()
     private val mPersistence = SourceStorage(WeakReference(context))
 
-    init {
-        mSources = constructSources(context)
-    }
-
     override fun getAllSources(): Set<Source> {
-        return HashSet(mSources)
+        return mSources
     }
 
     override fun getActiveSource(): Source {
@@ -44,18 +39,7 @@ class SourcesLayerImpl(context: Context) : SourcesLayer {
 
     override fun setActiveSource(source: Source) {
         AppLogger.d("Set active source $source")
-        mPersistence.putIntValue(KEY_IDX, source.idx)
-    }
-
-    private fun constructSources(context: Context): Set<Source> {
-        val names = context.resources.getStringArray(R.array.sources_names)
-        val ids = context.resources.getIntArray(R.array.sources_ids)
-        val set = HashSet<Source>(names.size)
-        // Names and Ids (and whatever may be associated) are of the same length.
-        for ((i, name) in names.withIndex()) {
-            set.add(Source(ids[i], name))
-        }
-        return set
+        mPersistence.putIntValue(KEY_IDX, source.srcId)
     }
 
     companion object {

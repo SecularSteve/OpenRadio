@@ -24,7 +24,6 @@ import com.yuriy.openradio.shared.model.net.NetworkLayer
 import com.yuriy.openradio.shared.model.parser.ParserLayer
 import com.yuriy.openradio.shared.model.storage.cache.api.ApiCache
 import com.yuriy.openradio.shared.model.translation.MediaIdBuilder
-import com.yuriy.openradio.shared.service.LocationService
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.vo.Category
@@ -32,7 +31,6 @@ import com.yuriy.openradio.shared.vo.Country
 import com.yuriy.openradio.shared.vo.RadioStation
 import org.json.JSONException
 import org.json.JSONObject
-import java.util.TreeSet
 
 /**
  * Created by Yuriy Chernyshov
@@ -51,18 +49,14 @@ class ModelLayerImpl(
     private val mApiCacheInMemory: ApiCache
 ) : ModelLayer {
 
-    override fun getCategories(uri: Uri): Set<Category> {
+    override fun getAllCategories(uri: Uri): Set<Category> {
         val data = downloadData(uri)
-        return mDataParser.getCategories(data)
+        return mDataParser.getAllCategories(data)
     }
 
-    override fun getCountries(): Set<Country> {
-        val set = TreeSet<Country>()
-        for (countryName in LocationService.COUNTRY_NAME_TO_CODE.keys) {
-            val countryCode = LocationService.COUNTRY_NAME_TO_CODE[countryName] ?: continue
-            set.add(Country(countryName, countryCode))
-        }
-        return set
+    override fun getAllCountries(uri: Uri): Set<Country> {
+        val data = downloadData(uri)
+        return mDataParser.getAllCountries(data)
     }
 
     override fun getStations(uri: Uri, mediaIdBuilder: MediaIdBuilder): Set<RadioStation> {

@@ -31,7 +31,6 @@ import java.util.Locale
 object MediaId {
 
     const val MEDIA_ID_ROOT = "__ROOT__"
-    const val MEDIA_ID_ROOT_CAR = "__ROOT_CAR__"
     const val MEDIA_ID_BROWSE_CAR = "__BROWSE_CAR__"
     const val MEDIA_ID_ALL_CATEGORIES = "__ALL_CATEGORIES__"
     const val MEDIA_ID_COUNTRY_STATIONS = "__COUNTRY_STATIONS__"
@@ -56,7 +55,6 @@ object MediaId {
         MEDIA_ID_LOCAL_RADIO_STATIONS_LIST,
         MEDIA_ID_CHILD_CATEGORIES,
         MEDIA_ID_ROOT,
-        MEDIA_ID_ROOT_CAR,
         MEDIA_ID_SEARCH_FROM_APP,
         MEDIA_ID_SEARCH_FROM_SERVICE,
         MEDIA_ID_POPULAR_STATIONS,
@@ -76,16 +74,12 @@ object MediaId {
      * Gets Id that is use to extract correct command implementation of the MediaItemCommand.
      *
      * @param value String pattern that represents loaded menu item.
-     * @param isCar Whether or not the Open Radio runs on a car.
      *
      * @return Category Id.
      */
-    fun getId(value: String, defaultCountryCode: String, isCar: Boolean = false): String {
+    fun getId(value: String, defaultCountryCode: String): String {
         if (value.isEmpty()) {
             return AppUtils.EMPTY_STRING
-        }
-        if (value == MEDIA_ID_ROOT && isCar) {
-            return MEDIA_ID_ROOT_CAR
         }
         for (id in IDS) {
             if (value == id) {
@@ -152,7 +146,6 @@ object MediaId {
     fun isRefreshable(categoryMediaId: String): Boolean {
         return (categoryMediaId.isNotEmpty()
                 && (MEDIA_ID_COUNTRY_STATIONS == categoryMediaId
-                || categoryMediaId.contains(MEDIA_ID_COUNTRIES_LIST)
                 || categoryMediaId.contains(MEDIA_ID_CHILD_CATEGORIES)))
     }
 }

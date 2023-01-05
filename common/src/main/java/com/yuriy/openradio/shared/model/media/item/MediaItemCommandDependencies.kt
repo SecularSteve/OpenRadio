@@ -43,7 +43,6 @@ class MediaItemCommandDependencies(
     val presenter: OpenRadioServicePresenter,
     val countryCode: String,
     val parentId: String,
-    val isCar: Boolean,
     val isSameCatalogue: Boolean,
     val isSavedInstance: Boolean,
     val options: Bundle,

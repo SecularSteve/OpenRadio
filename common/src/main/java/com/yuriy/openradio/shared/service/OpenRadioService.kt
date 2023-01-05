@@ -51,21 +51,8 @@ import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.exo.OpenRadioPlayer
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.RemoteControlListener
-import com.yuriy.openradio.shared.model.media.item.MediaItemAllCategories
-import com.yuriy.openradio.shared.model.media.item.MediaItemBrowseCar
-import com.yuriy.openradio.shared.model.media.item.MediaItemChildCategories
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommand
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommandDependencies
-import com.yuriy.openradio.shared.model.media.item.MediaItemCountriesList
-import com.yuriy.openradio.shared.model.media.item.MediaItemCountryStations
-import com.yuriy.openradio.shared.model.media.item.MediaItemFavoritesList
-import com.yuriy.openradio.shared.model.media.item.MediaItemLocalsList
-import com.yuriy.openradio.shared.model.media.item.MediaItemPopularStations
-import com.yuriy.openradio.shared.model.media.item.MediaItemRecentStations
-import com.yuriy.openradio.shared.model.media.item.MediaItemRoot
-import com.yuriy.openradio.shared.model.media.item.MediaItemRootCar
-import com.yuriy.openradio.shared.model.media.item.MediaItemSearchFromApp
-import com.yuriy.openradio.shared.model.media.item.MediaItemSearchFromService
 import com.yuriy.openradio.shared.model.net.NetworkMonitorListener
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.model.storage.RadioStationsStorage
@@ -123,11 +110,6 @@ class OpenRadioService : MediaBrowserServiceCompat() {
     private var mIsPackageValid = false
 
     private val mDelayedStopHandler: Handler
-
-    /**
-     * Map of the Media Item commands that responsible for the Media Items List creation.
-     */
-    private val mMediaItemCommands = HashMap<String, MediaItemCommand>()
 
     /**
      * Track selected Radio Station.
@@ -206,20 +188,6 @@ class OpenRadioService : MediaBrowserServiceCompat() {
         mUiScope = CoroutineScope(Dispatchers.Main)
         mScope = CoroutineScope(Dispatchers.IO)
         mCommandScope = CoroutineScope(Dispatchers.IO)
-        // Add Media Items implementations to the map
-        mMediaItemCommands[MediaId.MEDIA_ID_ROOT] = MediaItemRoot()
-        mMediaItemCommands[MediaId.MEDIA_ID_ROOT_CAR] = MediaItemRootCar()
-        mMediaItemCommands[MediaId.MEDIA_ID_BROWSE_CAR] = MediaItemBrowseCar()
-        mMediaItemCommands[MediaId.MEDIA_ID_ALL_CATEGORIES] = MediaItemAllCategories()
-        mMediaItemCommands[MediaId.MEDIA_ID_COUNTRIES_LIST] = MediaItemCountriesList()
-        mMediaItemCommands[MediaId.MEDIA_ID_COUNTRY_STATIONS] = MediaItemCountryStations()
-        mMediaItemCommands[MediaId.MEDIA_ID_CHILD_CATEGORIES] = MediaItemChildCategories()
-        mMediaItemCommands[MediaId.MEDIA_ID_FAVORITES_LIST] = MediaItemFavoritesList()
-        mMediaItemCommands[MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST] = MediaItemLocalsList()
-        mMediaItemCommands[MediaId.MEDIA_ID_SEARCH_FROM_APP] = MediaItemSearchFromApp()
-        mMediaItemCommands[MediaId.MEDIA_ID_SEARCH_FROM_SERVICE] = MediaItemSearchFromService()
-        mMediaItemCommands[MediaId.MEDIA_ID_POPULAR_STATIONS] = MediaItemPopularStations()
-        mMediaItemCommands[MediaId.MEDIA_ID_RECENT_STATIONS] = MediaItemRecentStations()
     }
 
     interface ResultListener {
@@ -394,7 +362,7 @@ class OpenRadioService : MediaBrowserServiceCompat() {
         mIsRestoreState = OpenRadioStore.getRestoreState(rootHints)
         val extras = Bundle()
         extras.putBoolean(MediaConstants.BROWSER_SERVICE_EXTRAS_KEY_SEARCH_SUPPORTED, true)
-        mCurrentParentId = if (DependencyRegistryCommon.isCar) MediaId.MEDIA_ID_ROOT_CAR else MediaId.MEDIA_ID_ROOT
+        mCurrentParentId = MediaId.MEDIA_ID_ROOT
         return BrowserRoot(mCurrentParentId, extras)
     }
 
@@ -408,9 +376,9 @@ class OpenRadioService : MediaBrowserServiceCompat() {
 
     override fun onSearch(query: String, extras: Bundle?, result: Result<List<MediaBrowserCompat.MediaItem>>) {
         val id = MediaId.MEDIA_ID_SEARCH_FROM_SERVICE
-        val command = mMediaItemCommands[id]
+        val command = mPresenter.getMediaItemCommand(id)
         val dependencies = MediaItemCommandDependencies(
-            applicationContext, result, mPresenter, Country.COUNTRY_CODE_DEFAULT, id, DependencyRegistryCommon.isCar,
+            applicationContext, result, mPresenter, Country.COUNTRY_CODE_DEFAULT, id,
             false, mIsRestoreState, AppUtils.makeSearchQueryBundle(query), mCommandScope,
             object : ResultListener {
                 override fun onResult(set: Set<RadioStation>, pageNumber: Int) {
@@ -461,7 +429,7 @@ class OpenRadioService : MediaBrowserServiceCompat() {
             return
         }
         // To force update Favorite menu tab.
-        var mediaId = MediaId.MEDIA_ID_ROOT_CAR
+        var mediaId = MediaId.MEDIA_ID_ROOT
         if (mCurrentParentId == MediaId.MEDIA_ID_FAVORITES_LIST) {
             if (mPresenter.getAllFavorites().isNotEmpty()) {
                 // To force update Favorites list.
@@ -497,10 +465,9 @@ class OpenRadioService : MediaBrowserServiceCompat() {
         val defaultCountryCode = mPresenter.getCountryCode()
         // If Parent Id contains Country Code - use it in the API.
         val countryCode = MediaId.getCountryCode(mCurrentParentId, defaultCountryCode)
-        val isCar = DependencyRegistryCommon.isCar
-        val command = mMediaItemCommands[MediaId.getId(mCurrentParentId, AppUtils.EMPTY_STRING, isCar)]
+        val command = mPresenter.getMediaItemCommand(MediaId.getId(mCurrentParentId, AppUtils.EMPTY_STRING))
         val dependencies = MediaItemCommandDependencies(
-            applicationContext, result, mPresenter, countryCode, mCurrentParentId, isCar,
+            applicationContext, result, mPresenter, countryCode, mCurrentParentId,
             isSameCatalogue, mIsRestoreState, options, mCommandScope,
             object : ResultListener {
                 override fun onResult(set: Set<RadioStation>, pageNumber: Int) {

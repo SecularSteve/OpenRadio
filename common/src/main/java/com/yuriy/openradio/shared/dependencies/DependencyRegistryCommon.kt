@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2021-2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import android.net.ConnectivityManager
 import androidx.multidex.MultiDexApplication
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.common.GoogleApiAvailability
-import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.model.ModelLayerImpl
 import com.yuriy.openradio.shared.model.media.EqualizerLayer
 import com.yuriy.openradio.shared.model.media.EqualizerLayerImpl
@@ -59,6 +58,7 @@ import com.yuriy.openradio.shared.model.timer.SleepTimerModelImpl
 import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.service.OpenRadioServicePresenterImpl
 import com.yuriy.openradio.shared.utils.AppLogger
+import com.yuriy.openradio.shared.vo.Country
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -131,8 +131,10 @@ object DependencyRegistryCommon {
         sNetworkLayer = NetworkLayerImpl(
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         )
-        val parser = getParserLayer(context, sSourcesLayer.getActiveSource())
-        val urlLayer = getUrlLayer(context, sSourcesLayer.getActiveSource())
+        val countriesCache = HashSet<Country>()
+        val source = sSourcesLayer.getActiveSource()
+        val parser = getParserLayer(source, countriesCache)
+        val urlLayer = getUrlLayer(source)
         val downloader = HTTPDownloaderImpl(urlLayer)
         val apiCachePersistent = PersistentApiCache(context, PersistentApiDb.DATABASE_DEFAULT_FILE_NAME)
         val apiCacheInMemory = InMemoryApiCache()
@@ -156,6 +158,8 @@ object DependencyRegistryCommon {
         sNetworkSettingsStorage = NetworkSettingsStorage(contextRef)
         sSleepTimerModel = SleepTimerModelImpl(contextRef)
         sOpenRadioServicePresenter = OpenRadioServicePresenterImpl(
+            isCar,
+            source,
             urlLayer,
             sNetworkLayer,
             modelLayer,
@@ -168,7 +172,8 @@ object DependencyRegistryCommon {
             sEqualizerLayer,
             apiCachePersistent,
             apiCacheInMemory,
-            sSleepTimerModel
+            sSleepTimerModel,
+            countriesCache
         )
 
         sInit.set(true)
@@ -252,19 +257,19 @@ object DependencyRegistryCommon {
         return sSleepTimerModel
     }
 
-    private fun getUrlLayer(context: Context, source: Source): UrlLayer {
-        return if (source.name == context.getString(R.string.source_radio_browser)) {
+    private fun getUrlLayer(source: Source): UrlLayer {
+        return if (source == Source.RADIO_BROWSER) {
             UrlLayerRadioBrowserImpl()
         } else {
             UrlLayerWebRadioImpl()
         }
     }
 
-    private fun getParserLayer(context: Context, source: Source): ParserLayer {
-        return if (source.name == context.getString(R.string.source_radio_browser)) {
+    private fun getParserLayer(source: Source, set: Set<Country>): ParserLayer {
+        return if (source == Source.RADIO_BROWSER) {
             ParserLayerRadioBrowserImpl()
         } else {
-            ParserLayerWebRadioImpl()
+            ParserLayerWebRadioImpl(set)
         }
     }
 }

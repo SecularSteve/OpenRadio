@@ -483,9 +483,7 @@ class MediaPresenterImpl(
     }
 
     private fun restoreSelectedPosition(parentId: String) {
-        if (parentId == MediaId.MEDIA_ID_ROOT ||
-            parentId == MediaId.MEDIA_ID_ROOT_CAR
-        ) {
+        if (parentId == MediaId.MEDIA_ID_ROOT) {
             // Do not process Home Screen
             return
         }

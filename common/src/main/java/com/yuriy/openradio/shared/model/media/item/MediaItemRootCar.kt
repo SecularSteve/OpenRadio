@@ -17,6 +17,7 @@
 package com.yuriy.openradio.shared.model.media.item
 
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommand.IUpdatePlaybackState
+import com.yuriy.openradio.shared.model.source.Source
 import com.yuriy.openradio.shared.utils.MediaItemBuilder
 
 /**
@@ -28,7 +29,7 @@ import com.yuriy.openradio.shared.utils.MediaItemBuilder
  * [MediaItemRootCar] is concrete implementation of the [MediaItemCommand] that
  * designed to prepare data to display root menu items for Car display.
  */
-class MediaItemRootCar : MediaItemCommand {
+class MediaItemRootCar(private val mSource: Source) : MediaItemCommand {
 
     override fun execute(playbackStateListener: IUpdatePlaybackState, dependencies: MediaItemCommandDependencies) {
         dependencies.result.detach()
@@ -38,8 +39,10 @@ class MediaItemRootCar : MediaItemCommand {
         if (favorites.isNotEmpty()) {
             dependencies.addMediaItem(MediaItemBuilder.buildFavoritesMenuItem(context))
         }
-        // Recently added Radio Stations.
-        dependencies.addMediaItem(MediaItemBuilder.buildRecentMenuItem(context))
+        if (mSource == Source.RADIO_BROWSER) {
+            // Recently added Radio Stations.
+            dependencies.addMediaItem(MediaItemBuilder.buildRecentMenuItem(context))
+        }
         // Browse category to provide the rest of categories.
         dependencies.addMediaItem(MediaItemBuilder.buildBrowseMenuItem(context))
         dependencies.result.sendResult(dependencies.getMediaItems())

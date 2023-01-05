@@ -91,8 +91,8 @@ class SourceDialog : BaseDialogFragment(), SourcesLayerDependency {
         val sources = mSourcesLayer.getAllSources()
         for (source in sources) {
             val child = LayoutInflater.from(context).inflate(R.layout.source_view, null) as RadioButton
-            child.text = source.name
-            child.id = source.idx
+            child.text = source.srcName
+            child.id = source.srcId
             if (source == mSourcesLayer.getActiveSource()) {
                 child.isChecked = true
             }

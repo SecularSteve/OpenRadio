@@ -19,13 +19,17 @@ package com.yuriy.openradio.shared.model.parser
 import android.net.Uri
 import com.yuriy.openradio.shared.model.net.UrlLayerWebRadioImpl
 import com.yuriy.openradio.shared.model.translation.MediaIdBuilder
+import com.yuriy.openradio.shared.service.LocationService
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.JsonUtils
 import com.yuriy.openradio.shared.vo.Category
+import com.yuriy.openradio.shared.vo.Country
 import com.yuriy.openradio.shared.vo.MediaStream
 import com.yuriy.openradio.shared.vo.RadioStation
+import com.yuriy.openradio.shared.vo.isInvalid
 import com.yuriy.openradio.shared.vo.setVariant
+import org.json.JSONArray
 import org.json.JSONObject
 import java.util.TreeMap
 import java.util.TreeSet
@@ -38,7 +42,7 @@ import java.util.TreeSet
  *
  * This is implementation of [ParserLayer] that designed to works with JSON as input format.
  */
-class ParserLayerWebRadioImpl : ParserLayer {
+class ParserLayerWebRadioImpl(private val mCountriesCache:Set<Country>) : ParserLayer {
 
     companion object {
         private const val TAG = "PLWRI"
@@ -47,6 +51,11 @@ class ParserLayerWebRadioImpl : ParserLayer {
         private const val KEY_URL = "StreamUri"
         private const val KEY_CODEC = "Codec"
         private const val KEY_BIT_RATE = "Bitrate"
+        private const val KEY_HOME_PAGE = "Homepage"
+        private const val KEY_COUNTRY = "Country"
+        private const val KEY_DESCRIPTION = "Description"
+        private const val KEY_IMAGE = "Image"
+        private const val IMG_URL_PREFIX = "https://jcorporation.github.io/webradiodb/db/pics/"
     }
 
     override fun getRadioStation(data: String, mediaIdBuilder: MediaIdBuilder, uri: Uri): RadioStation {
@@ -58,46 +67,47 @@ class ParserLayerWebRadioImpl : ParserLayer {
         val jsonData = try {
             JSONObject(data)
         } catch (e: Exception) {
-            AppLogger.e("$TAG to JSON Array, data:$data", e)
+            AppLogger.e("$TAG to JSON, data:$data", e)
             return emptySet()
         }
         val categoryId = getCategoryId(uri)
+        val countryId = getCountryId(uri)
         val result = TreeSet<RadioStation>()
-        for (i in jsonData.keys()) {
+        for (uuid in jsonData.keys()) {
             val jsonObject = try {
-                jsonData[i] as JSONObject
+                jsonData[uuid] as JSONObject
             } catch (e: Exception) {
                 AppLogger.e("$TAG get stations, data:$data", e)
                 continue
             }
-            if (jsonObject.has(KEY_GENRE)) {
-                val genres = try {
-                    jsonObject.getJSONArray(KEY_GENRE)
-                } catch (e: Exception) {
-                    AppLogger.e("$TAG get genre, data:$data", e)
-                    continue
-                }
-                for (j in 0 until genres.length()) {
-                    val genre = genres.getString(j)
-                    if (genre != categoryId) {
-                        continue
-                    }
-                    val radioStation = getRadioStation(jsonObject, i)
-                    if (radioStation.isMediaStreamEmpty()) {
-                        continue
-                    }
+            if (categoryId != AppUtils.EMPTY_STRING) {
+                val radioStation = getRadioStationByGenre(uuid, jsonObject, categoryId)
+                if (radioStation.isInvalid().not()) {
                     result.add(radioStation)
                 }
+            } else if (countryId != AppUtils.EMPTY_STRING) {
+                var countryName = AppUtils.EMPTY_STRING
+                for (country in mCountriesCache) {
+                    if (country.code == countryId) {
+                        countryName = country.name
+                    }
+                }
+                val radioStation = getRadioStationByCountry(uuid, jsonObject, countryName)
+                if (radioStation.isInvalid().not()) {
+                    result.add(radioStation)
+                }
+            } else {
+                AppLogger.e("$TAG no criteria specified, return empty set")
             }
         }
         return result
     }
 
-    override fun getCategories(data: String): Set<Category> {
+    override fun getAllCategories(data: String): Set<Category> {
         val jsonData = try {
             JSONObject(data)
         } catch (e: Exception) {
-            AppLogger.e("$TAG to JSON Array, data:$data", e)
+            AppLogger.e("$TAG to JSON, data:$data", e)
             return emptySet()
         }
         val result = TreeSet<Category>()
@@ -132,32 +142,93 @@ class ParserLayerWebRadioImpl : ParserLayer {
         return result
     }
 
+    @Synchronized
+    override fun getAllCountries(data: String): Set<Country> {
+        val jsonData = try {
+            JSONArray(data)
+        } catch (e: Exception) {
+            AppLogger.e("$TAG to JSON Array, data:$data", e)
+            return emptySet()
+        }
+        val set = TreeSet<Country>()
+        for (j in 0 until jsonData.length()) {
+            val name = jsonData.getString(j)
+            val iso = LocationService.COUNTRY_NAME_TO_CODE[name]
+            if (iso != null) {
+                val country = Country(name, iso)
+                set.add(country)
+            } else {
+                AppLogger.w("$TAG Missing country of $name")
+            }
+        }
+        return set
+    }
+
     private fun getRadioStation(jsonObject: JSONObject, uuid: String): RadioStation {
         val radioStation = RadioStation.makeDefaultInstance(uuid)
         radioStation.name = JsonUtils.getStringValue(jsonObject, KEY_NAME)
-        //radioStation.homePage = JsonUtils.getStringValue(jsonObject, KEY_HOME_PAGE)
-        //radioStation.country = JsonUtils.getStringValue(jsonObject, KEY_COUNTRY)
-        //radioStation.countryCode = JsonUtils.getStringValue(jsonObject, KEY_COUNTRY_CODE)
-        //radioStation.imageUrl = JsonUtils.getStringValue(jsonObject, KEY_FAV_ICON)
-        //radioStation.lastCheckOkTime = JsonUtils.getStringValue(jsonObject, KEY_LAST_CHECK_OK_TIME)
-        //radioStation.urlResolved = JsonUtils.getStringValue(jsonObject, KEY_URL_RESOLVED)
+        radioStation.homePage = JsonUtils.getStringValue(jsonObject, KEY_HOME_PAGE)
+        radioStation.country = JsonUtils.getStringValue(jsonObject, KEY_COUNTRY)
+        radioStation.imageUrl = IMG_URL_PREFIX + JsonUtils.getStringValue(jsonObject, KEY_IMAGE)
         radioStation.codec = JsonUtils.getStringValue(jsonObject, KEY_CODEC)
-        //radioStation.lastCheckOk = JsonUtils.getIntValue(jsonObject, KEY_LAST_CHECK_OK)
-
+        radioStation.description = JsonUtils.getStringValue(jsonObject, KEY_DESCRIPTION)
         var bitrate = MediaStream.BIT_RATE_DEFAULT
         if (jsonObject.has(KEY_BIT_RATE)) {
             bitrate = jsonObject.getInt(KEY_BIT_RATE)
         }
         radioStation.setVariant(bitrate, jsonObject.getString(KEY_URL))
-
         return radioStation
     }
 
     private fun getCategoryId(uri: Uri): String {
-        val pair = uri.toString().split(UrlLayerWebRadioImpl.KEY_CATEGORY_ID)
+        return getBrowseId(uri, UrlLayerWebRadioImpl.KEY_CATEGORY_ID)
+    }
+
+    private fun getCountryId(uri: Uri): String {
+        return getBrowseId(uri, UrlLayerWebRadioImpl.KEY_COUNTRY_ID)
+    }
+
+    private fun getBrowseId(uri: Uri, key: String): String {
+        val pair = uri.toString().split(key)
         if (pair.size != 2) {
             return AppUtils.EMPTY_STRING
         }
         return pair[1]
+    }
+
+    private fun getRadioStationByGenre(uuid: String, jsonObject: JSONObject, categoryId: String): RadioStation {
+        if (jsonObject.has(KEY_GENRE).not()) {
+            return RadioStation.INVALID_INSTANCE
+        }
+        val genres = try {
+            jsonObject.getJSONArray(KEY_GENRE)
+        } catch (e: Exception) {
+            AppLogger.e("$TAG get genres", e)
+            return RadioStation.INVALID_INSTANCE
+        }
+        for (j in 0 until genres.length()) {
+            val genre = genres.getString(j)
+            if (genre != categoryId) {
+                continue
+            }
+            return getRadioStation(jsonObject, uuid)
+        }
+        return RadioStation.INVALID_INSTANCE
+    }
+
+    private fun getRadioStationByCountry(uuid: String, jsonObject: JSONObject, countryName: String): RadioStation {
+        if (jsonObject.has(KEY_COUNTRY).not()) {
+            return RadioStation.INVALID_INSTANCE
+        }
+        val country = try {
+            jsonObject.getString(KEY_COUNTRY)
+        } catch (e: Exception) {
+            AppLogger.e("$TAG get country", e)
+            return RadioStation.INVALID_INSTANCE
+        }
+        if (countryName != country) {
+            return RadioStation.INVALID_INSTANCE
+        }
+        return getRadioStation(jsonObject, uuid)
     }
 }

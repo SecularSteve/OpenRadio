@@ -3,10 +3,26 @@ package com.yuriy.openradio.shared.service
 import android.content.Context
 import com.yuriy.openradio.shared.model.ModelLayer
 import com.yuriy.openradio.shared.model.media.EqualizerLayer
+import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.RemoteControlListener
+import com.yuriy.openradio.shared.model.media.item.MediaItemAllCategories
+import com.yuriy.openradio.shared.model.media.item.MediaItemBrowseCar
+import com.yuriy.openradio.shared.model.media.item.MediaItemChildCategories
+import com.yuriy.openradio.shared.model.media.item.MediaItemCommand
+import com.yuriy.openradio.shared.model.media.item.MediaItemCountriesList
+import com.yuriy.openradio.shared.model.media.item.MediaItemCountryStations
+import com.yuriy.openradio.shared.model.media.item.MediaItemFavoritesList
+import com.yuriy.openradio.shared.model.media.item.MediaItemLocalsList
+import com.yuriy.openradio.shared.model.media.item.MediaItemPopularStations
+import com.yuriy.openradio.shared.model.media.item.MediaItemRecentStations
+import com.yuriy.openradio.shared.model.media.item.MediaItemRoot
+import com.yuriy.openradio.shared.model.media.item.MediaItemRootCar
+import com.yuriy.openradio.shared.model.media.item.MediaItemSearchFromApp
+import com.yuriy.openradio.shared.model.media.item.MediaItemSearchFromService
 import com.yuriy.openradio.shared.model.net.NetworkLayer
 import com.yuriy.openradio.shared.model.net.NetworkMonitorListener
 import com.yuriy.openradio.shared.model.net.UrlLayer
+import com.yuriy.openradio.shared.model.source.Source
 import com.yuriy.openradio.shared.model.storage.DeviceLocalsStorage
 import com.yuriy.openradio.shared.model.storage.FavoritesStorage
 import com.yuriy.openradio.shared.model.storage.LatestRadioStationStorage
@@ -23,6 +39,8 @@ import com.yuriy.openradio.shared.vo.Country
 import com.yuriy.openradio.shared.vo.RadioStation
 
 class OpenRadioServicePresenterImpl(
+    isCar: Boolean,
+    source: Source,
     private val mUrlLayer: UrlLayer,
     private val mNetworkLayer: NetworkLayer,
     private val mModelLayer: ModelLayer,
@@ -35,11 +53,39 @@ class OpenRadioServicePresenterImpl(
     private val mEqualizerLayer: EqualizerLayer,
     private val mApiCachePersistent: ApiCache,
     private val mApiCacheInMemory: ApiCache,
-    private val mSleepTimerModel: SleepTimerModel
+    private val mSleepTimerModel: SleepTimerModel,
+    private val mCountriesCache:MutableSet<Country>
 ) : OpenRadioServicePresenter {
 
     private var mRemoteControlListener: RemoteControlListener? = null
     private val mRemoteControlListenerProxy = RemoteControlListenerProxy()
+    /**
+     * Map of the Media Item commands that responsible for the Media Items List creation.
+     */
+    private val mMediaItemCommands = HashMap<String, MediaItemCommand>()
+
+    init {
+        if (isCar) {
+            mMediaItemCommands[MediaId.MEDIA_ID_ROOT] = MediaItemRootCar(source)
+            mMediaItemCommands[MediaId.MEDIA_ID_BROWSE_CAR] = MediaItemBrowseCar(source)
+        } else {
+            mMediaItemCommands[MediaId.MEDIA_ID_ROOT] = MediaItemRoot(source)
+        }
+        mMediaItemCommands[MediaId.MEDIA_ID_ALL_CATEGORIES] = MediaItemAllCategories()
+        mMediaItemCommands[MediaId.MEDIA_ID_COUNTRIES_LIST] = MediaItemCountriesList()
+        mMediaItemCommands[MediaId.MEDIA_ID_COUNTRY_STATIONS] = MediaItemCountryStations()
+        mMediaItemCommands[MediaId.MEDIA_ID_CHILD_CATEGORIES] = MediaItemChildCategories()
+        mMediaItemCommands[MediaId.MEDIA_ID_FAVORITES_LIST] = MediaItemFavoritesList()
+        mMediaItemCommands[MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST] = MediaItemLocalsList()
+        mMediaItemCommands[MediaId.MEDIA_ID_SEARCH_FROM_APP] = MediaItemSearchFromApp()
+        mMediaItemCommands[MediaId.MEDIA_ID_SEARCH_FROM_SERVICE] = MediaItemSearchFromService()
+        mMediaItemCommands[MediaId.MEDIA_ID_POPULAR_STATIONS] = MediaItemPopularStations()
+        mMediaItemCommands[MediaId.MEDIA_ID_RECENT_STATIONS] = MediaItemRecentStations()
+    }
+
+    override fun getMediaItemCommand(commandId: String): MediaItemCommand? {
+        return mMediaItemCommands[commandId]
+    }
 
     fun getRemoteControlListenerProxy(): RemoteControlListener {
         return mRemoteControlListenerProxy
@@ -102,11 +148,16 @@ class OpenRadioServicePresenterImpl(
     }
 
     override fun getAllCategories(): Set<Category> {
-        return mModelLayer.getCategories(mUrlLayer.getAllCategoriesUrl())
+        return mModelLayer.getAllCategories(mUrlLayer.getAllCategoriesUrl())
     }
 
+    @Synchronized
     override fun getAllCountries(): Set<Country> {
-        return mModelLayer.getCountries()
+        if (mCountriesCache.isEmpty().not()) {
+            return mCountriesCache
+        }
+        mCountriesCache.addAll(mModelLayer.getAllCountries(mUrlLayer.getAllCountries()))
+        return mCountriesCache
     }
 
     override fun getAllFavorites(): Set<RadioStation> {

@@ -18,6 +18,7 @@ package com.yuriy.openradio.shared.model.media.item
 
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommand.IUpdatePlaybackState
+import com.yuriy.openradio.shared.model.source.Source
 import com.yuriy.openradio.shared.utils.MediaItemBuilder
 
 /**
@@ -29,13 +30,15 @@ import com.yuriy.openradio.shared.utils.MediaItemBuilder
  * [MediaItemBrowseCar] is concrete implementation of the [MediaItemCommand] that
  * designed to prepare data to display Browse menu items for Car display.
  */
-class MediaItemBrowseCar : MediaItemCommand {
+class MediaItemBrowseCar(private val mSource: Source) : MediaItemCommand {
 
     override fun execute(playbackStateListener: IUpdatePlaybackState, dependencies: MediaItemCommandDependencies) {
         val context = dependencies.context
         dependencies.result.detach()
-        // Popular Radio Stations
-        dependencies.addMediaItem(MediaItemBuilder.buildPopularMenuItem(context))
+        if (mSource == Source.RADIO_BROWSER) {
+            // Popular Radio Stations
+            dependencies.addMediaItem(MediaItemBuilder.buildPopularMenuItem(context))
+        }
         // Worldwide Stations
         dependencies.addMediaItem(MediaItemBuilder.buildCategoriesMenuItem(context))
         // All countries list

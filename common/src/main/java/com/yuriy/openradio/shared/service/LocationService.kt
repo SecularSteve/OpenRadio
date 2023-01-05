@@ -415,6 +415,11 @@ class LocationService : JobIntentService() {
             for ((key, value) in COUNTRY_CODE_TO_NAME) {
                 COUNTRY_NAME_TO_CODE[value] = key
             }
+            // Exceptions:
+            COUNTRY_NAME_TO_CODE["Czechia"] = "CZ"
+            COUNTRY_NAME_TO_CODE["Russia"] = "RU"
+            COUNTRY_NAME_TO_CODE["United Kingdom"] = "GB"
+            COUNTRY_NAME_TO_CODE["United States"] = "US"
         }
     }
 

@@ -18,6 +18,7 @@ package com.yuriy.openradio.shared.model.media.item
 
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommand.IUpdatePlaybackState
+import com.yuriy.openradio.shared.model.source.Source
 import com.yuriy.openradio.shared.utils.MediaItemBuilder
 
 /**
@@ -29,7 +30,7 @@ import com.yuriy.openradio.shared.utils.MediaItemBuilder
  * [MediaItemRoot] is concrete implementation of the [MediaItemCommand] that
  * designed to prepare data to display root menu items.
  */
-class MediaItemRoot : MediaItemCommand {
+class MediaItemRoot(private val mSource: Source) : MediaItemCommand {
 
     override fun execute(playbackStateListener: IUpdatePlaybackState, dependencies: MediaItemCommandDependencies) {
         val context = dependencies.context
@@ -39,10 +40,12 @@ class MediaItemRoot : MediaItemCommand {
         if (favorites.isNotEmpty()) {
             dependencies.addMediaItem(MediaItemBuilder.buildFavoritesMenuItem(context))
         }
-        // Recently added Radio Stations
-        dependencies.addMediaItem(MediaItemBuilder.buildRecentMenuItem(context))
-        // Popular Radio Stations
-        dependencies.addMediaItem(MediaItemBuilder.buildPopularMenuItem(context))
+        if (mSource == Source.RADIO_BROWSER) {
+            // Recently added Radio Stations
+            dependencies.addMediaItem(MediaItemBuilder.buildRecentMenuItem(context))
+            // Popular Radio Stations
+            dependencies.addMediaItem(MediaItemBuilder.buildPopularMenuItem(context))
+        }
         // Worldwide Stations
         dependencies.addMediaItem(MediaItemBuilder.buildCategoriesMenuItem(context))
         // All countries list

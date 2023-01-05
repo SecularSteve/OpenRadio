@@ -18,10 +18,12 @@ package com.yuriy.openradio.shared.model.parser
 
 import android.net.Uri
 import com.yuriy.openradio.shared.model.translation.MediaIdBuilder
+import com.yuriy.openradio.shared.service.LocationService
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.JsonUtils
 import com.yuriy.openradio.shared.vo.Category
+import com.yuriy.openradio.shared.vo.Country
 import com.yuriy.openradio.shared.vo.RadioStation
 import com.yuriy.openradio.shared.vo.setVariant
 import org.json.JSONArray
@@ -57,6 +59,7 @@ class ParserLayerRadioBrowserImpl : ParserLayer {
         private const val KEY_LAST_CHECK_OK_TIME = "lastcheckoktime"
         private const val KEY_LAST_CHECK_OK = "lastcheckok"
         private const val KEY_CODEC = "codec"
+        private const val KEY_ISO_3166_1 = "iso_3166_1"
     }
 
     override fun getRadioStation(data: String, mediaIdBuilder: MediaIdBuilder, uri: Uri): RadioStation {
@@ -88,7 +91,7 @@ class ParserLayerRadioBrowserImpl : ParserLayer {
         return result
     }
 
-    override fun getCategories(data: String): Set<Category> {
+    override fun getAllCategories(data: String): Set<Category> {
         val array = try {
             JSONArray(data)
         } catch (e: Exception) {
@@ -115,6 +118,34 @@ class ParserLayerRadioBrowserImpl : ParserLayer {
             }
         }
         return result
+    }
+
+    override fun getAllCountries(data: String): Set<Country> {
+        val array = try {
+            JSONArray(data)
+        } catch (e: Exception) {
+            AppLogger.e("$TAG to JSON Array, data:$data", e)
+            return emptySet()
+        }
+        val set = TreeSet<Country>()
+        for (i in 0 until array.length()) {
+            val jsonObject = try {
+                array[i] as JSONObject
+            } catch (e: Exception) {
+                AppLogger.e("$TAG getAllCountries, data:$data", e)
+                continue
+            }
+            if (jsonObject.has(KEY_ISO_3166_1)) {
+                val iso = jsonObject.getString(KEY_ISO_3166_1)
+                val name = LocationService.COUNTRY_CODE_TO_NAME[iso]
+                if (name != null) {
+                    set.add(Country(name, iso))
+                } else {
+                    AppLogger.w("$TAG Missing country of $iso")
+                }
+            }
+        }
+        return set
     }
 
     private fun getRadioStation(jsonObject: JSONObject, mediaIdBuilder: MediaIdBuilder): RadioStation {

@@ -38,14 +38,14 @@ interface ModelLayer {
      * @param uri [Uri] of the request.
      * @return Set of the [Category]s
      */
-    fun getCategories(uri: Uri): Set<Category>
+    fun getAllCategories(uri: Uri): Set<Category>
 
     /**
      * Get a list of all countries.
      *
      * @return Set of the Countries.
      */
-    fun getCountries(): Set<Country>
+    fun getAllCountries(uri: Uri): Set<Country>
 
     /**
      * Get a list of Radio Stations by provided Uri.

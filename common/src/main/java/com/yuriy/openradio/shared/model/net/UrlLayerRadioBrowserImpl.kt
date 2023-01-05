@@ -128,6 +128,10 @@ class UrlLayerRadioBrowserImpl: UrlLayer {
         return Pair(Uri.parse(BASE_URL + "add"), postParams)
     }
 
+    override fun getAllCountries(): Uri {
+        return Uri.parse(BASE_URL + "countries")
+    }
+
     private fun getUrlModified(
         uriOrigin: String,
         uri: String?, parameters: List<Pair<String, String>>
@@ -168,7 +172,7 @@ class UrlLayerRadioBrowserImpl: UrlLayer {
         /**
          * Number of Radio Stations in each page.
          */
-        private const val ITEMS_PER_PAGE = 20
+        private const val ITEMS_PER_PAGE = 200
         private const val LOOK_UP_DNS = "all.api.radio-browser.info"
         private const val BASE_URL_PREFIX = "https://do-look-up-dns-first"
         /**

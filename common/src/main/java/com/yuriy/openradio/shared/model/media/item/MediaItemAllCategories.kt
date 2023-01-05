@@ -75,13 +75,7 @@ class MediaItemAllCategories : MediaItemCommand {
             return
         }
 
-        // Counter of max number of categories. It is matter for Car since binder can not transfer a huge
-        // amount of data.
-        var counter = 0
         for (category in set) {
-            if (dependencies.isCar && counter++ > MAX_COUNTER) {
-                break
-            }
             val bundle = Bundle()
             MediaItemHelper.setDrawableId(bundle, R.drawable.ic_child_categories)
             dependencies.addMediaItem(
@@ -97,9 +91,5 @@ class MediaItemAllCategories : MediaItemCommand {
         }
         dependencies.result.sendResult(dependencies.getMediaItems())
         dependencies.resultListener.onResult()
-    }
-
-    companion object {
-        private const val MAX_COUNTER = 200
     }
 }

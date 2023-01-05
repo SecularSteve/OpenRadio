@@ -19,6 +19,7 @@ package com.yuriy.openradio.shared.model.media.item
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommand.IUpdatePlaybackState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -42,6 +43,10 @@ class MediaItemCountryStations : IndexableMediaItemCommand() {
         }
         mJob?.cancel()
         mJob = dependencies.mScope.launch(Dispatchers.IO) {
+            runBlocking {
+                // Call this API to make sure countries are cached.
+                dependencies.presenter.getAllCountries()
+            }
             withTimeoutOrNull(MediaItemCommand.CMD_TIMEOUT_MS) {
                 // Load all categories into menu
                 val pageNumber = nextPageNumber

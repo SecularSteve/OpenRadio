@@ -16,4 +16,8 @@
 
 package com.yuriy.openradio.shared.model.source
 
-data class Source(val idx: Int, val name: String)
+enum class Source(val srcId: Int, val srcName: String) {
+
+    RADIO_BROWSER(0, "Radio Browser"),
+    WEB_RADIO(1, "Web Radio");
+}

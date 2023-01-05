@@ -27,7 +27,7 @@ import java.net.URL
 /**
  * Use single url to get whole dataset and parse it into the data object.
  */
-class UrlLayerWebRadioImpl: UrlLayer {
+class UrlLayerWebRadioImpl : UrlLayer {
 
     override fun getConnectionUrl(uri: Uri, parameters: List<Pair<String, String>>): URL? {
         return try {
@@ -55,7 +55,8 @@ class UrlLayerWebRadioImpl: UrlLayer {
     }
 
     override fun getStationsByCountry(countryCode: String, pageNumber: Int): Uri {
-        return URI
+        val url = "$URL$KEY_COUNTRY_ID$countryCode"
+        return Uri.parse(url)
     }
 
     override fun getPopularStations(): Uri {
@@ -74,12 +75,20 @@ class UrlLayerWebRadioImpl: UrlLayer {
         return Pair(Uri.EMPTY, ArrayList())
     }
 
+    override fun getAllCountries(): Uri {
+        return URI_COUNTRIES
+    }
+
     companion object {
 
         private const val TAG = "ULWRI"
         private const val URL = "https://jcorporation.github.io/webradiodb/db/index/webradios.min.json"
         private val URI = Uri.parse(URL)
+        private val URI_COUNTRIES = Uri.parse(
+            "https://jcorporation.github.io/webradiodb/db/index/countries.min.json"
+        )
 
         const val KEY_CATEGORY_ID = "?categoryId="
+        const val KEY_COUNTRY_ID = "?countryId="
     }
 }

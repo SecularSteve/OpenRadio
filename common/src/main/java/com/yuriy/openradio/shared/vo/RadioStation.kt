@@ -102,40 +102,23 @@ fun RadioStation.setVariantFixed(bitrate: Int, url: String) {
 
 class RadioStation : Serializable, Comparable<RadioStation> {
 
-    private var mId = AppUtils.EMPTY_STRING
-
     var name = AppUtils.EMPTY_STRING
     var homePage = AppUtils.EMPTY_STRING
     var lastCheckOkTime = AppUtils.EMPTY_STRING
-
     var lastCheckOk = 0
-
-    // TODO: Convert to enum
-    private var mCountry = AppUtils.EMPTY_STRING
-
     // TODO: Convert to enum
     var countryCode = AppUtils.EMPTY_STRING
     var genre = AppUtils.EMPTY_STRING
     var urlResolved = AppUtils.EMPTY_STRING
-    private val mMediaStream: MediaStream
-    private val mMediaStreamFixed: MediaStream
-
     /**
      * Flag indicate that Radio Station has been added locally to the phone storage.
      */
     var isLocal = false
     var sortId = MediaSessionCompat.QueueItem.UNKNOWN_ID
-
     /**
      * Image Url. Used for internal logic only, for example fetch image from or determine image is not specified.
      */
     var imageUrl = AppUtils.EMPTY_STRING
-
-    /**
-     * Used to actually fetch bytes from Images Provider.
-     */
-    val imageUri get() = ImagesStore.buildImageUri(mId, imageUrl)
-
     /**
      * List of current codecs:
      * AAC
@@ -151,6 +134,13 @@ class RadioStation : Serializable, Comparable<RadioStation> {
      * UNKNOWN,H.264
      */
     var codec = AppUtils.EMPTY_STRING
+    var description = AppUtils.EMPTY_STRING
+
+    private var mId = AppUtils.EMPTY_STRING
+    private val mMediaStream: MediaStream
+    private val mMediaStreamFixed: MediaStream
+    // TODO: Convert to enum
+    private var mCountry = AppUtils.EMPTY_STRING
 
     /**
      * Private constructor.
@@ -184,6 +174,12 @@ class RadioStation : Serializable, Comparable<RadioStation> {
         imageUrl = radioStation.imageUrl
         codec = radioStation.codec
     }
+
+    /**
+     * Used to actually fetch bytes from Images Provider.
+     */
+    val imageUri
+        get() = ImagesStore.buildImageUri(mId, imageUrl)
 
     var id: String
         get() = mId

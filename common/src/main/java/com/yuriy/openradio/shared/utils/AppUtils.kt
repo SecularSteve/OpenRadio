@@ -253,7 +253,6 @@ object AppUtils {
 
     fun isSameCatalogue(newMediaId: String, prevMediaId: String): Boolean {
         if (newMediaId != MediaId.MEDIA_ID_ROOT &&
-            newMediaId != MediaId.MEDIA_ID_ROOT_CAR &&
             newMediaId == prevMediaId
         ) {
             return true

@@ -62,4 +62,6 @@ interface UrlLayer {
     fun getSearchUrl(query: String): Uri
 
     fun getAddStationUrl(rsToAdd: RadioStationToAdd): Pair<Uri, List<Pair<String, String>>>
+
+    fun getAllCountries(): Uri
 }

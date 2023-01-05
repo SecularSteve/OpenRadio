@@ -63,6 +63,4 @@
     <!-- Notification Channel -->
     <string name="notification_channel">Now Playing</string>
     <string name="notification_channel_description">Shows what music is currently playing on Open Radio</string>
-    <string name="source_radio_browser">Radio Browser</string>
-    <string name="source_web_radio">Web Radio</string>
 </resources>

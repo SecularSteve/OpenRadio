@@ -19,6 +19,7 @@ package com.yuriy.openradio.shared.model.parser
 import android.net.Uri
 import com.yuriy.openradio.shared.model.translation.MediaIdBuilder
 import com.yuriy.openradio.shared.vo.Category
+import com.yuriy.openradio.shared.vo.Country
 import com.yuriy.openradio.shared.vo.RadioStation
 
 /**
@@ -36,5 +37,7 @@ interface ParserLayer {
 
     fun getRadioStations(data: String, mediaIdBuilder: MediaIdBuilder, uri: Uri): Set<RadioStation>
 
-    fun getCategories(data: String): Set<Category>
+    fun getAllCategories(data: String): Set<Category>
+
+    fun getAllCountries(data: String): Set<Country>
 }
