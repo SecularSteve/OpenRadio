@@ -17,9 +17,17 @@
 package com.yuriy.openradio.shared.dependencies
 
 import android.content.Context
+import com.yuriy.openradio.shared.model.media.EqualizerLayer
+import com.yuriy.openradio.shared.model.media.RadioStationManagerLayer
+import com.yuriy.openradio.shared.model.net.NetworkLayer
+import com.yuriy.openradio.shared.model.storage.DeviceLocalsStorage
+import com.yuriy.openradio.shared.model.storage.FavoritesStorage
+import com.yuriy.openradio.shared.model.storage.LocationStorage
+import com.yuriy.openradio.shared.model.storage.NetworkSettingsStorage
 import com.yuriy.openradio.shared.model.storage.StorageManagerLayer
 import com.yuriy.openradio.shared.model.storage.StorageManagerLayerImpl
 import com.yuriy.openradio.shared.model.storage.drive.GoogleDriveManager
+import com.yuriy.openradio.shared.model.timer.SleepTimerModel
 import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.presenter.MediaPresenterImpl
 import com.yuriy.openradio.shared.view.dialog.AddEditStationDialogPresenter
@@ -37,7 +45,10 @@ import com.yuriy.openradio.shared.view.dialog.RemoveStationDialogPresenter
 import com.yuriy.openradio.shared.view.dialog.RemoveStationDialogPresenterImpl
 import java.util.concurrent.atomic.AtomicBoolean
 
-object DependencyRegistryCommonUi {
+object DependencyRegistryCommonUi :
+    NetworkLayerDependency, LocationStorageDependency, FavoritesStorageDependency,
+    DeviceLocalsStorageDependency, EqualizerLayerDependency, RadioStationManagerLayerDependency,
+    NetworkSettingsStorageDependency, SleepTimerModelDependency {
 
     private lateinit var sMediaPresenter: MediaPresenter
     private lateinit var sEditStationPresenter: EditStationPresenter
@@ -45,6 +56,14 @@ object DependencyRegistryCommonUi {
     private lateinit var sRemoveStationDialogPresenter: RemoveStationDialogPresenter
     private lateinit var sAddEditStationDialogPresenter: AddEditStationDialogPresenter
     private lateinit var sStorageManagerLayer: StorageManagerLayer
+    private lateinit var sNetworkLayer: NetworkLayer
+    private lateinit var sLocationStorage: LocationStorage
+    private lateinit var sFavoritesStorage: FavoritesStorage
+    private lateinit var sDeviceLocalsStorage: DeviceLocalsStorage
+    private lateinit var sNetworkSettingsStorage: NetworkSettingsStorage
+    private lateinit var sEqualizerLayer: EqualizerLayer
+    private lateinit var sRadioStationManagerLayer: RadioStationManagerLayer
+    private lateinit var sSleepTimerModel: SleepTimerModel
 
     @Volatile
     private var sInit = AtomicBoolean(false)
@@ -56,31 +75,71 @@ object DependencyRegistryCommonUi {
         if (sInit.get()) {
             return
         }
+        DependencyRegistryCommon.injectNetworkLayer(this)
+        DependencyRegistryCommon.injectLocationStorage(this)
+        DependencyRegistryCommon.injectFavoritesStorage(this)
+        DependencyRegistryCommon.injectDeviceLocalsStorage(this)
+        DependencyRegistryCommon.injectEqualizerLayer(this)
+        DependencyRegistryCommon.injectRadioStationManagerLayer(this)
+        DependencyRegistryCommon.injectNetworkSettingsStorage(this)
+        DependencyRegistryCommon.injectSleepTimerModel(this)
         sMediaPresenter = MediaPresenterImpl(
             context,
-            DependencyRegistryCommon.getNetworkLayer(),
-            DependencyRegistryCommon.getLocationStorage(),
-            DependencyRegistryCommon.getSleepTimerModel()
+            sNetworkLayer,
+            sLocationStorage,
+            sSleepTimerModel
         )
         sEditStationPresenter = EditStationPresenterImpl(
-            DependencyRegistryCommon.getFavoriteStorage(),
-            DependencyRegistryCommon.getLocalRadioStationsStorage()
+            sFavoritesStorage,
+            sDeviceLocalsStorage
         )
         sStorageManagerLayer = StorageManagerLayerImpl(
-            DependencyRegistryCommon.getFavoriteStorage(),
-            DependencyRegistryCommon.getLocalRadioStationsStorage()
+            sFavoritesStorage,
+            sDeviceLocalsStorage
         )
-        sEqualizerPresenter = EqualizerPresenterImpl(DependencyRegistryCommon.getEqualizerLayer())
+        sEqualizerPresenter = EqualizerPresenterImpl(sEqualizerLayer)
         sRemoveStationDialogPresenter = RemoveStationDialogPresenterImpl(
             context,
-            DependencyRegistryCommon.getRadioStationManagerLayer()
+            sRadioStationManagerLayer
         )
         sAddEditStationDialogPresenter = AddEditStationDialogPresenterImpl(
             context,
-            DependencyRegistryCommon.getRadioStationManagerLayer()
+            sRadioStationManagerLayer
         )
 
         sInit.set(true)
+    }
+
+    override fun configureWith(networkLayer: NetworkLayer) {
+        sNetworkLayer = networkLayer
+    }
+
+    override fun configureWith(locationStorage: LocationStorage) {
+        sLocationStorage = locationStorage
+    }
+
+    override fun configureWith(favoritesStorage: FavoritesStorage) {
+        sFavoritesStorage = favoritesStorage
+    }
+
+    override fun configureWith(deviceLocalsStorage: DeviceLocalsStorage) {
+        sDeviceLocalsStorage = deviceLocalsStorage
+    }
+
+    override fun configureWith(equalizerLayer: EqualizerLayer) {
+        sEqualizerLayer = equalizerLayer
+    }
+
+    override fun configureWith(radioStationManagerLayer: RadioStationManagerLayer) {
+        sRadioStationManagerLayer = radioStationManagerLayer
+    }
+
+    override fun configureWith(networkSettingsStorage: NetworkSettingsStorage) {
+        sNetworkSettingsStorage = networkSettingsStorage
+    }
+
+    override fun configureWith(sleepTimerModel: SleepTimerModel) {
+        sSleepTimerModel = sleepTimerModel
     }
 
     fun inject(dependency: MediaPresenterDependency) {
@@ -108,6 +167,6 @@ object DependencyRegistryCommonUi {
     }
 
     fun inject(dependency: NetworkDialog) {
-        dependency.configureWith(DependencyRegistryCommon.getNetworkSettingsStorage())
+        dependency.configureWith(sNetworkSettingsStorage)
     }
 }

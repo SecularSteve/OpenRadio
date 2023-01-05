@@ -17,14 +17,17 @@
 package com.yuriy.openradio.tv.dependencies
 
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
+import com.yuriy.openradio.shared.dependencies.LatestRadioStationStorageDependency
+import com.yuriy.openradio.shared.model.storage.LatestRadioStationStorage
 import com.yuriy.openradio.tv.view.activity.TvMainActivity
 import com.yuriy.openradio.tv.view.activity.TvMainActivityPresenter
 import com.yuriy.openradio.tv.view.activity.TvMainActivityPresenterImpl
 import java.util.concurrent.atomic.AtomicBoolean
 
-object DependencyRegistryTv {
+object DependencyRegistryTv : LatestRadioStationStorageDependency {
 
     private lateinit var sTvMainActivityPresenter: TvMainActivityPresenter
+    private lateinit var sLatestRadioStationStorage: LatestRadioStationStorage
 
     @Volatile
     private var sInit = AtomicBoolean(false)
@@ -37,11 +40,16 @@ object DependencyRegistryTv {
             return
         }
 
+        DependencyRegistryCommon.injectLatestRadioStationStorage(this)
         sTvMainActivityPresenter = TvMainActivityPresenterImpl(
-            DependencyRegistryCommon.getLatestRadioStationStorage()
+            sLatestRadioStationStorage
         )
 
         sInit.set(true)
+    }
+
+    override fun configureWith(latestRadioStationStorage: LatestRadioStationStorage) {
+        sLatestRadioStationStorage = latestRadioStationStorage
     }
 
     fun inject(dependency: TvMainActivity) {

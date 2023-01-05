@@ -29,7 +29,11 @@ import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.Spinner
 import com.yuriy.openradio.shared.R
+import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
+import com.yuriy.openradio.shared.dependencies.SourcesLayerDependency
+import com.yuriy.openradio.shared.model.source.Source
+import com.yuriy.openradio.shared.model.source.SourcesLayer
 import com.yuriy.openradio.shared.permission.PermissionChecker
 import com.yuriy.openradio.shared.service.LocationService
 import com.yuriy.openradio.shared.utils.AppLogger
@@ -42,6 +46,7 @@ import com.yuriy.openradio.shared.utils.findEditText
 import com.yuriy.openradio.shared.utils.findLinearLayout
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.utils.findView
+import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.invisible
 import com.yuriy.openradio.shared.utils.visible
 import com.yuriy.openradio.shared.view.BaseDialogFragment
@@ -57,7 +62,7 @@ import com.yuriy.openradio.shared.vo.RadioStationToAdd
  *
  * Base dialog to use by Edit and Add dialogs.
  */
-abstract class BaseAddEditStationDialog : BaseDialogFragment() {
+abstract class BaseAddEditStationDialog : BaseDialogFragment(), SourcesLayerDependency {
 
     protected lateinit var mPresenter: AddEditStationDialogPresenter
     protected lateinit var mNameEdit: EditText
@@ -73,14 +78,20 @@ abstract class BaseAddEditStationDialog : BaseDialogFragment() {
     private lateinit var mProgressView: ProgressBar
     private lateinit var mGenresAdapter: ArrayAdapter<CharSequence>
     private lateinit var mCountriesAdapter: ArrayAdapter<String>
+    private lateinit var mSourcesLayer: SourcesLayer
 
     fun configureWith(presenter: AddEditStationDialogPresenter) {
         mPresenter = presenter
     }
 
+    override fun configureWith(sourcesLayer: SourcesLayer) {
+        mSourcesLayer = sourcesLayer
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         DependencyRegistryCommonUi.inject(this)
+        DependencyRegistryCommon.injectSourcesLayer(this)
     }
 
     override fun onCreateView(
@@ -161,6 +172,10 @@ abstract class BaseAddEditStationDialog : BaseDialogFragment() {
         val cancelBtn = view.findButton(R.id.add_edit_station_dialog_cancel_btn_view)
         cancelBtn.setOnClickListener { dialog?.dismiss() }
         mProgressView.invisible()
+        if (mSourcesLayer.getActiveSource() == Source.WEB_RADIO) {
+            addToSrvrCheckView.gone()
+            webImageViewGone(view)
+        }
         return view
     }
 
@@ -270,5 +285,15 @@ abstract class BaseAddEditStationDialog : BaseDialogFragment() {
         val edit = view.findTextView(R.id.add_edit_station_web_image_url_edit)
         label.isEnabled = enabled
         edit.isEnabled = enabled
+    }
+
+    private fun webImageViewGone(view: View?) {
+        if (view == null) {
+            return
+        }
+        val label = view.findTextView(R.id.add_edit_station_web_image_url_label)
+        val edit = view.findTextView(R.id.add_edit_station_web_image_url_edit)
+        label.gone()
+        edit.gone()
     }
 }

@@ -39,7 +39,7 @@ open class MainAppCommonUi: MainAppCommon(), SleepTimerModelDependency {
 
     override fun onCreate() {
         super.onCreate()
-        DependencyRegistryCommon.inject(this)
+        DependencyRegistryCommon.injectSleepTimerModel(this)
         mAppScope.launch(Dispatchers.IO) {
             mSleepTimerModel.init()
         }

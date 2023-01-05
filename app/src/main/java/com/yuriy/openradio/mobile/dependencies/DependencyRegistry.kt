@@ -20,11 +20,17 @@ import com.yuriy.openradio.mobile.view.activity.MainActivity
 import com.yuriy.openradio.mobile.view.activity.MainActivityPresenter
 import com.yuriy.openradio.mobile.view.activity.MainActivityPresenterImpl
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
+import com.yuriy.openradio.shared.dependencies.FavoritesStorageDependency
+import com.yuriy.openradio.shared.dependencies.LatestRadioStationStorageDependency
+import com.yuriy.openradio.shared.model.storage.FavoritesStorage
+import com.yuriy.openradio.shared.model.storage.LatestRadioStationStorage
 import java.util.concurrent.atomic.AtomicBoolean
 
-object DependencyRegistry {
+object DependencyRegistry : FavoritesStorageDependency, LatestRadioStationStorageDependency {
 
     private lateinit var sMainActivityPresenter: MainActivityPresenter
+    private lateinit var sFavoritesStorage: FavoritesStorage
+    private lateinit var sLatestRadioStationStorage: LatestRadioStationStorage
 
     @Volatile
     private var sInit = AtomicBoolean(false)
@@ -33,12 +39,23 @@ object DependencyRegistry {
         if (sInit.get()) {
             return
         }
+
+        DependencyRegistryCommon.injectFavoritesStorage(this)
+        DependencyRegistryCommon.injectLatestRadioStationStorage(this)
         sMainActivityPresenter = MainActivityPresenterImpl(
-            DependencyRegistryCommon.getFavoriteStorage(),
-            DependencyRegistryCommon.getLatestRadioStationStorage()
+            sFavoritesStorage,
+            sLatestRadioStationStorage
         )
 
         sInit.set(true)
+    }
+
+    override fun configureWith(favoritesStorage: FavoritesStorage) {
+        sFavoritesStorage = favoritesStorage
+    }
+
+    override fun configureWith(latestRadioStationStorage: LatestRadioStationStorage) {
+        sLatestRadioStationStorage = latestRadioStationStorage
     }
 
     fun inject(dependency: MainActivity) {

@@ -46,7 +46,7 @@ class SourceDialog : BaseDialogFragment(), SourcesLayerDependency {
     private var mNewSrc: Source? = null
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        DependencyRegistryCommon.inject(this)
+        DependencyRegistryCommon.injectSourcesLayer(this)
         val view = inflater.inflate(
             R.layout.dialog_source,
             requireActivity().findViewById(R.id.dialog_source_root)

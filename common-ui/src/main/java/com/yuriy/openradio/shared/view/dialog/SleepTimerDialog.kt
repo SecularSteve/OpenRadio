@@ -58,7 +58,7 @@ class SleepTimerDialog : BaseDialogFragment(), SleepTimerModelDependency {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        DependencyRegistryCommon.inject(this)
+        DependencyRegistryCommon.injectSleepTimerModel(this)
         mView = inflater.inflate(
                 R.layout.dialog_sleep_timer,
                 requireActivity().findViewById(R.id.dialog_sleep_timer_root)

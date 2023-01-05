@@ -205,7 +205,7 @@ object DependencyRegistryCommon {
         service.configureWith(sOpenRadioServicePresenter)
     }
 
-    fun inject(dependency: SleepTimerModelDependency) {
+    fun injectSleepTimerModel(dependency: SleepTimerModelDependency) {
         dependency.configureWith(sSleepTimerModel)
     }
 
@@ -213,48 +213,40 @@ object DependencyRegistryCommon {
         dependency.configureWith(sOpenRadioServicePresenter.getRemoteControlListenerProxy())
     }
 
-    fun inject(dependency: SourcesLayerDependency) {
+    fun injectSourcesLayer(dependency: SourcesLayerDependency) {
         dependency.configureWith(sSourcesLayer)
     }
 
-    /**
-     * TODO: Find a better way to cooperate below dependencies:
-     */
-
-    fun getNetworkLayer(): NetworkLayer {
-        return sNetworkLayer
+    fun injectNetworkLayer(dependency: NetworkLayerDependency) {
+        dependency.configureWith(sNetworkLayer)
     }
 
-    fun getFavoriteStorage(): FavoritesStorage {
-        return sFavoritesStorage
+    fun injectLocationStorage(dependency: LocationStorageDependency) {
+        dependency.configureWith(sLocationStorage)
     }
 
-    fun getLocalRadioStationsStorage(): DeviceLocalsStorage {
-        return sDeviceLocalsStorage
+    fun injectFavoritesStorage(dependency: FavoritesStorageDependency) {
+        dependency.configureWith(sFavoritesStorage)
     }
 
-    fun getLatestRadioStationStorage(): LatestRadioStationStorage {
-        return sLatestRadioStationStorage
+    fun injectDeviceLocalsStorage(dependency: DeviceLocalsStorageDependency) {
+        dependency.configureWith(sDeviceLocalsStorage)
     }
 
-    fun getEqualizerLayer(): EqualizerLayer {
-        return sEqualizerLayer
+    fun injectLatestRadioStationStorage(dependency: LatestRadioStationStorageDependency) {
+        dependency.configureWith(sLatestRadioStationStorage)
     }
 
-    fun getRadioStationManagerLayer(): RadioStationManagerLayer {
-        return sRadioStationManagerLayer
+    fun injectEqualizerLayer(dependency: EqualizerLayerDependency) {
+        dependency.configureWith(sEqualizerLayer)
     }
 
-    fun getLocationStorage(): LocationStorage {
-        return sLocationStorage
+    fun injectRadioStationManagerLayer(dependency: RadioStationManagerLayerDependency) {
+        dependency.configureWith(sRadioStationManagerLayer)
     }
 
-    fun getNetworkSettingsStorage(): NetworkSettingsStorage {
-        return sNetworkSettingsStorage
-    }
-
-    fun getSleepTimerModel(): SleepTimerModel {
-        return sSleepTimerModel
+    fun injectNetworkSettingsStorage(dependency: NetworkSettingsStorageDependency) {
+        dependency.configureWith(sNetworkSettingsStorage)
     }
 
     private fun getUrlLayer(source: Source): UrlLayer {
