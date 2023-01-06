@@ -58,6 +58,8 @@ object IntentUtils {
 
     const val RADIO_BROWSER_URL = "https://www.radio-browser.info"
 
+    const val WEB_RADIO_URL = "https://jcorporation.github.io/webradiodb"
+
     /**
      * Make intent to navigate to provided url.
      *

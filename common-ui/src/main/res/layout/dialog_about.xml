@@ -89,6 +89,19 @@
 
             <TextView
                 style="@style/about_item_label"
+                android:text="@string/about_web_radio_title" />
+
+            <TextView
+                android:id="@+id/about_web_radio_link_view"
+                style="@style/about_item_text"
+                android:text="@string/link_text" />
+
+        </LinearLayout>
+
+        <LinearLayout style="@style/about_item_layout">
+
+            <TextView
+                style="@style/about_item_label"
                 android:text="@string/about_graphics" />
 
             <TextView

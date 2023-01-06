@@ -54,6 +54,7 @@ class AboutDialog : BaseDialogFragment() {
         setOnClickOnText(context, view, R.id.about_exo_player_ver_link_view, IntentUtils.EXO_PLAYER_URL)
         setOnClickOnText(context, view, R.id.about_report_issue_link_view, IntentUtils.REPORT_ISSUE_URL)
         setOnClickOnText(context, view, R.id.about_radio_browser_link_view, IntentUtils.RADIO_BROWSER_URL)
+        setOnClickOnText(context, view, R.id.about_web_radio_link_view, IntentUtils.WEB_RADIO_URL)
         setOnClickOnText(context, view, R.id.about_playlist_parser_name_view, IntentUtils.PLAY_LIST_PARSER_URL)
         setOnClickOnText(context, view, R.id.about_countries_boundaries_view, IntentUtils.OFFLINE_COUNTRIES_URL)
         setOnClickOnText(context, view, R.id.about_easy_swipe_name_view, IntentUtils.SWIPE_EFFECT_URL)
