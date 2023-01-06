@@ -18,9 +18,7 @@ package wseemann.media.jplaylistparser.mime
 
 import com.yuriy.openradio.shared.utils.AppUtils
 import java.util.Locale
-import java.util.SortedMap
 import java.util.TreeMap
-import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 /**
@@ -51,7 +49,7 @@ class MediaType : Comparable<MediaType> {
             builder.append(typeCpy)
             builder.append('/')
             builder.append(subtypeCpy)
-            val map: SortedMap<String, String> = TreeMap()
+            val map = TreeMap<String, String>()
             for ((key1, value) in parameters) {
                 val key = key1.trim { it <= ' ' }.lowercase(Locale.ENGLISH)
                 map[key] = value
@@ -157,7 +155,7 @@ class MediaType : Comparable<MediaType> {
                     return type
                 }
             }
-            var matcher: Matcher = TYPE_PATTERN.matcher(string)
+            var matcher = TYPE_PATTERN.matcher(string)
             if (matcher.matches()) {
                 return MediaType(
                         matcher.group(1), matcher.group(2),
@@ -186,12 +184,12 @@ class MediaType : Comparable<MediaType> {
         }
 
         private fun parseParameters(string: String?): Map<String, String> {
-            var stringCpy: String? = string ?: return emptyMap()
+            var stringCpy = string ?: return emptyMap()
             // Extracts k1=v1, k2=v2 from mime/type; k1=v1; k2=v2
             // Note - this logic isn't fully RFC2045 compliant yet, as it
             //  doesn't fully handle quoted keys or values (eg containing ; or =)
             val parameters = HashMap<String, String>()
-            while (stringCpy!!.isNotEmpty()) {
+            while (stringCpy.isNotEmpty()) {
                 var key = stringCpy
                 var value = AppUtils.EMPTY_STRING
                 val semicolon = stringCpy.indexOf(';')
