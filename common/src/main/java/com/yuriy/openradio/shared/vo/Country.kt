@@ -25,7 +25,7 @@ package com.yuriy.openradio.shared.vo
 data class Country(val name: String, val code: String) : Comparable<Country> {
 
     override fun compareTo(other: Country): Int {
-        return code.compareTo(other.code)
+        return name.compareTo(other.name)
     }
 
     override fun toString(): String {

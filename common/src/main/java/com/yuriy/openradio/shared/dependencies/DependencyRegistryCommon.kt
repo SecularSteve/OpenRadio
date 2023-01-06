@@ -60,6 +60,7 @@ import com.yuriy.openradio.shared.service.OpenRadioServicePresenterImpl
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.vo.Country
 import java.lang.ref.WeakReference
+import java.util.TreeSet
 import java.util.concurrent.atomic.AtomicBoolean
 
 object DependencyRegistryCommon {
@@ -131,7 +132,7 @@ object DependencyRegistryCommon {
         sNetworkLayer = NetworkLayerImpl(
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         )
-        val countriesCache = HashSet<Country>()
+        val countriesCache = TreeSet<Country>()
         val source = sSourcesLayer.getActiveSource()
         val parser = getParserLayer(source, countriesCache)
         val urlLayer = getUrlLayer(source)

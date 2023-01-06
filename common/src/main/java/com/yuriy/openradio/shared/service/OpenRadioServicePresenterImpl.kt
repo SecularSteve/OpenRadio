@@ -37,6 +37,7 @@ import com.yuriy.openradio.shared.utils.SortUtils
 import com.yuriy.openradio.shared.vo.Category
 import com.yuriy.openradio.shared.vo.Country
 import com.yuriy.openradio.shared.vo.RadioStation
+import java.util.TreeSet
 
 class OpenRadioServicePresenterImpl(
     isCar: Boolean,
@@ -54,7 +55,7 @@ class OpenRadioServicePresenterImpl(
     private val mApiCachePersistent: ApiCache,
     private val mApiCacheInMemory: ApiCache,
     private val mSleepTimerModel: SleepTimerModel,
-    private val mCountriesCache:MutableSet<Country>
+    private val mCountriesCache:TreeSet<Country>
 ) : OpenRadioServicePresenter {
 
     private var mRemoteControlListener: RemoteControlListener? = null
