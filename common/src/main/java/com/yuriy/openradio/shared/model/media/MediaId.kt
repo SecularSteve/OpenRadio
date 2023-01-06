@@ -16,6 +16,8 @@
 
 package com.yuriy.openradio.shared.model.media
 
+import com.yuriy.openradio.shared.model.source.Source
+import com.yuriy.openradio.shared.model.source.SourcesLayer
 import com.yuriy.openradio.shared.utils.AppUtils
 import java.util.Locale
 
@@ -143,7 +145,10 @@ object MediaId {
      * @param categoryMediaId Category Media Id.
      * @return `true` in case of Catalog is refreshable, `false` otherwise.
      */
-    fun isRefreshable(categoryMediaId: String): Boolean {
+    fun isRefreshable(categoryMediaId: String, sourcesLayer: SourcesLayer): Boolean {
+        if (sourcesLayer.getActiveSource() == Source.WEB_RADIO) {
+            return false
+        }
         return (categoryMediaId.isNotEmpty()
                 && (MEDIA_ID_COUNTRY_STATIONS == categoryMediaId
                 || categoryMediaId.contains(MEDIA_ID_CHILD_CATEGORIES)))

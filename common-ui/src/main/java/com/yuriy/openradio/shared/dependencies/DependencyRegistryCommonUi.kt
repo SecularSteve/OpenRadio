@@ -20,6 +20,7 @@ import android.content.Context
 import com.yuriy.openradio.shared.model.media.EqualizerLayer
 import com.yuriy.openradio.shared.model.media.RadioStationManagerLayer
 import com.yuriy.openradio.shared.model.net.NetworkLayer
+import com.yuriy.openradio.shared.model.source.SourcesLayer
 import com.yuriy.openradio.shared.model.storage.DeviceLocalsStorage
 import com.yuriy.openradio.shared.model.storage.FavoritesStorage
 import com.yuriy.openradio.shared.model.storage.LocationStorage
@@ -48,7 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 object DependencyRegistryCommonUi :
     NetworkLayerDependency, LocationStorageDependency, FavoritesStorageDependency,
     DeviceLocalsStorageDependency, EqualizerLayerDependency, RadioStationManagerLayerDependency,
-    NetworkSettingsStorageDependency, SleepTimerModelDependency {
+    NetworkSettingsStorageDependency, SleepTimerModelDependency, SourcesLayerDependency {
 
     private lateinit var sMediaPresenter: MediaPresenter
     private lateinit var sEditStationPresenter: EditStationPresenter
@@ -64,6 +65,7 @@ object DependencyRegistryCommonUi :
     private lateinit var sEqualizerLayer: EqualizerLayer
     private lateinit var sRadioStationManagerLayer: RadioStationManagerLayer
     private lateinit var sSleepTimerModel: SleepTimerModel
+    private lateinit var sSourcesLayer: SourcesLayer
 
     @Volatile
     private var sInit = AtomicBoolean(false)
@@ -83,11 +85,13 @@ object DependencyRegistryCommonUi :
         DependencyRegistryCommon.injectRadioStationManagerLayer(this)
         DependencyRegistryCommon.injectNetworkSettingsStorage(this)
         DependencyRegistryCommon.injectSleepTimerModel(this)
+        DependencyRegistryCommon.injectSourcesLayer(this)
         sMediaPresenter = MediaPresenterImpl(
             context,
             sNetworkLayer,
             sLocationStorage,
-            sSleepTimerModel
+            sSleepTimerModel,
+            sSourcesLayer
         )
         sEditStationPresenter = EditStationPresenterImpl(
             sFavoritesStorage,
@@ -108,6 +112,10 @@ object DependencyRegistryCommonUi :
         )
 
         sInit.set(true)
+    }
+
+    override fun configureWith(sourcesLayer: SourcesLayer) {
+        sSourcesLayer = sourcesLayer
     }
 
     override fun configureWith(networkLayer: NetworkLayer) {

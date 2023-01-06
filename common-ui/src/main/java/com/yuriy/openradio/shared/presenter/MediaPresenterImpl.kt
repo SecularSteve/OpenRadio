@@ -51,6 +51,7 @@ import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.MediaResourceManagerListener
 import com.yuriy.openradio.shared.model.media.MediaResourcesManager
 import com.yuriy.openradio.shared.model.net.NetworkLayer
+import com.yuriy.openradio.shared.model.source.SourcesLayer
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.model.storage.LocationStorage
 import com.yuriy.openradio.shared.model.storage.images.ImagesStore
@@ -72,9 +73,6 @@ import com.yuriy.openradio.shared.view.dialog.RSSettingsDialog
 import com.yuriy.openradio.shared.view.dialog.RemoveStationDialog
 import com.yuriy.openradio.shared.view.list.MediaItemsAdapter
 import com.yuriy.openradio.shared.vo.PlaybackStateError
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.util.Hashtable
 import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -83,7 +81,8 @@ class MediaPresenterImpl(
     private val mContext: Context,
     private val mNetworkLayer: NetworkLayer,
     private val mLocationStorage: LocationStorage,
-    private val mSleepTimerModel: SleepTimerModel
+    private val mSleepTimerModel: SleepTimerModel,
+    private val mSourcesLayer: SourcesLayer
 ) : MediaPresenter {
     /**
      * Manager object that acts as interface between Media Resources and current Activity.
@@ -187,7 +186,7 @@ class MediaPresenterImpl(
     }
 
     private fun clean() {
-        AppLogger.d("$CLASS_NAME clean")
+        AppLogger.d("$TAG clean")
         mActivity?.applicationContext?.contentResolver?.unregisterContentObserver(
             mContentObserver
         )
@@ -262,12 +261,12 @@ class MediaPresenterImpl(
      */
     override fun updateRootView() {
         if (getOnSaveInstancePassed()) {
-            AppLogger.w("$CLASS_NAME can not do Location Changed after OnSaveInstanceState")
+            AppLogger.w("$TAG can not do Location Changed after OnSaveInstanceState")
             return
         }
         if (MediaId.MEDIA_ID_ROOT != mCurrentParentId) {
             AppLogger.w(
-                "$CLASS_NAME can not do Location Changed for non root. " +
+                "$TAG can not do Location Changed for non root. " +
                         "Current is '$mCurrentParentId'"
             )
             return
@@ -329,11 +328,11 @@ class MediaPresenterImpl(
 
     override fun addMediaItemToStack(mediaId: String, options: Bundle) {
         if (mCallback == null) {
-            AppLogger.e("$CLASS_NAME add media id to stack, callback null")
+            AppLogger.e("$TAG add media id to stack, callback null")
             return
         }
         if (mediaId.isEmpty()) {
-            AppLogger.e("$CLASS_NAME add empty media id to stack")
+            AppLogger.e("$TAG add empty media id to stack")
             return
         }
         if (!mMediaItemsStack.contains(mediaId)) {
@@ -363,7 +362,7 @@ class MediaPresenterImpl(
      * @param position Position of the item in the list.
      */
     override fun setActiveItem(position: Int) {
-        val prevPos = mAdapter?.activeItemId ?: 0
+        val prevPos = mAdapter?.activeItemId ?: -1
         mAdapter?.activeItemId = position
         mAdapter?.notifyItemChanged(prevPos)
         mAdapter?.notifyItemChanged(position)
@@ -382,14 +381,14 @@ class MediaPresenterImpl(
             data = createInitPositionEntry()
             mPositions[mediaItem] = data
         }
-        data[0] = layoutManager.findFirstCompletelyVisibleItemPosition()
+        data[0] = mListLastVisiblePosition
         data[1] = clickPosition
     }
 
     override fun handleItemSettings(item: MediaBrowserCompat.MediaItem) {
         val transaction = getFragmentTransaction(mActivity)
         if (transaction == null) {
-            AppLogger.w("$CLASS_NAME can not handle settings with invalid transaction")
+            AppLogger.w("$TAG can not handle settings with invalid transaction")
             return
         }
         UiUtils.clearDialogs(mActivity!!.supportFragmentManager, transaction)
@@ -416,7 +415,7 @@ class MediaPresenterImpl(
                 return
             }
         }
-        //updateListPositions(clickPosition)
+        updateListPositions(clickPosition)
         mCurrentMediaId = item.mediaId.toString()
 
         // If it is browsable - then we navigate to the next category
@@ -483,22 +482,14 @@ class MediaPresenterImpl(
     }
 
     private fun restoreSelectedPosition(parentId: String) {
-        if (parentId == MediaId.MEDIA_ID_ROOT) {
-            // Do not process Home Screen
-            return
-        }
         // Restore positions for the Catalogue list.
         val positions = getPositions(parentId)
-        val clickedPosition = positions[1]
         val selectedPosition = positions[0]
+        val clickedPosition = positions[1]
         // This will make selected item highlighted.
         setActiveItem(clickedPosition)
         // This will do scroll to the position.
         mListView?.scrollToPosition(selectedPosition.coerceAtLeast(0))
-        MainScope().launch {
-            delay(50)
-            mListView?.smoothScrollToPosition(selectedPosition.coerceAtLeast(0))
-        }
     }
 
     override fun handleSaveInstanceState(outState: Bundle) {
@@ -520,12 +511,12 @@ class MediaPresenterImpl(
      */
     override fun handleEditRadioStationMenu(view: View) {
         if (getOnSaveInstancePassed()) {
-            AppLogger.w("$CLASS_NAME can not edit after OnSaveInstanceState")
+            AppLogger.w("$TAG can not edit after OnSaveInstanceState")
             return
         }
         val transaction = getFragmentTransaction(mActivity)
         if (transaction == null) {
-            AppLogger.w("$CLASS_NAME can not edit with invalid transaction")
+            AppLogger.w("$TAG can not edit with invalid transaction")
             return
         }
         UiUtils.clearDialogs(mActivity!!.supportFragmentManager, transaction)
@@ -533,7 +524,7 @@ class MediaPresenterImpl(
         val item = view.tag as MediaBrowserCompat.MediaItem
         val mediaId = item.mediaId
         if (mediaId == null) {
-            AppLogger.e("$CLASS_NAME can not edit with invalid media id")
+            AppLogger.e("$TAG can not edit with invalid media id")
             return
         }
 
@@ -550,12 +541,12 @@ class MediaPresenterImpl(
      */
     override fun handleRemoveRadioStationMenu(view: View) {
         if (getOnSaveInstancePassed()) {
-            AppLogger.w("$CLASS_NAME can not show Remove RS Dialog after OnSaveInstanceState")
+            AppLogger.w("$TAG can not show Remove RS Dialog after OnSaveInstanceState")
             return
         }
         val transaction = getFragmentTransaction(mActivity)
         if (transaction == null) {
-            AppLogger.w("$CLASS_NAME can not show Remove RS Dialog with invalid transaction")
+            AppLogger.w("$TAG can not show Remove RS Dialog with invalid transaction")
             return
         }
         UiUtils.clearDialogs(mActivity!!.supportFragmentManager, transaction)
@@ -583,7 +574,7 @@ class MediaPresenterImpl(
      */
     private fun registerReceivers(callback: AppLocalReceiverCallback) {
         if (mIsReceiversRegistered.get()) {
-            AppLogger.w("$CLASS_NAME receivers are registered")
+            AppLogger.w("$TAG receivers are registered")
             return
         }
         mAppLocalBroadcastRcvr.registerListener(callback)
@@ -605,7 +596,7 @@ class MediaPresenterImpl(
      */
     private fun unregisterReceivers() {
         if (!mIsReceiversRegistered.get()) {
-            AppLogger.w("$CLASS_NAME receivers are unregistered")
+            AppLogger.w("$TAG receivers are unregistered")
             return
         }
         mAppLocalBroadcastRcvr.unregisterListener()
@@ -641,11 +632,11 @@ class MediaPresenterImpl(
     }
 
     private fun onScrolledToEnd() {
-        if (MediaId.isRefreshable(mCurrentParentId)) {
+        if (MediaId.isRefreshable(mCurrentParentId, mSourcesLayer)) {
             unsubscribeFromItem(mCurrentParentId)
             addMediaItemToStack(mCurrentParentId)
         } else {
-            AppLogger.w(CLASS_NAME + "Category $mCurrentParentId is not refreshable")
+            AppLogger.w("$TAG category $mCurrentParentId is not refreshable")
         }
     }
 
@@ -660,18 +651,18 @@ class MediaPresenterImpl(
     private inner class MediaResourceManagerListenerImpl : MediaResourceManagerListener {
 
         override fun onConnected() {
-            AppLogger.i("$CLASS_NAME Connected")
+            AppLogger.i("$TAG Connected")
             handleMediaResourceManagerConnected()
         }
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat) {
-            AppLogger.d("$CLASS_NAME psc:$state")
+            AppLogger.d("$TAG psc:$state")
             mCurrentPlaybackState = state.state
             this@MediaPresenterImpl.mListener?.handlePlaybackStateChanged(state)
         }
 
         override fun onQueueChanged(queue: List<MediaSessionCompat.QueueItem>) {
-            AppLogger.d("$CLASS_NAME qc:$queue")
+            AppLogger.d("$TAG qc:$queue")
         }
 
         override fun onMetadataChanged(metadata: MediaMetadataCompat) {
@@ -742,7 +733,7 @@ class MediaPresenterImpl(
 
     companion object {
 
-        private const val CLASS_NAME = "MP"
+        private const val TAG = "MP"
 
         private fun getFragmentTransaction(activity: FragmentActivity?): FragmentTransaction? {
             return activity?.supportFragmentManager?.beginTransaction()
