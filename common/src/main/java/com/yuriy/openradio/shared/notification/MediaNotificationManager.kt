@@ -84,13 +84,13 @@ class MediaNotificationManager(
         override fun createCustomActions(
             context: Context,
             instanceId: Int
-        ): MutableMap<String, NotificationCompat.Action> {
+        ): Map<String, NotificationCompat.Action> {
             val map = HashMap<String, NotificationCompat.Action>()
             map[ACTION_CLOSE_APP] = getCloseAppAction()
             return map
         }
 
-        override fun getCustomActions(player: Player): MutableList<String> {
+        override fun getCustomActions(player: Player): List<String> {
             val list = ArrayList<String>()
             list.add(ACTION_CLOSE_APP)
             return list

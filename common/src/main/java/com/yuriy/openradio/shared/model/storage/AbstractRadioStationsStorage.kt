@@ -16,7 +16,6 @@
 package com.yuriy.openradio.shared.model.storage
 
 import android.content.Context
-import android.support.v4.media.session.MediaSessionCompat
 import com.yuriy.openradio.shared.model.translation.RadioStationJsonDeserializer
 import com.yuriy.openradio.shared.model.translation.RadioStationJsonSerializer
 import com.yuriy.openradio.shared.utils.AppLogger
@@ -128,13 +127,11 @@ abstract class AbstractRadioStationsStorage(contextRef: WeakReference<Context>, 
      *
      * @return Collection of the Radio Stations.
      */
-    fun getAll(): TreeSet<RadioStation> {
+    fun getAll(): Set<RadioStation> {
         // TODO: Return cache when possible
-        val radioStations = TreeSet<RadioStation>()
         val map = getAllValues()
         val deserializer = RadioStationJsonDeserializer()
-        var counter = 0
-        var isListSorted: Boolean? = null
+        val tmp = ArrayList<RadioStation>()
         for (key in map.keys) {
             // This is not Radio Station
             if (DeviceLocalsStorage.isKeyId(key)) {
@@ -146,29 +143,22 @@ abstract class AbstractRadioStationsStorage(contextRef: WeakReference<Context>, 
                 AppLogger.e("Can not deserialize (getAll) from '$value'")
                 continue
             }
-
             // This is not valid Radio Station. It can be happen in case of there is assigned ID
             // but actual Radio Station is not created yet. Probably it is necessary to re-design
             // functionality to avoid such scenario.
             if (radioStation.isMediaStreamEmpty()) {
                 continue
             }
-
-            radioStations.add(radioStation)
-
-            // This is solution for the new functionality - drag and drop in order to sort
-            // Assume that if there is undefined sort id then user runs application with
-            // new feature with Radio Stations already in Favorites.
-            // Just assign another incremental value.
-            if (isListSorted == null) {
-                isListSorted = radioStation.sortId != MediaSessionCompat.QueueItem.UNKNOWN_ID
-            }
-            if (!isListSorted) {
-                radioStation.sortId = counter++
-                add(radioStation)
-            }
+            tmp.add(radioStation)
         }
-        return radioStations
+        tmp.sortWith { o1, o2 ->
+            o1.sortId.compareTo(o2.sortId)
+        }
+        var counter = 0
+        for (item in tmp) {
+            item.sortId = counter++
+        }
+        return TreeSet(tmp)
     }
 
     fun addAll(set: Set<RadioStation>) {

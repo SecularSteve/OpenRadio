@@ -22,6 +22,7 @@
     <string name="buffering">Buffering</string>
     <string name="network">Network</string>
     <string name="source">Source</string>
+    <string name="source_semicolon">Source:</string>
     <string name="buffering_infinite">Buffering…</string>
     <string name="no_network_connection_toast">No network connection found</string>
     <string name="category_empty">Category is empty</string>

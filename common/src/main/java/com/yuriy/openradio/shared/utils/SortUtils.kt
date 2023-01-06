@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2021-2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ object SortUtils {
                 resortIds(all, sortId, mediaId)
                 favoritesStorage.addAll(all)
             }
+
             MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST -> {
                 val all = deviceLocalsStorage.getAll()
                 resortIds(all, sortId, mediaId)
@@ -48,10 +49,7 @@ object SortUtils {
         }
     }
 
-    private fun resortIds(
-        all: Set<RadioStation>, sortId: Int, mediaId: String
-    ) {
-        //Collections.sort(all, comparator)
+    private fun resortIds(all: Set<RadioStation>, sortId: Int, mediaId: String) {
         var counter = 0
         var value: Int
         for (item in all) {

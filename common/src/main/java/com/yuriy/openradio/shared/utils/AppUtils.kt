@@ -252,6 +252,12 @@ object AppUtils {
     }
 
     fun isSameCatalogue(newMediaId: String, prevMediaId: String): Boolean {
+        if (newMediaId == MediaId.MEDIA_ID_FAVORITES_LIST) {
+            return false
+        }
+        if (newMediaId == MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST) {
+            return false
+        }
         if (newMediaId != MediaId.MEDIA_ID_ROOT &&
             newMediaId == prevMediaId
         ) {

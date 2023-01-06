@@ -16,6 +16,9 @@
 
 package com.yuriy.openradio.shared.model.storage
 
+import com.yuriy.openradio.shared.vo.RadioStation
+import java.util.TreeSet
+
 class StorageManagerLayerImpl(
     private val mFavoritesStorage: FavoritesStorage,
     private val mDeviceLocalsStorage: DeviceLocalsStorage
@@ -24,8 +27,8 @@ class StorageManagerLayerImpl(
     override fun mergeFavorites(value: String) {
         val set = mFavoritesStorage.getAll()
         val rxSet = mFavoritesStorage.getAllFromString(value)
-        set.addAll(rxSet)
-        for (station in set) {
+        val tmp = merge(set, rxSet)
+        for (station in tmp) {
             mFavoritesStorage.add(station)
         }
     }
@@ -33,8 +36,8 @@ class StorageManagerLayerImpl(
     override fun mergeDeviceLocals(value: String) {
         val set = mDeviceLocalsStorage.getAll()
         val rxSet = mDeviceLocalsStorage.getAllFromString(value)
-        set.addAll(rxSet)
-        for (station in set) {
+        val tmp = merge(set, rxSet)
+        for (station in tmp) {
             mDeviceLocalsStorage.add(station)
         }
     }
@@ -45,5 +48,18 @@ class StorageManagerLayerImpl(
 
     override fun getAllDeviceLocalsAsString(): String {
         return mDeviceLocalsStorage.getAllAsString()
+    }
+
+    private fun merge(setA: Set<RadioStation>, setB: Set<RadioStation>): Set<RadioStation> {
+        val tmp = ArrayList<RadioStation>(setA)
+        tmp.addAll(setB)
+        tmp.sortWith { o1, o2 ->
+            o1.sortId.compareTo(o2.sortId)
+        }
+        var counter = 0
+        for (item in tmp) {
+            item.sortId = counter++
+        }
+        return TreeSet(tmp)
     }
 }

@@ -16,23 +16,37 @@
 
 package com.yuriy.openradio.automotive.ui
 
+import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.AdapterView
+import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.SeekBar
 import androidx.activity.result.ActivityResultLauncher
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.yuriy.openradio.automotive.R
 import com.yuriy.openradio.automotive.dependencies.DependencyRegistryAutomotive
+import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
+import com.yuriy.openradio.shared.dependencies.SourcesLayerDependency
+import com.yuriy.openradio.shared.model.source.Source
+import com.yuriy.openradio.shared.model.source.SourcesLayer
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.model.storage.drive.GoogleDriveError
 import com.yuriy.openradio.shared.model.storage.drive.GoogleDriveManager
@@ -56,7 +70,7 @@ import com.yuriy.openradio.shared.view.SafeToast
 import com.yuriy.openradio.shared.view.dialog.StreamBufferingDialog
 import com.yuriy.openradio.shared.view.list.CountriesArrayAdapter
 
-class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency {
+class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency, SourcesLayerDependency {
 
     private lateinit var mMinBuffer: EditText
     private lateinit var mMaxBuffer: EditText
@@ -68,6 +82,9 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
     private lateinit var mLauncher: ActivityResultLauncher<Intent>
     private lateinit var mMediaPresenter: MediaPresenter
     private lateinit var mPresenter: AutomotiveSettingsActivityPresenter
+    private lateinit var mSourcesLayer: SourcesLayer
+    private var mInitSrc: Source? = null
+    private var mNewSrc: Source? = null
 
     override fun configureWith(mediaPresenter: MediaPresenter) {
         mMediaPresenter = mediaPresenter
@@ -77,10 +94,15 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
         mPresenter = presenter
     }
 
+    override fun configureWith(sourcesLayer: SourcesLayer) {
+        mSourcesLayer = sourcesLayer
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.automotive_activity_settings)
 
+        DependencyRegistryCommon.injectSourcesLayer(this)
         DependencyRegistryCommonUi.inject(this)
         DependencyRegistryAutomotive.inject(this)
 
@@ -88,6 +110,39 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
         setSupportActionBar(toolbar)
         supportActionBar?.setHomeButtonEnabled(true)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        val groupView = findViewById<RadioGroup>(R.id.sources_radio_group_car)
+        handleRadioBtns(applicationContext, groupView) {
+            if (it) {
+                val view = LayoutInflater
+                    .from(applicationContext)
+                    .inflate(R.layout.automotive_dialog_restart, null) as LinearLayout
+                val dialog = AlertDialog.Builder(this, R.style.Theme_AppCompat)
+                    .setView(view)
+                    .show()
+                val cancelBtn = view.findViewById<Button>(R.id.automotive_dialog_restart_cancel_btn)
+                cancelBtn.setOnClickListener {
+                    dialog.cancel()
+                    // Have to finish activity to apply check box selection (no other easy way ...)
+                    this.finish()
+                }
+                val okBtn = view.findViewById<Button>(R.id.automotive_dialog_restart_ok_btn)
+                okBtn.setOnClickListener {
+                    dialog.cancel()
+                    if (mNewSrc != null) {
+                        mSourcesLayer.setActiveSource(mNewSrc!!)
+                    }
+                    // Give time to shared pref. to apply source selection.
+                    Handler(Looper.getMainLooper()).postDelayed(
+                        {
+                            this.finish()
+                            Runtime.getRuntime().exit(0)
+                        },
+                        500
+                    )
+                }
+            }
+        }
 
         val lastKnownRsEnabled = AppPreferencesManager.lastKnownRadioStationEnabled(applicationContext)
         val lastKnownRsEnableCheckView = findCheckBox(
@@ -197,6 +252,10 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
         hideProgress(GoogleDriveManager.Command.UPLOAD)
         hideProgress(GoogleDriveManager.Command.DOWNLOAD)
         mGoogleDriveManager.disconnect()
+        // In case a user selected a new source but did not restart.
+        if (mInitSrc != null && mInitSrc != mNewSrc) {
+            mSourcesLayer.setActiveSource(mInitSrc!!)
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -242,6 +301,7 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
             GoogleDriveManager.Command.UPLOAD -> runOnUiThread {
                 mProgressBarUpload.visible()
             }
+
             GoogleDriveManager.Command.DOWNLOAD -> runOnUiThread {
                 mProgressBarDownload.visible()
             }
@@ -253,9 +313,39 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
             GoogleDriveManager.Command.UPLOAD -> runOnUiThread {
                 mProgressBarUpload.gone()
             }
+
             GoogleDriveManager.Command.DOWNLOAD -> runOnUiThread {
                 mProgressBarDownload.gone()
             }
+        }
+    }
+
+    @SuppressLint("InflateParams")
+    private fun handleRadioBtns(
+        context: Context,
+        view: LinearLayout,
+        onSelectChanged: (isSrcChanged: Boolean) -> Unit
+    ) {
+        mInitSrc = mSourcesLayer.getActiveSource()
+        val sources = mSourcesLayer.getAllSources()
+        for (source in sources) {
+            val child = LayoutInflater.from(context).inflate(R.layout.automotive_source_view, null) as RadioButton
+            child.text = source.srcName
+            child.id = source.srcId
+            child.tag = source.srcId
+            if (source == mSourcesLayer.getActiveSource()) {
+                child.isChecked = true
+            }
+            child.setOnCheckedChangeListener { buttonView, isChecked ->
+                run {
+                    val src = sources.elementAt(buttonView.id)
+                    if (isChecked) {
+                        mNewSrc = src
+                    }
+                    onSelectChanged(mInitSrc == src)
+                }
+            }
+            view.addView(child)
         }
     }
 

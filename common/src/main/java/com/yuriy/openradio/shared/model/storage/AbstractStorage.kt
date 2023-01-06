@@ -77,7 +77,7 @@ abstract class AbstractStorage(private val mContextRef: WeakReference<Context>, 
         AppLogger.i("[$mName] added '$key'-'$value'")
     }
 
-    protected fun getAllValues(): MutableMap<String, *> {
+    protected fun getAllValues(): Map<String, *> {
         return getSharedPreferences()?.all ?: HashMap<String, String>()
     }
 

@@ -248,6 +248,9 @@ class RadioStation : Serializable, Comparable<RadioStation> {
     }
 
     override fun compareTo(other: RadioStation): Int {
+        if (sortId != MediaSessionCompat.QueueItem.UNKNOWN_ID) {
+            return sortId.compareTo(other.sortId)
+        }
         return name.compareTo(other.name)
     }
 

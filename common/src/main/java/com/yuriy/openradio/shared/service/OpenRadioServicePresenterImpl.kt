@@ -161,13 +161,7 @@ class OpenRadioServicePresenterImpl(
     }
 
     override fun getAllFavorites(): Set<RadioStation> {
-        val list = mFavoritesStorage.getAll()
-        // TODO: Investigate this algorithm.
-        var counter = 0
-        for (radioStation in list) {
-            radioStation.sortId = counter++
-        }
-        return list
+        return mFavoritesStorage.getAll()
     }
 
     override fun getAllDeviceLocal(): Set<RadioStation> {
