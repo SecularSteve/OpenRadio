@@ -63,6 +63,7 @@ class TvSettingsDialog : BaseDialogFragment() {
         // TODO: Refactor this and the same from activity_main_drawer to string resources
         val values = arrayOf(
             getString(R.string.main_menu_general),
+            getString(R.string.main_menu_source),
             getString(R.string.main_menu_network),
             getString(R.string.main_menu_buffering),
             getString(R.string.main_menu_sleep_timer),
