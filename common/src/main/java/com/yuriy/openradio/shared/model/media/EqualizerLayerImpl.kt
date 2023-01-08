@@ -46,6 +46,9 @@ class EqualizerLayerImpl(
         }
         if (isInit()) {
             applyState(loadState()) {}
+        } else {
+            val newState = EqualizerState(mEqualizer!!)
+            saveState(newState)
         }
     }
 
