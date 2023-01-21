@@ -16,10 +16,10 @@
 
 package com.yuriy.openradio.shared.model.translation
 
+import com.yuriy.openradio.shared.model.media.RadioStation
+import com.yuriy.openradio.shared.model.media.getStreamBitrate
+import com.yuriy.openradio.shared.model.media.getStreamUrl
 import com.yuriy.openradio.shared.utils.AppLogger
-import com.yuriy.openradio.shared.vo.RadioStation
-import com.yuriy.openradio.shared.vo.getStreamBitrate
-import com.yuriy.openradio.shared.vo.getStreamUrl
 import org.json.JSONObject
 
 /**

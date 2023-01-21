@@ -23,9 +23,9 @@ import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
 import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.gms.security.ProviderInstaller
-import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
+import com.yuriy.openradio.shared.utils.AnalyticsUtils
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
 import kotlinx.coroutines.CoroutineScope
@@ -64,7 +64,7 @@ open class MainAppCommon : MultiDexApplication() {
         }
 
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
-        printFirstLogMessage(applicationContext)
+        sendStats(applicationContext)
 
         mAppScope.launch(Dispatchers.IO) {
             correctBufferSettings(applicationContext)
@@ -78,32 +78,12 @@ open class MainAppCommon : MultiDexApplication() {
         private val CLASS_NAME = MainAppCommon::class.java.simpleName
 
         /**
-         * Print first log message with summary information about device and application.
+         * Send stats of the device to the cloud.
          */
-        private fun printFirstLogMessage(context: Context) {
-            val densities = AppUtils.getDensity(context)
-            val message = StringBuilder()
-            message.append("\n")
-            message.append("########### Create '")
-            message.append(context.getString(R.string.app_name))
-            message.append("' Application ###########\n")
-            message.append("- version: ")
-            message.append(AppUtils.getApplicationVersionName(context))
-            message.append(".")
-            message.append(AppUtils.getApplicationVersionCode(context))
-            message.append("\n")
-            message.append("- processors: ")
-            message.append(Runtime.getRuntime().availableProcessors())
-            message.append("\n")
-            message.append("- OS ver: ")
-            message.append(Build.VERSION.RELEASE)
-            message.append("\n")
-            message.append("- API level: ")
-            message.append(Build.VERSION.SDK_INT)
-            message.append("\n")
-            message.append("- Density: ")
-            message.append(densities[0]).append(" ").append(densities[1])
-            AppLogger.i(message.toString())
+        private fun sendStats(context: Context) {
+            AnalyticsUtils.logMessage("OS ver: " + Build.VERSION.RELEASE)
+            AnalyticsUtils.logMessage("SDK ver: " + Build.VERSION.SDK_INT)
+            AnalyticsUtils.logMessage("Density: : " + AppUtils.getDensityDpi(context))
         }
 
         /**

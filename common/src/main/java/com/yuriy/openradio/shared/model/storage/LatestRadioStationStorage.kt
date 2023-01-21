@@ -16,8 +16,8 @@
 package com.yuriy.openradio.shared.model.storage
 
 import android.content.Context
-import com.yuriy.openradio.shared.vo.RadioStation
-import com.yuriy.openradio.shared.vo.isInvalid
+import com.yuriy.openradio.shared.model.media.RadioStation
+import com.yuriy.openradio.shared.model.media.isInvalid
 import java.lang.ref.WeakReference
 
 /**

@@ -35,7 +35,7 @@ import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
 import com.yuriy.openradio.shared.view.BaseDialogFragment
-import com.yuriy.openradio.shared.vo.EqualizerState
+import com.yuriy.openradio.shared.model.eq.EqualizerState
 
 class EqualizerDialog : BaseDialogFragment() {
 

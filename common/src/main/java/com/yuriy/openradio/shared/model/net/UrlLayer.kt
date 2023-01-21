@@ -2,7 +2,7 @@ package com.yuriy.openradio.shared.model.net
 
 import android.net.Uri
 import androidx.core.util.Pair
-import com.yuriy.openradio.shared.vo.RadioStationToAdd
+import com.yuriy.openradio.shared.model.media.RadioStationToAdd
 import java.net.URL
 
 interface UrlLayer {

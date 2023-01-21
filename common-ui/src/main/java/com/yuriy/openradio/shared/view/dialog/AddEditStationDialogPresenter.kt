@@ -1,7 +1,7 @@
 package com.yuriy.openradio.shared.view.dialog
 
 import android.content.Context
-import com.yuriy.openradio.shared.vo.RadioStationToAdd
+import com.yuriy.openradio.shared.model.media.RadioStationToAdd
 
 interface AddEditStationDialogPresenter {
 

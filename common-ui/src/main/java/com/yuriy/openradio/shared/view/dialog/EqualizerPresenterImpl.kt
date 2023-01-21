@@ -16,8 +16,8 @@
 
 package com.yuriy.openradio.shared.view.dialog
 
-import com.yuriy.openradio.shared.model.media.EqualizerLayer
-import com.yuriy.openradio.shared.vo.EqualizerState
+import com.yuriy.openradio.shared.model.eq.EqualizerLayer
+import com.yuriy.openradio.shared.model.eq.EqualizerState
 
 class EqualizerPresenterImpl(
     private val mEqualizer: EqualizerLayer

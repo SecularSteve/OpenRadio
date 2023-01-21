@@ -46,11 +46,11 @@ import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.broadcast.AppLocalBroadcast
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiver
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiverCallback
-import com.yuriy.openradio.shared.exo.extentions.id
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.MediaResourceManagerListener
 import com.yuriy.openradio.shared.model.media.MediaResourcesManager
 import com.yuriy.openradio.shared.model.net.NetworkLayer
+import com.yuriy.openradio.shared.model.player.extentions.id
 import com.yuriy.openradio.shared.model.source.SourcesLayer
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.model.storage.LocationStorage
@@ -58,8 +58,8 @@ import com.yuriy.openradio.shared.model.storage.images.ImagesStore
 import com.yuriy.openradio.shared.model.timer.SleepTimerListener
 import com.yuriy.openradio.shared.model.timer.SleepTimerModel
 import com.yuriy.openradio.shared.permission.PermissionChecker
-import com.yuriy.openradio.shared.service.LocationService
 import com.yuriy.openradio.shared.service.OpenRadioStore
+import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.MediaItemHelper
@@ -72,7 +72,6 @@ import com.yuriy.openradio.shared.view.dialog.EditStationDialog
 import com.yuriy.openradio.shared.view.dialog.RSSettingsDialog
 import com.yuriy.openradio.shared.view.dialog.RemoveStationDialog
 import com.yuriy.openradio.shared.view.list.MediaItemsAdapter
-import com.yuriy.openradio.shared.vo.PlaybackStateError
 import java.util.Hashtable
 import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -349,11 +348,24 @@ class MediaPresenterImpl(
         descriptionView.text = MediaItemHelper.getDisplayDescription(
             description, mContext.getString(R.string.media_description_default)
         )
-        if (PlaybackStateError.isPlaybackStateError(mContext, descriptionView.text.toString())) {
+        if (isPlaybackStateError(mContext, descriptionView.text.toString())) {
             descriptionView.setBackgroundColor(ContextCompat.getColor(mContext, R.color.or_color_red_light))
         } else {
             descriptionView.setBackgroundColor(ContextCompat.getColor(mContext, R.color.or_color_transparent))
         }
+    }
+
+    private fun isPlaybackStateError(context: Context, msg: String): Boolean {
+        if (msg.isEmpty()) {
+            return false
+        }
+        if (msg == context.getString(com.yuriy.openradio.R.string.media_stream_error)
+            || msg == context.getString(com.yuriy.openradio.R.string.media_stream_http_403)
+            || msg == context.getString(com.yuriy.openradio.R.string.media_stream_http_404)
+        ) {
+            return true
+        }
+        return false
     }
 
     /**

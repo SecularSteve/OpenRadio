@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yuriy.openradio.shared.model.media
+package com.yuriy.openradio.shared.model.eq
 
 import android.media.audiofx.Equalizer
 import com.yuriy.openradio.shared.model.storage.EqualizerStorage
@@ -22,7 +22,6 @@ import com.yuriy.openradio.shared.model.translation.EqualizerJsonStateSerializer
 import com.yuriy.openradio.shared.model.translation.EqualizerStateJsonDeserializer
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
-import com.yuriy.openradio.shared.vo.EqualizerState
 
 class EqualizerLayerImpl(
     private val mEqualizerStorage: EqualizerStorage

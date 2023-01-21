@@ -219,19 +219,8 @@ object AppUtils {
         return queryBundle.getString(KEY_SEARCH_QUERY, EMPTY_STRING)
     }
 
-    fun getDensity(context: Context): Array<String> {
-        val densityDpi = context.resources.displayMetrics.densityDpi
-        val value: String = when (densityDpi) {
-            DisplayMetrics.DENSITY_LOW -> "LDPI"
-            DisplayMetrics.DENSITY_MEDIUM -> "MDPI"
-            DisplayMetrics.DENSITY_TV, DisplayMetrics.DENSITY_HIGH -> "HDPI"
-            DisplayMetrics.DENSITY_XHIGH, DisplayMetrics.DENSITY_280 -> "XHDPI"
-            DisplayMetrics.DENSITY_XXHIGH,
-            DisplayMetrics.DENSITY_360, DisplayMetrics.DENSITY_400, DisplayMetrics.DENSITY_420 -> "XXHDPI"
-            DisplayMetrics.DENSITY_XXXHIGH, DisplayMetrics.DENSITY_560 -> "XXXHDPI"
-            else -> "UNKNOWN"
-        }
-        return arrayOf(densityDpi.toString(), value)
+    fun getDensityDpi(context: Context): Int {
+        return context.resources.displayMetrics.densityDpi
     }
 
     /**

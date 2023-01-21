@@ -26,9 +26,9 @@ import com.yuriy.openradio.shared.model.storage.cache.api.ApiCache
 import com.yuriy.openradio.shared.model.translation.MediaIdBuilder
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
-import com.yuriy.openradio.shared.vo.Category
-import com.yuriy.openradio.shared.vo.Country
-import com.yuriy.openradio.shared.vo.RadioStation
+import com.yuriy.openradio.shared.model.media.Category
+import com.yuriy.openradio.shared.model.media.RadioStation
+import com.yuriy.openradio.shared.service.location.Country
 import org.json.JSONException
 import org.json.JSONObject
 

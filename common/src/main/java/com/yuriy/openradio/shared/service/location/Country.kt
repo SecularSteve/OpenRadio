@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yuriy.openradio.shared.vo
+package com.yuriy.openradio.shared.service.location
 
 /**
  * Created by Chernyshov Yurii

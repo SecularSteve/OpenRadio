@@ -16,6 +16,11 @@
 
 package com.yuriy.openradio.shared.vo
 
+import com.yuriy.openradio.shared.model.media.MediaStream
+import com.yuriy.openradio.shared.model.media.RadioStation
+import com.yuriy.openradio.shared.model.media.setVariant
+import com.yuriy.openradio.shared.service.location.Country
+
 class RadioStationTest {
 
     companion object {

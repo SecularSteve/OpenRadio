@@ -16,16 +16,16 @@
 package com.yuriy.openradio.shared.service
 
 import android.content.Context
-import com.yuriy.openradio.shared.model.media.EqualizerLayer
+import com.yuriy.openradio.shared.model.eq.EqualizerLayer
 import com.yuriy.openradio.shared.model.media.RemoteControlListener
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommand
 import com.yuriy.openradio.shared.model.net.NetworkMonitorListener
 import com.yuriy.openradio.shared.model.timer.SleepTimerModel
 import com.yuriy.openradio.shared.model.translation.MediaIdBuilder
 import com.yuriy.openradio.shared.model.translation.MediaIdBuilderDefault
-import com.yuriy.openradio.shared.vo.Category
-import com.yuriy.openradio.shared.vo.Country
-import com.yuriy.openradio.shared.vo.RadioStation
+import com.yuriy.openradio.shared.model.media.Category
+import com.yuriy.openradio.shared.model.media.RadioStation
+import com.yuriy.openradio.shared.service.location.Country
 
 interface OpenRadioServicePresenter {
 

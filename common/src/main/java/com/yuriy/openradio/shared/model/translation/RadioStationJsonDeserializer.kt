@@ -18,11 +18,11 @@ package com.yuriy.openradio.shared.model.translation
 
 import android.support.v4.media.session.MediaSessionCompat
 import android.text.TextUtils
+import com.yuriy.openradio.shared.model.media.RadioStation
+import com.yuriy.openradio.shared.model.media.setVariant
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.JsonUtils
-import com.yuriy.openradio.shared.vo.RadioStation
-import com.yuriy.openradio.shared.vo.setVariant
 import org.json.JSONException
 import org.json.JSONObject
 import java.util.Locale

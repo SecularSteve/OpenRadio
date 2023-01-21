@@ -16,12 +16,12 @@
 package com.yuriy.openradio.shared.model.storage
 
 import android.content.Context
+import com.yuriy.openradio.shared.model.media.RadioStation
+import com.yuriy.openradio.shared.model.media.isInvalid
 import com.yuriy.openradio.shared.model.translation.RadioStationJsonDeserializer
 import com.yuriy.openradio.shared.model.translation.RadioStationJsonSerializer
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
-import com.yuriy.openradio.shared.vo.RadioStation
-import com.yuriy.openradio.shared.vo.isInvalid
 import java.lang.ref.WeakReference
 import java.util.TreeSet
 

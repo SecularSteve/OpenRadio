@@ -18,7 +18,7 @@ package com.yuriy.openradio.shared.utils
 
 import android.support.v4.media.MediaBrowserCompat
 import com.google.android.exoplayer2.Player
-import com.yuriy.openradio.shared.vo.MediaItemListEnded
+import com.yuriy.openradio.shared.model.media.MediaItemListEnded
 
 object PlayerUtils {
 

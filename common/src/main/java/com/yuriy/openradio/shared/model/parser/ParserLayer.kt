@@ -17,10 +17,10 @@
 package com.yuriy.openradio.shared.model.parser
 
 import android.net.Uri
+import com.yuriy.openradio.shared.model.media.Category
+import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.translation.MediaIdBuilder
-import com.yuriy.openradio.shared.vo.Category
-import com.yuriy.openradio.shared.vo.Country
-import com.yuriy.openradio.shared.vo.RadioStation
+import com.yuriy.openradio.shared.service.location.Country
 
 /**
  * Created by Yuriy Chernyshov

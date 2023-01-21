@@ -15,7 +15,7 @@
  */
 package com.yuriy.openradio.shared.model.translation
 
-import com.yuriy.openradio.shared.vo.EqualizerState
+import com.yuriy.openradio.shared.model.eq.EqualizerState
 
 /**
  * Created by Yuriy Chernyshov

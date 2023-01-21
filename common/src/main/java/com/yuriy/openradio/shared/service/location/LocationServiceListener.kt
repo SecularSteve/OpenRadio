@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2019 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.yuriy.openradio.shared.service.location
 
-package com.yuriy.openradio.shared.model.media
+/**
+ * Created by Yuriy Chernyshov
+ * At Android Studio
+ * On 4/27/15
+ * E-Mail: chernyshov.yuriy@gmail.com
+ */
+internal interface LocationServiceListener {
 
-import com.yuriy.openradio.shared.vo.EqualizerState
-
-interface EqualizerLayer {
-
-    fun init(audioSessionId: Int)
-
-    fun deinit()
-
-    fun isInit(): Boolean
-
-    fun saveState(state: EqualizerState)
-
-    fun loadState(): EqualizerState
-
-    fun applyState(state: EqualizerState, onSuccess: (state: EqualizerState) -> Unit)
+    fun onCountryCodeLocated(countryCode: String)
 }

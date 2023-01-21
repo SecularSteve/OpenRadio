@@ -16,7 +16,7 @@
 
 package com.yuriy.openradio.shared.view.dialog
 
-import com.yuriy.openradio.shared.vo.EqualizerState
+import com.yuriy.openradio.shared.model.eq.EqualizerState
 
 /**
  * // TODO : Move business logic from Equalizer Dialog here.

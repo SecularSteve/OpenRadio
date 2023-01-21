@@ -16,7 +16,7 @@
 
 package com.yuriy.openradio.shared.dependencies
 
-import com.yuriy.openradio.shared.model.media.EqualizerLayer
+import com.yuriy.openradio.shared.model.eq.EqualizerLayer
 
 interface EqualizerLayerDependency {
 

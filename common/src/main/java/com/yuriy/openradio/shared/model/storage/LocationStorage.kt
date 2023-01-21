@@ -17,7 +17,7 @@
 package com.yuriy.openradio.shared.model.storage
 
 import android.content.Context
-import com.yuriy.openradio.shared.vo.Country
+import com.yuriy.openradio.shared.service.location.Country
 import java.lang.ref.WeakReference
 
 /**

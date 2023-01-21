@@ -16,7 +16,7 @@
 
 package com.yuriy.openradio.tv.view.activity
 
-import com.yuriy.openradio.shared.vo.RadioStation
+import com.yuriy.openradio.shared.model.media.RadioStation
 
 /**
  * // TODO: Transfer all business logic from TV Media Activity here.

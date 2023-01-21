@@ -20,7 +20,7 @@ import android.net.Uri
 import androidx.core.util.Pair
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.NetUtils
-import com.yuriy.openradio.shared.vo.RadioStationToAdd
+import com.yuriy.openradio.shared.model.media.RadioStationToAdd
 import java.net.MalformedURLException
 import java.net.URL
 

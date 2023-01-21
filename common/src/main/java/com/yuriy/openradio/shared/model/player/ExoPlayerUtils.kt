@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yuriy.openradio.shared.exo
+package com.yuriy.openradio.shared.model.player
 
 import android.content.Context
 import android.support.v4.media.MediaMetadataCompat
@@ -31,12 +31,12 @@ import com.google.android.exoplayer2.upstream.cache.Cache
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource
 import com.google.android.exoplayer2.upstream.cache.NoOpCacheEvictor
 import com.google.android.exoplayer2.upstream.cache.SimpleCache
-import com.yuriy.openradio.shared.exo.extentions.album
-import com.yuriy.openradio.shared.exo.extentions.albumArtUri
-import com.yuriy.openradio.shared.exo.extentions.artist
-import com.yuriy.openradio.shared.exo.extentions.id
-import com.yuriy.openradio.shared.exo.extentions.mediaUri
-import com.yuriy.openradio.shared.exo.extentions.title
+import com.yuriy.openradio.shared.model.player.extentions.album
+import com.yuriy.openradio.shared.model.player.extentions.albumArtUri
+import com.yuriy.openradio.shared.model.player.extentions.artist
+import com.yuriy.openradio.shared.model.player.extentions.id
+import com.yuriy.openradio.shared.model.player.extentions.mediaUri
+import com.yuriy.openradio.shared.model.player.extentions.title
 import com.yuriy.openradio.shared.utils.AnalyticsUtils
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.AppUtils.getUserAgent

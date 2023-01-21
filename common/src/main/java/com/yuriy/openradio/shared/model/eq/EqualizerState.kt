@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yuriy.openradio.shared.vo
+package com.yuriy.openradio.shared.model.eq
 
 import android.media.audiofx.Equalizer
 import com.yuriy.openradio.shared.utils.AppLogger

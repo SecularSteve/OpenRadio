@@ -19,11 +19,11 @@ package com.yuriy.openradio.shared.model.media.item
 import android.support.v4.media.MediaBrowserCompat
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.model.media.MediaId
+import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommand.IUpdatePlaybackState
+import com.yuriy.openradio.shared.model.media.toMediaItemPlayable
 import com.yuriy.openradio.shared.utils.MediaItemHelper
 import com.yuriy.openradio.shared.utils.PlayerUtils
-import com.yuriy.openradio.shared.vo.RadioStation
-import com.yuriy.openradio.shared.vo.toMediaItemPlayable
 import kotlinx.coroutines.Job
 import java.util.TreeSet
 

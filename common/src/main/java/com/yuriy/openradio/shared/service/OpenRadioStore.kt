@@ -23,7 +23,6 @@ import android.support.v4.media.MediaDescriptionCompat
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.IntentUtils
-import com.yuriy.openradio.shared.vo.RadioStation
 
 /**
  * [OpenRadioStore] is the object that provides ability to perform one way communication with [OpenRadioService].

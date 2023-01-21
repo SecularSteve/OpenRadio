@@ -31,6 +31,8 @@ import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
 import com.yuriy.openradio.shared.model.media.MediaId
+import com.yuriy.openradio.shared.model.media.getStreamBitrate
+import com.yuriy.openradio.shared.model.media.isInvalid
 import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.presenter.MediaPresenterListener
 import com.yuriy.openradio.shared.utils.AppLogger
@@ -47,8 +49,6 @@ import com.yuriy.openradio.shared.view.SafeToast
 import com.yuriy.openradio.shared.view.dialog.AddStationDialog
 import com.yuriy.openradio.shared.view.dialog.EqualizerDialog
 import com.yuriy.openradio.shared.view.list.MediaItemsAdapter
-import com.yuriy.openradio.shared.vo.getStreamBitrate
-import com.yuriy.openradio.shared.vo.isInvalid
 import com.yuriy.openradio.tv.R
 import com.yuriy.openradio.tv.dependencies.DependencyRegistryTv
 import com.yuriy.openradio.tv.view.dialog.TvSettingsDialog

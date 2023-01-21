@@ -20,7 +20,7 @@ import android.content.Context
 import android.view.View
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.utils.findTextView
-import com.yuriy.openradio.shared.vo.Country
+import com.yuriy.openradio.shared.service.location.Country
 
 class CountriesArrayAdapter(context: Context, private val items: Array<Country>)
     : BaseArrayAdapter<Country, CountriesArrayAdapter.ViewHolderImp>(context, items) {

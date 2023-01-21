@@ -17,9 +17,9 @@
 package com.yuriy.openradio.shared.model.storage
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.yuriy.openradio.shared.vo.MediaStream.Companion.BIT_RATE_DEFAULT
-import com.yuriy.openradio.shared.vo.MediaStream.Companion.makeDefaultInstance
-import com.yuriy.openradio.shared.vo.RadioStation
+import com.yuriy.openradio.shared.model.media.MediaStream.Companion.BIT_RATE_DEFAULT
+import com.yuriy.openradio.shared.model.media.MediaStream.Companion.makeDefaultInstance
+import com.yuriy.openradio.shared.model.media.RadioStation
 import org.junit.Test
 import org.junit.runner.RunWith
 

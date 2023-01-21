@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yuriy.openradio.shared.vo
+package com.yuriy.openradio.shared.model.media
 
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
@@ -22,8 +22,9 @@ import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.text.TextUtils
 import com.yuriy.openradio.R
+import com.yuriy.openradio.shared.model.media.MediaStream
 import com.yuriy.openradio.shared.model.storage.images.ImagesStore
-import com.yuriy.openradio.shared.service.LocationService
+import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.MediaItemHelper
 import java.io.Serializable

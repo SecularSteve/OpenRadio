@@ -16,8 +16,8 @@
 
 package com.yuriy.openradio.tv.view.activity
 
+import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.storage.LatestRadioStationStorage
-import com.yuriy.openradio.shared.vo.RadioStation
 
 class TvMainActivityPresenterImpl(
     private val mLatestRadioStationStorage: LatestRadioStationStorage

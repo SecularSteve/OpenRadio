@@ -23,15 +23,15 @@ import android.view.ViewGroup
 import android.widget.Button
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
+import com.yuriy.openradio.shared.model.media.RadioStation
+import com.yuriy.openradio.shared.model.media.RadioStationToAdd
+import com.yuriy.openradio.shared.model.media.getStreamUrl
+import com.yuriy.openradio.shared.model.media.isInvalid
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.findCheckBox
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.view.SafeToast.showAnyThread
-import com.yuriy.openradio.shared.vo.RadioStation
-import com.yuriy.openradio.shared.vo.RadioStationToAdd
-import com.yuriy.openradio.shared.vo.getStreamUrl
-import com.yuriy.openradio.shared.vo.isInvalid
 
 /**
  * Created by Yuriy Chernyshov

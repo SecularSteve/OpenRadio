@@ -35,7 +35,7 @@ import com.yuriy.openradio.shared.dependencies.SourcesLayerDependency
 import com.yuriy.openradio.shared.model.source.Source
 import com.yuriy.openradio.shared.model.source.SourcesLayer
 import com.yuriy.openradio.shared.permission.PermissionChecker
-import com.yuriy.openradio.shared.service.LocationService
+import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.ImageFilePath
@@ -51,7 +51,7 @@ import com.yuriy.openradio.shared.utils.invisible
 import com.yuriy.openradio.shared.utils.visible
 import com.yuriy.openradio.shared.view.BaseDialogFragment
 import com.yuriy.openradio.shared.view.SafeToast
-import com.yuriy.openradio.shared.vo.RadioStationToAdd
+import com.yuriy.openradio.shared.model.media.RadioStationToAdd
 
 /**
  * Created by Yuriy Chernyshov

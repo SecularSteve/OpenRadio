@@ -17,9 +17,9 @@
 package com.yuriy.openradio.shared.utils
 
 import com.yuriy.openradio.shared.model.media.MediaId
+import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.storage.DeviceLocalsStorage
 import com.yuriy.openradio.shared.model.storage.FavoritesStorage
-import com.yuriy.openradio.shared.vo.RadioStation
 
 object SortUtils {
 

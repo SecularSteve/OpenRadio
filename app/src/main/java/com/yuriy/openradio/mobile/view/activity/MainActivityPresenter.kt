@@ -17,7 +17,7 @@
 package com.yuriy.openradio.mobile.view.activity
 
 import android.support.v4.media.MediaBrowserCompat
-import com.yuriy.openradio.shared.vo.RadioStation
+import com.yuriy.openradio.shared.model.media.RadioStation
 
 /**
  * // TODO: Transfer all business logic from Media Activity here.

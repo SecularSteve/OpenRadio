@@ -24,8 +24,8 @@ import androidx.multidex.MultiDexApplication
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.common.GoogleApiAvailability
 import com.yuriy.openradio.shared.model.ModelLayerImpl
-import com.yuriy.openradio.shared.model.media.EqualizerLayer
-import com.yuriy.openradio.shared.model.media.EqualizerLayerImpl
+import com.yuriy.openradio.shared.model.eq.EqualizerLayer
+import com.yuriy.openradio.shared.model.eq.EqualizerLayerImpl
 import com.yuriy.openradio.shared.model.media.RadioStationManagerLayer
 import com.yuriy.openradio.shared.model.media.RadioStationManagerLayerImpl
 import com.yuriy.openradio.shared.model.net.HTTPDownloaderImpl
@@ -58,7 +58,7 @@ import com.yuriy.openradio.shared.model.timer.SleepTimerModelImpl
 import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.service.OpenRadioServicePresenterImpl
 import com.yuriy.openradio.shared.utils.AppLogger
-import com.yuriy.openradio.shared.vo.Country
+import com.yuriy.openradio.shared.service.location.Country
 import java.lang.ref.WeakReference
 import java.util.TreeSet
 import java.util.concurrent.atomic.AtomicBoolean

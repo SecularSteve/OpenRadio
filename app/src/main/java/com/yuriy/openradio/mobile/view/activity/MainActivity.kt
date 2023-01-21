@@ -45,6 +45,8 @@ import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
 import com.yuriy.openradio.shared.model.media.MediaId
+import com.yuriy.openradio.shared.model.media.getStreamBitrate
+import com.yuriy.openradio.shared.model.media.isInvalid
 import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.presenter.MediaPresenterListener
 import com.yuriy.openradio.shared.utils.AppLogger
@@ -74,8 +76,6 @@ import com.yuriy.openradio.shared.view.dialog.SleepTimerDialog
 import com.yuriy.openradio.shared.view.dialog.SourceDialog
 import com.yuriy.openradio.shared.view.dialog.StreamBufferingDialog
 import com.yuriy.openradio.shared.view.list.MediaItemsAdapter
-import com.yuriy.openradio.shared.vo.getStreamBitrate
-import com.yuriy.openradio.shared.vo.isInvalid
 import java.lang.ref.WeakReference
 
 /**
@@ -326,16 +326,6 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
             val dialog = BaseDialogFragment.newInstance(AddStationDialog::class.java.name)
             dialog.show(transaction, AddStationDialog.DIALOG_TAG)
         }
-    }
-
-    /**
-     * Process call back from the Search Dialog.
-     *
-     * @param queryBundle Bundle with information to query for.
-     */
-    fun onSearchDialogClick(queryBundle: Bundle) {
-        mMediaPresenter.unsubscribeFromItem(MediaId.MEDIA_ID_SEARCH_FROM_APP)
-        mMediaPresenter.addMediaItemToStack(MediaId.MEDIA_ID_SEARCH_FROM_APP, queryBundle)
     }
 
     /**

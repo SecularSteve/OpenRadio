@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yuriy.openradio.shared.notification
+package com.yuriy.openradio.shared.model.player
 
 import android.app.PendingIntent
 import android.content.Context
@@ -41,7 +41,7 @@ class MediaNotificationManager(
     private val mContext: Context,
     sessionToken: MediaSessionCompat.Token,
     notificationListener: PlayerNotificationManager.NotificationListener,
-    private val mListener:Listener
+    private val mListener: Listener
 ) {
 
     interface Listener {

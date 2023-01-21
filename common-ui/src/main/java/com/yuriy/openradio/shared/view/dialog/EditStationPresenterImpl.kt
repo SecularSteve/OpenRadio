@@ -16,9 +16,9 @@
 
 package com.yuriy.openradio.shared.view.dialog
 
+import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.storage.DeviceLocalsStorage
 import com.yuriy.openradio.shared.model.storage.FavoritesStorage
-import com.yuriy.openradio.shared.vo.RadioStation
 
 class EditStationPresenterImpl(private val mFavoritesStorage: FavoritesStorage,
                                private val mDeviceLocalsStorage: DeviceLocalsStorage) : EditStationPresenter {

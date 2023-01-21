@@ -1,7 +1,6 @@
 package com.yuriy.openradio.shared.model.media
 
 import android.content.Context
-import com.yuriy.openradio.shared.vo.RadioStationToAdd
 
 interface RadioStationManagerLayer {
 

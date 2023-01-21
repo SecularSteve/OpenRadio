@@ -15,7 +15,7 @@
  */
 package com.yuriy.openradio.shared.model.translation
 
-import com.yuriy.openradio.shared.vo.RadioStation
+import com.yuriy.openradio.shared.model.media.RadioStation
 
 /**
  * Created by Yuriy Chernyshov

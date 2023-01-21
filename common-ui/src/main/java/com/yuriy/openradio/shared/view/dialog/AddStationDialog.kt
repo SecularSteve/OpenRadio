@@ -21,7 +21,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.yuriy.openradio.shared.R
-import com.yuriy.openradio.shared.vo.RadioStationToAdd
+import com.yuriy.openradio.shared.model.media.RadioStationToAdd
 
 /**
  * Created by Yuriy Chernyshov

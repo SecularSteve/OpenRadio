@@ -16,7 +16,7 @@
 
 package com.yuriy.openradio.shared.model.storage
 
-import com.yuriy.openradio.shared.vo.RadioStation
+import com.yuriy.openradio.shared.model.media.RadioStation
 import java.util.TreeSet
 
 class StorageManagerLayerImpl(
