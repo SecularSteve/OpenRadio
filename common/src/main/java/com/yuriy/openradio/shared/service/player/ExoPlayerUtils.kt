@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yuriy.openradio.shared.model.player
+package com.yuriy.openradio.shared.service.player
 
 import android.content.Context
 import android.support.v4.media.MediaMetadataCompat

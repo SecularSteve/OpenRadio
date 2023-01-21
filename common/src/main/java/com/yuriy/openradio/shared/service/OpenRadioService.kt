@@ -58,7 +58,7 @@ import com.yuriy.openradio.shared.model.media.item.MediaItemCommand
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommandDependencies
 import com.yuriy.openradio.shared.model.media.setVariantFixed
 import com.yuriy.openradio.shared.model.net.NetworkMonitorListener
-import com.yuriy.openradio.shared.model.player.OpenRadioPlayer
+import com.yuriy.openradio.shared.service.player.OpenRadioPlayer
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.model.storage.RadioStationsStorage
 import com.yuriy.openradio.shared.model.timer.SleepTimerListener

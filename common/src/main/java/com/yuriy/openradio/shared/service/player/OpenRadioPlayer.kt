@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yuriy.openradio.shared.model.player
+package com.yuriy.openradio.shared.service.player
 
 import android.app.Notification
 import android.content.Context
