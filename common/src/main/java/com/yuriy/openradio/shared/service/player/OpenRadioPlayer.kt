@@ -458,7 +458,10 @@ class OpenRadioPlayer(
                         when (entry.id) {
                             ExoPlayerUtils.METADATA_ID_TT2,
                             ExoPlayerUtils.METADATA_ID_TIT2 -> {
-                                title = entry.value
+                                val values = entry.values
+                                if (values.isNotEmpty()) {
+                                    title = values[0]
+                                }
                             }
                         }
                     }
@@ -488,25 +491,18 @@ class OpenRadioPlayer(
                     if (playerState == Player.STATE_BUFFERING) {
                         updateStreamMetadata(mBufferingLabel)
                     }
-                    if (playerState == Player.STATE_READY) {
-                        if (mCurrentPlayer.playWhenReady.not()) {
-                            // If playback is paused we remove the foreground state which allows the
-                            // notification to be dismissed. An alternative would be to provide a
-                            // "close" button in the notification which stops playback and clears
-                            // the notification.
-                            mListener.onStopForeground(false)
-                            mIsForegroundService = false
-                        }
+                    if (playerState == Player.STATE_READY && mCurrentPlayer.playWhenReady.not()) {
+                        // If playback is paused we remove the foreground state which allows the
+                        // notification to be dismissed. An alternative would be to provide a
+                        // "close" button in the notification which stops playback and clears
+                        // the notification.
+                        mListener.onStopForeground(false)
+                        mIsForegroundService = false
                     }
                     if (this@OpenRadioPlayer::mNotificationManager.isInitialized) {
                         mNotificationManager.showNotificationForPlayer(mCurrentPlayer)
                     }
                     mListener.onReady()
-                }
-                Player.STATE_IDLE -> {
-                    if (this@OpenRadioPlayer::mNotificationManager.isInitialized) {
-                        mNotificationManager.hideNotification()
-                    }
                 }
                 else -> {
                     if (this@OpenRadioPlayer::mNotificationManager.isInitialized) {

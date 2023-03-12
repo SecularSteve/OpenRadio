@@ -32,6 +32,7 @@ import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.dependencies.SourcesLayerDependency
+import com.yuriy.openradio.shared.model.media.RadioStationToAdd
 import com.yuriy.openradio.shared.model.source.Source
 import com.yuriy.openradio.shared.model.source.SourcesLayer
 import com.yuriy.openradio.shared.permission.PermissionChecker
@@ -40,6 +41,7 @@ import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.ImageFilePath
 import com.yuriy.openradio.shared.utils.IntentUtils
+import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.findCheckBox
 import com.yuriy.openradio.shared.utils.findEditText
@@ -50,8 +52,6 @@ import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.invisible
 import com.yuriy.openradio.shared.utils.visible
 import com.yuriy.openradio.shared.view.BaseDialogFragment
-import com.yuriy.openradio.shared.utils.SafeToast
-import com.yuriy.openradio.shared.model.media.RadioStationToAdd
 
 /**
  * Created by Yuriy Chernyshov

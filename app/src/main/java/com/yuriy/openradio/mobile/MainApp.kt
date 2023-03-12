@@ -17,7 +17,6 @@
 package com.yuriy.openradio.mobile
 
 import android.content.Context
-import android.support.v4.media.MediaMetadataCompat
 import com.yuriy.openradio.mobile.dependencies.DependencyRegistry
 import com.yuriy.openradio.shared.MainAppCommonUi
 

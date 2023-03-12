@@ -53,6 +53,7 @@ import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.IntentUtils
 import com.yuriy.openradio.shared.utils.PlayerUtils
+import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.utils.UiUtils
 import com.yuriy.openradio.shared.utils.findCheckBox
 import com.yuriy.openradio.shared.utils.findFloatingActionButton
@@ -64,7 +65,6 @@ import com.yuriy.openradio.shared.utils.findView
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
 import com.yuriy.openradio.shared.view.BaseDialogFragment
-import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.view.dialog.AboutDialog
 import com.yuriy.openradio.shared.view.dialog.AddStationDialog
 import com.yuriy.openradio.shared.view.dialog.EqualizerDialog

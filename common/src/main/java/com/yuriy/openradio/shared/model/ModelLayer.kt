@@ -18,9 +18,9 @@ package com.yuriy.openradio.shared.model
 
 import android.net.Uri
 import androidx.core.util.Pair
-import com.yuriy.openradio.shared.model.translation.MediaIdBuilder
 import com.yuriy.openradio.shared.model.media.Category
 import com.yuriy.openradio.shared.model.media.RadioStation
+import com.yuriy.openradio.shared.model.translation.MediaIdBuilder
 import com.yuriy.openradio.shared.service.location.Country
 
 /**

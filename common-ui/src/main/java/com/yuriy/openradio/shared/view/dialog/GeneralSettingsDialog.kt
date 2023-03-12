@@ -30,10 +30,11 @@ import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.permission.PermissionChecker
 import com.yuriy.openradio.shared.presenter.MediaPresenter
-import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.service.OpenRadioStore
+import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.utils.AppUtils
+import com.yuriy.openradio.shared.utils.SafeToast.showAnyThread
 import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.findCheckBox
 import com.yuriy.openradio.shared.utils.findEditText
@@ -41,7 +42,6 @@ import com.yuriy.openradio.shared.utils.findSeekBar
 import com.yuriy.openradio.shared.utils.findSpinner
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.view.BaseDialogFragment
-import com.yuriy.openradio.shared.utils.SafeToast.showAnyThread
 import com.yuriy.openradio.shared.view.list.CountriesArrayAdapter
 
 /**

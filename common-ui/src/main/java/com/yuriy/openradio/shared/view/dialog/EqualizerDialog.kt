@@ -30,12 +30,12 @@ import android.widget.SeekBar
 import android.widget.TextView
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
+import com.yuriy.openradio.shared.model.eq.EqualizerState
 import com.yuriy.openradio.shared.utils.findSpinner
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
 import com.yuriy.openradio.shared.view.BaseDialogFragment
-import com.yuriy.openradio.shared.model.eq.EqualizerState
 
 class EqualizerDialog : BaseDialogFragment() {
 

@@ -15,8 +15,8 @@
  */
 package com.yuriy.openradio.shared.model.translation
 
-import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.model.eq.EqualizerState
+import com.yuriy.openradio.shared.utils.AppLogger
 import org.json.JSONObject
 
 /**

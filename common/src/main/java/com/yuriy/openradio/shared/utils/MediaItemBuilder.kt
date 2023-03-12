@@ -22,8 +22,8 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.model.media.MediaId
-import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.service.location.Country
+import com.yuriy.openradio.shared.service.location.LocationService
 import java.util.Locale
 
 object MediaItemBuilder {

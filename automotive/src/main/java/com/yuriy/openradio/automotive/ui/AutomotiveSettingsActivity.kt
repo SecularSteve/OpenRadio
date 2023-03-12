@@ -51,11 +51,12 @@ import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.model.storage.drive.GoogleDriveError
 import com.yuriy.openradio.shared.model.storage.drive.GoogleDriveManager
 import com.yuriy.openradio.shared.presenter.MediaPresenter
-import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.service.OpenRadioStore
+import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.IntentUtils
+import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.findCheckBox
 import com.yuriy.openradio.shared.utils.findEditText
@@ -66,7 +67,6 @@ import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.utils.findToolbar
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
-import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.view.dialog.StreamBufferingDialog
 import com.yuriy.openradio.shared.view.list.CountriesArrayAdapter
 

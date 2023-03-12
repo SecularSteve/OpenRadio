@@ -37,6 +37,7 @@ import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.presenter.MediaPresenterListener
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.IntentUtils
+import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.utils.UiUtils
 import com.yuriy.openradio.shared.utils.findImageView
 import com.yuriy.openradio.shared.utils.findProgressBar
@@ -45,7 +46,6 @@ import com.yuriy.openradio.shared.utils.findView
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
 import com.yuriy.openradio.shared.view.BaseDialogFragment
-import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.view.dialog.AddStationDialog
 import com.yuriy.openradio.shared.view.dialog.EqualizerDialog
 import com.yuriy.openradio.shared.view.list.MediaItemsAdapter

@@ -25,12 +25,12 @@ import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.dependencies.SleepTimerModelDependency
 import com.yuriy.openradio.shared.model.timer.SleepTimerModel
 import com.yuriy.openradio.shared.utils.AppLogger
+import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.findLinearLayout
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.utils.findToggleButton
 import com.yuriy.openradio.shared.view.BaseDialogFragment
-import com.yuriy.openradio.shared.utils.SafeToast
 import java.text.SimpleDateFormat
 import java.util.Locale
 

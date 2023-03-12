@@ -22,7 +22,6 @@ import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.text.TextUtils
 import com.yuriy.openradio.R
-import com.yuriy.openradio.shared.model.media.MediaStream
 import com.yuriy.openradio.shared.model.storage.images.ImagesStore
 import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.utils.AppUtils

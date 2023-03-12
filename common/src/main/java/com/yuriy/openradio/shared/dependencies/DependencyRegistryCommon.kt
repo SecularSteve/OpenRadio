@@ -57,8 +57,8 @@ import com.yuriy.openradio.shared.model.timer.SleepTimerModel
 import com.yuriy.openradio.shared.model.timer.SleepTimerModelImpl
 import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.service.OpenRadioServicePresenterImpl
-import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.service.location.Country
+import com.yuriy.openradio.shared.utils.AppLogger
 import java.lang.ref.WeakReference
 import java.util.TreeSet
 import java.util.concurrent.atomic.AtomicBoolean

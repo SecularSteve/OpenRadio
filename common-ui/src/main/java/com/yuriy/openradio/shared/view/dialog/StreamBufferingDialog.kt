@@ -24,11 +24,11 @@ import android.widget.EditText
 import com.google.android.exoplayer2.DefaultLoadControl
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
+import com.yuriy.openradio.shared.utils.SafeToast.showAnyThread
 import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.findEditText
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.view.BaseDialogFragment
-import com.yuriy.openradio.shared.utils.SafeToast.showAnyThread
 
 /**
  * Created by Yuriy Chernyshov
