@@ -231,7 +231,7 @@ class OpenRadioServicePresenterImpl(
         mRemoteControlListener = value
     }
 
-    override fun removeRemoteControlListener(value: RemoteControlListener) {
+    override fun removeRemoteControlListener() {
         mRemoteControlListener = null
     }
 

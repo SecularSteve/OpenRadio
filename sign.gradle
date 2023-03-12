@@ -22,7 +22,7 @@ if (signConfFile.canRead()) {
     throw new GradleException("Could not read sign.properties. File exists: ${signConfFile.exists()}")
 }
 
-tasks.whenTaskAdded { task ->
+tasks.configureEach { task ->
     if (task.name == "signReleaseBundle") {
         task.doLast() {
             println "Get And Increment Version code"

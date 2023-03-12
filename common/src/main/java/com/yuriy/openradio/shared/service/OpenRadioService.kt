@@ -450,7 +450,7 @@ class OpenRadioService : MediaBrowserServiceCompat() {
         mNoisyAudioStreamReceiver.unregister(applicationContext)
         mPresenter.stopNetworkMonitor(applicationContext)
         mPresenter.getSleepTimerModel().removeSleepTimerListener(mSleepTimerListener)
-        mPresenter.removeRemoteControlListener(mRemoteControlListener)
+        mPresenter.removeRemoteControlListener()
     }
 
     private fun handleOnLoadChildren(
@@ -941,7 +941,7 @@ class OpenRadioService : MediaBrowserServiceCompat() {
      */
     private inner class PlayerListener : OpenRadioPlayer.Listener {
 
-        override fun onError(error: PlaybackException) {
+        override fun onError() {
             handleStopRequest()
         }
 
@@ -1060,17 +1060,17 @@ class OpenRadioService : MediaBrowserServiceCompat() {
 
         override fun onSkipToPrevious(player: Player) {
             super.onSkipToPrevious(player)
-            mPlayer.skipToPrevious(player)
+            mPlayer.skipToPrevious()
         }
 
         override fun onSkipToQueueItem(player: Player, id: Long) {
             super.onSkipToQueueItem(player, id)
-            mPlayer.skipToQueueItem(player, id)
+            mPlayer.skipToQueueItem()
         }
 
         override fun onSkipToNext(player: Player) {
             super.onSkipToNext(player)
-            mPlayer.skipToNext(player)
+            mPlayer.skipToNext()
         }
     }
 

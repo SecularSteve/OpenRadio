@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.yuriy.openradio.shared.model.player.extentions
+package com.yuriy.openradio.shared.extentions
 
 import android.graphics.Bitmap
 import android.net.Uri

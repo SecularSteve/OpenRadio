@@ -45,10 +45,10 @@ import com.google.android.exoplayer2.util.Util
 import com.google.android.gms.cast.framework.CastContext
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
+import com.yuriy.openradio.shared.extentions.toMediaItemMetadata
 import com.yuriy.openradio.shared.model.eq.EqualizerLayer
 import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.getStreamUrlFixed
-import com.yuriy.openradio.shared.model.player.extentions.toMediaItemMetadata
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.utils.AnalyticsUtils
@@ -85,7 +85,7 @@ class OpenRadioPlayer(
      */
     interface Listener {
 
-        fun onError(error: PlaybackException)
+        fun onError()
 
         fun onHandledError(error: PlaybackException)
 
@@ -329,15 +329,15 @@ class OpenRadioPlayer(
         mCurrentPlayer.playWhenReady = false
     }
 
-    fun skipToPrevious(player: Player) {
+    fun skipToPrevious() {
         mIndex -= 1
     }
 
-    fun skipToQueueItem(player: Player, id: Long) {
+    fun skipToQueueItem() {
         // Not in use.
     }
 
-    fun skipToNext(player: Player) {
+    fun skipToNext() {
         mIndex += 1
     }
 
@@ -539,14 +539,14 @@ class OpenRadioPlayer(
             AppLogger.e("$LOG_TAG onPlayerError [${mNumOfExceptions.get()}]", exception)
             if (exception.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED) {
                 updateStreamMetadata(toDisplayString(mContext, exception))
-                mListener.onError(exception)
+                mListener.onError()
                 mStoppedByNetwork = true
                 return
             }
             val cause = exception.cause
             if (cause is HttpDataSource.InvalidResponseCodeException) {
                 updateStreamMetadata(toDisplayString(mContext, exception))
-                mListener.onError(exception)
+                mListener.onError()
                 return
             }
             if (mNumOfExceptions.getAndIncrement() <= MAX_EXCEPTIONS_COUNT) {
@@ -558,7 +558,7 @@ class OpenRadioPlayer(
                 return
             }
             updateStreamMetadata(toDisplayString(mContext, exception))
-            mListener.onError(exception)
+            mListener.onError()
         }
 
         private fun toDisplayString(context: Context, exception: PlaybackException): String {

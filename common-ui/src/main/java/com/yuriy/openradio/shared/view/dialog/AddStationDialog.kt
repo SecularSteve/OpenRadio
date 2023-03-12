@@ -50,9 +50,8 @@ class AddStationDialog : BaseAddEditStationDialog() {
      * @param radioStationToAdd
      */
     override fun processInput(radioStationToAdd: RadioStationToAdd) {
-        val context = activity?.applicationContext ?: return
         mPresenter.addRadioStation(
-            context, radioStationToAdd,
+            radioStationToAdd,
             { msg -> onSuccess(msg) },
             { msg -> onFailure(msg) }
         )

@@ -46,11 +46,11 @@ import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.broadcast.AppLocalBroadcast
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiver
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiverCallback
+import com.yuriy.openradio.shared.extentions.id
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.MediaResourceManagerListener
 import com.yuriy.openradio.shared.model.media.MediaResourcesManager
 import com.yuriy.openradio.shared.model.net.NetworkLayer
-import com.yuriy.openradio.shared.model.player.extentions.id
 import com.yuriy.openradio.shared.model.source.SourcesLayer
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.model.storage.LocationStorage

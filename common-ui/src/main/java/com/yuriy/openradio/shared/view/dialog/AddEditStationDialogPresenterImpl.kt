@@ -10,7 +10,6 @@ class AddEditStationDialogPresenterImpl(
 ) : AddEditStationDialogPresenter {
 
     override fun addRadioStation(
-        context: Context,
         radioStation: RadioStationToAdd,
         onSuccess: (msg: String) -> Unit,
         onFailure: (msg: String) -> Unit
@@ -19,7 +18,6 @@ class AddEditStationDialogPresenterImpl(
     }
 
     override fun editRadioStation(
-        context: Context,
         mediaId: String,
         radioStation: RadioStationToAdd,
         onSuccess: (msg: String) -> Unit,

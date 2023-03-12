@@ -115,8 +115,4 @@ public abstract class OrientationStrategy implements Runnable {
             parent.requestDisallowInterceptTouchEvent(disallow);
         }
     }
-
-    public void startWith(final int position) {
-        mPositionInfo.setCurrPos(position);
-    }
 }

@@ -85,9 +85,8 @@ class EditStationDialog : BaseAddEditStationDialog() {
      * Validate provided input in order to pass data farther to generate [RadioStation].
      */
     override fun processInput(radioStationToAdd: RadioStationToAdd) {
-        val context = activity?.applicationContext ?: return
         mPresenter.editRadioStation(
-            context, mMediaId, radioStationToAdd,
+            mMediaId, radioStationToAdd,
             { msg -> onSuccess(msg) },
             { msg -> onFailure(msg) }
         )

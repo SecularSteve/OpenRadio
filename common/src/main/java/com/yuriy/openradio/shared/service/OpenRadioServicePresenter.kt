@@ -87,5 +87,5 @@ interface OpenRadioServicePresenter {
 
     fun setRemoteControlListener(value: RemoteControlListener)
 
-    fun removeRemoteControlListener(value: RemoteControlListener)
+    fun removeRemoteControlListener()
 }
