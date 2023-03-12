@@ -21,7 +21,6 @@ import android.net.Uri
 import android.support.v4.media.MediaBrowserCompat.MediaItem
 import android.support.v4.media.MediaMetadataCompat
 import com.google.android.exoplayer2.MediaMetadata
-import com.yuriy.openradio.shared.extentions.toUri
 
 /**
  * Useful extensions for [MediaMetadataCompat].
