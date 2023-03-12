@@ -50,7 +50,7 @@ import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.invisible
 import com.yuriy.openradio.shared.utils.visible
 import com.yuriy.openradio.shared.view.BaseDialogFragment
-import com.yuriy.openradio.shared.view.SafeToast
+import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.model.media.RadioStationToAdd
 
 /**

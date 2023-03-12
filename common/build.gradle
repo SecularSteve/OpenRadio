@@ -1,12 +1,13 @@
+plugins {
+    id("com.google.devtools.ksp")
+}
 apply plugin: "com.android.library"
 apply plugin: "kotlin-android"
 apply plugin: "com.google.gms.google-services"
-apply plugin: "kotlin-kapt"
 apply from: "../constants.gradle"
 
 android {
-    compileSdkVersion project.ext.compileSdkVersion
-    buildToolsVersion project.ext.buildToolsVersion
+    compileSdk project.ext.compileSdkVersion
 
     defaultConfig {
         minSdkVersion project.ext.minSdkVersion
@@ -47,7 +48,7 @@ android {
 dependencies {
     api "androidx.media:media:$androidxMediaVersion"
     implementation group: "androidx.exifinterface", name: "exifinterface", version: "$exifinterfaceVersion"
-    kapt "androidx.room:room-compiler:$roomVersion"
+    ksp("androidx.room:room-compiler:$roomVersion")
     implementation "androidx.room:room-runtime:$roomVersion"
     implementation "androidx.room:room-ktx:$roomVersion"
     implementation "androidx.work:work-runtime-ktx:$workVersion"

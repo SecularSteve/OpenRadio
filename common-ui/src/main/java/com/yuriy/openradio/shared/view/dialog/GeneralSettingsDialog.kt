@@ -41,7 +41,7 @@ import com.yuriy.openradio.shared.utils.findSeekBar
 import com.yuriy.openradio.shared.utils.findSpinner
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.view.BaseDialogFragment
-import com.yuriy.openradio.shared.view.SafeToast.showAnyThread
+import com.yuriy.openradio.shared.utils.SafeToast.showAnyThread
 import com.yuriy.openradio.shared.view.list.CountriesArrayAdapter
 
 /**

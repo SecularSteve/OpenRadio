@@ -58,11 +58,11 @@ import com.yuriy.openradio.shared.model.media.item.MediaItemCommand
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommandDependencies
 import com.yuriy.openradio.shared.model.media.setVariantFixed
 import com.yuriy.openradio.shared.model.net.NetworkMonitorListener
-import com.yuriy.openradio.shared.service.player.OpenRadioPlayer
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.model.storage.RadioStationsStorage
 import com.yuriy.openradio.shared.model.timer.SleepTimerListener
 import com.yuriy.openradio.shared.service.location.Country
+import com.yuriy.openradio.shared.service.player.OpenRadioPlayer
 import com.yuriy.openradio.shared.utils.AnalyticsUtils
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
@@ -71,7 +71,7 @@ import com.yuriy.openradio.shared.utils.MediaItemHelper
 import com.yuriy.openradio.shared.utils.NetUtils
 import com.yuriy.openradio.shared.utils.PackageValidator
 import com.yuriy.openradio.shared.utils.PlayerUtils
-import com.yuriy.openradio.shared.view.SafeToast
+import com.yuriy.openradio.shared.utils.SafeToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -430,11 +430,9 @@ class OpenRadioService : MediaBrowserServiceCompat() {
         }
         // To force update Favorite menu tab.
         var mediaId = MediaId.MEDIA_ID_ROOT
-        if (mCurrentParentId == MediaId.MEDIA_ID_FAVORITES_LIST) {
-            if (mPresenter.getAllFavorites().isNotEmpty()) {
-                // To force update Favorites list.
-                mediaId = MediaId.MEDIA_ID_FAVORITES_LIST
-            }
+        if (mCurrentParentId == MediaId.MEDIA_ID_FAVORITES_LIST && mPresenter.getAllFavorites().isNotEmpty()) {
+            // To force update Favorites list.
+            mediaId = MediaId.MEDIA_ID_FAVORITES_LIST
         }
         notifyChildrenChanged(mediaId)
     }
@@ -711,15 +709,15 @@ class OpenRadioService : MediaBrowserServiceCompat() {
                 // Fill more items based on category.
                 when (mCurrentParentId) {
                     MediaId.MEDIA_ID_FAVORITES_LIST -> {
-                        //AppLogger.d("-- load more favorites")
+                        AppLogger.d("-- load more favorites")
                     }
 
                     MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST -> {
-                        //AppLogger.d("-- load more locals")
+                        AppLogger.d("-- load more locals")
                     }
 
                     else -> {
-                        //AppLogger.d("-- load more recent")
+                        AppLogger.d("-- load more recent")
                     }
                 }
                 mBrowseStorage.addAll(mLatestPlaylist)

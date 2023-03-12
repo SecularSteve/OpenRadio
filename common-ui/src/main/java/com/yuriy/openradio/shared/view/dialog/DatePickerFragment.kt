@@ -22,7 +22,7 @@ import android.os.Bundle
 import android.widget.DatePicker
 import androidx.fragment.app.DialogFragment
 import com.yuriy.openradio.shared.R
-import com.yuriy.openradio.shared.view.SafeToast
+import com.yuriy.openradio.shared.utils.SafeToast
 import java.util.Calendar
 
 class DatePickerFragment : DialogFragment(), DatePickerDialog.OnDateSetListener {

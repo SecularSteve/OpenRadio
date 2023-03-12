@@ -20,8 +20,6 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.util.Pair
 import com.yuriy.openradio.R
-import com.yuriy.openradio.shared.view.SafeToast
-import okhttp3.internal.Util
 import wseemann.media.jplaylistparser.parser.AutoDetectParser
 import wseemann.media.jplaylistparser.playlist.Playlist
 import wseemann.media.jplaylistparser.playlist.PlaylistEntry
@@ -94,7 +92,7 @@ object NetUtils {
                     connection.setRequestProperty("enctype", "application/x-www-form-urlencoded")
                     try {
                         connection.outputStream.use { outputStream ->
-                            BufferedWriter(OutputStreamWriter(outputStream, Util.UTF_8)).use { writer ->
+                            BufferedWriter(OutputStreamWriter(outputStream, Charsets.UTF_8)).use { writer ->
                                 writer.write(getPostParametersQuery(parameters))
                                 writer.flush()
                             }

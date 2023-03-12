@@ -30,7 +30,7 @@ import com.yuriy.openradio.shared.utils.findLinearLayout
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.utils.findToggleButton
 import com.yuriy.openradio.shared.view.BaseDialogFragment
-import com.yuriy.openradio.shared.view.SafeToast
+import com.yuriy.openradio.shared.utils.SafeToast
 import java.text.SimpleDateFormat
 import java.util.Locale
 

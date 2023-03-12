@@ -42,9 +42,9 @@ object MediaItemBuilder {
         val builder = MediaDescriptionCompat.Builder()
             .setMediaId(MediaId.MEDIA_ID_RECENT_STATIONS)
             .setTitle(context.getString(R.string.new_stations_title))
-        val bundleRecent = Bundle()
-        MediaItemHelper.setDrawableId(bundleRecent, R.drawable.ic_fiber_new_black_24dp)
-        builder.setExtras(bundleRecent)
+        val bundle = Bundle()
+        MediaItemHelper.setDrawableId(bundle, R.drawable.ic_fiber_new_black_24dp)
+        builder.setExtras(bundle)
         return MediaBrowserCompat.MediaItem(builder.build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE)
     }
 
@@ -59,9 +59,9 @@ object MediaItemBuilder {
         val builder = MediaDescriptionCompat.Builder()
             .setMediaId(MediaId.MEDIA_ID_POPULAR_STATIONS)
             .setTitle(context.getString(R.string.popular_stations_title))
-        val bundlePop = Bundle()
-        MediaItemHelper.setDrawableId(bundlePop, R.drawable.ic_trending_up_black_24dp)
-        builder.setExtras(bundlePop)
+        val bundle = Bundle()
+        MediaItemHelper.setDrawableId(bundle, R.drawable.ic_trending_up_black_24dp)
+        builder.setExtras(bundle)
         return MediaBrowserCompat.MediaItem(builder.build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE)
     }
 
@@ -79,9 +79,9 @@ object MediaItemBuilder {
         val builder = MediaDescriptionCompat.Builder()
             .setMediaId(MediaId.MEDIA_ID_COUNTRIES_LIST)
             .setTitle(context.getString(R.string.countries_list_title))
-        val bundleCounties = Bundle()
-        MediaItemHelper.setDrawableId(bundleCounties, R.drawable.ic_public_black_24dp)
-        builder.setExtras(bundleCounties)
+        val bundle = Bundle()
+        MediaItemHelper.setDrawableId(bundle, R.drawable.ic_public_black_24dp)
+        builder.setExtras(bundle)
         return MediaBrowserCompat.MediaItem(builder.build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE)
     }
 

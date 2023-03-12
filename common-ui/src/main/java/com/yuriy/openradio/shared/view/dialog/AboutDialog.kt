@@ -41,10 +41,7 @@ class AboutDialog : BaseDialogFragment() {
             requireActivity().findViewById(R.id.dialog_about_root)
         )
         setWindowDimensions(view, 0.9f, 0.9f)
-        val context = context
-        val titleText = context!!.getString(R.string.app_name)
-        val title = view.findTextView(R.id.dialog_about_title_view)
-        title.text = titleText
+        val context = requireContext()
         val exoPlayerVersion = view.findTextView(R.id.about_exo_player_ver_link_view)
         val exoPlayerVersionText = getString(R.string.about_exo_text) + " " + ExoPlayerLibraryInfo.VERSION
         exoPlayerVersion.text = exoPlayerVersionText

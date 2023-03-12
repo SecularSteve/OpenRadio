@@ -24,7 +24,7 @@ import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.broadcast.AbstractReceiver
 import com.yuriy.openradio.shared.broadcast.ConnectivityReceiver
 import com.yuriy.openradio.shared.utils.AppLogger
-import com.yuriy.openradio.shared.view.SafeToast
+import com.yuriy.openradio.shared.utils.SafeToast
 
 class NetworkLayerImpl(private val mConnectivityManager: ConnectivityManager) : NetworkLayer {
 

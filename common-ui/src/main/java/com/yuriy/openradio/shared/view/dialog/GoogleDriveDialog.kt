@@ -36,7 +36,7 @@ import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
 import com.yuriy.openradio.shared.view.BaseDialogFragment
-import com.yuriy.openradio.shared.view.SafeToast.showAnyThread
+import com.yuriy.openradio.shared.utils.SafeToast.showAnyThread
 
 /**
  * Created by Yuriy Chernyshov

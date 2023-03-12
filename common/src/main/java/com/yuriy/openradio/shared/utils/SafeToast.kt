@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package com.yuriy.openradio.shared.view
+package com.yuriy.openradio.shared.utils
 
 import android.content.Context
 import android.widget.Toast
-import com.yuriy.openradio.shared.utils.AppLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

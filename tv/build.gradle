@@ -8,8 +8,7 @@ apply from: "../constants.gradle"
 apply from: "../sign.gradle"
 
 android {
-    compileSdkVersion project.ext.compileSdkVersion
-    buildToolsVersion project.ext.buildToolsVersion
+    compileSdk project.ext.compileSdkVersion
 
     defaultConfig {
         applicationId project.ext.applicationId
