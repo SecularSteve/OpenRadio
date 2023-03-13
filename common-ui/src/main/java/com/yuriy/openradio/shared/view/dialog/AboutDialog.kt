@@ -57,6 +57,7 @@ class AboutDialog : BaseDialogFragment() {
         setOnClickOnText(context, view, R.id.about_easy_swipe_name_view, IntentUtils.SWIPE_EFFECT_URL)
         setOnClickOnImage(context, view, R.id.about_item_ivan_fb_btn, IntentUtils.IVAN_FB_LINK)
         setOnClickOnImage(context, view, R.id.about_item_ivan_ig_btn, IntentUtils.IVAN_IG_LINK)
+        setOnClickOnImage(context, view, R.id.about_item_gofundme_btn, IntentUtils.GOFUNDME_LINK)
 
         return createAlertDialog(view)
     }

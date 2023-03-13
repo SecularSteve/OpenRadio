@@ -41,6 +41,8 @@ object IntentUtils {
 
     const val IVAN_IG_LINK = "https://www.instagram.com/ivan.chernyshov.racer"
 
+    const val GOFUNDME_LINK = "https://www.gofundme.com/f/powering-ivans-path-to-the-podium"
+
     /**
      * Project's url
      */

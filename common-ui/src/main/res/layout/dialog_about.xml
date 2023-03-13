@@ -30,9 +30,9 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="15dp"
             android:gravity="center"
+            android:text="@string/app_name"
             android:textSize="20sp"
-            android:textStyle="bold"
-            android:text="@string/app_name"/>
+            android:textStyle="bold" />
 
         <LinearLayout style="@style/about_item_layout">
 
@@ -171,8 +171,8 @@
         <TextView
             style="@style/about_item_label"
             android:layout_width="match_parent"
-            android:gravity="center"
             android:layout_marginBottom="15dp"
+            android:gravity="center"
             android:text="@string/support_ivan_text" />
 
         <LinearLayout
@@ -203,6 +203,13 @@
                 android:src="@drawable/ivan_ig" />
 
         </LinearLayout>
+
+        <ImageView
+            android:id="@+id/about_item_gofundme_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/gofundme_logo" />
 
     </LinearLayout>
 
