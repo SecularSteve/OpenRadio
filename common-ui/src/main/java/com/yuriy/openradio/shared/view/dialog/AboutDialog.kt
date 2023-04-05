@@ -22,6 +22,7 @@ import android.os.Bundle
 import android.view.View
 import com.google.android.exoplayer2.ExoPlayerLibraryInfo
 import com.yuriy.openradio.shared.R
+import com.yuriy.openradio.shared.utils.AnalyticsUtils
 import com.yuriy.openradio.shared.utils.IntentUtils
 import com.yuriy.openradio.shared.utils.findImageView
 import com.yuriy.openradio.shared.utils.findTextView
@@ -57,7 +58,10 @@ class AboutDialog : BaseDialogFragment() {
         setOnClickOnText(context, view, R.id.about_easy_swipe_name_view, IntentUtils.SWIPE_EFFECT_URL)
         setOnClickOnImage(context, view, R.id.about_item_ivan_fb_btn, IntentUtils.IVAN_FB_LINK)
         setOnClickOnImage(context, view, R.id.about_item_ivan_ig_btn, IntentUtils.IVAN_IG_LINK)
+        setOnClickOnImage(context, view, R.id.about_item_ivan_view, IntentUtils.GOFUNDME_LINK)
         setOnClickOnImage(context, view, R.id.about_item_gofundme_btn, IntentUtils.GOFUNDME_LINK)
+
+        AnalyticsUtils.logAboutOpen()
 
         return createAlertDialog(view)
     }
@@ -82,6 +86,9 @@ class AboutDialog : BaseDialogFragment() {
         private fun setOnClickOnImage(context: Context, view: View, viewId: Int, linkUrl: String) {
             view.findImageView(viewId).setOnClickListener {
                 IntentUtils.startActivitySafe(context, IntentUtils.makeUrlBrowsableIntent(linkUrl))
+                if (linkUrl == IntentUtils.GOFUNDME_LINK) {
+                    AnalyticsUtils.logGoFundMeClicked()
+                }
             }
         }
     }

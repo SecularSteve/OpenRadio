@@ -37,6 +37,8 @@ object AnalyticsUtils {
     private const val EVENT_METADATA = "EVENT_METADATA"
     private const val EVENT_CANT_DECODE_BITES = "EVENT_CANT_DECODE_BITES_V2"
     private const val EVENT_GDRIVE_FILE_DELETED = "EVENT_GDRIVE_FILE_DELETED"
+    private const val EVENT_ABOUT_PAGE = "EVENT_ABOUT_PAGE"
+    private const val EVENT_GOFUNDME_CLICK = "EVENT_GOFUNDME_CLICK"
     private const val KEY_METADATA = "KEY_METADATA"
     private const val KEY_URL = "KEY_URL"
     private const val KEY_BYTES_SIZE = "KEY_BYTES_SIZE"
@@ -80,6 +82,14 @@ object AnalyticsUtils {
         val bundle = Bundle()
         bundle.putString(KEY_METADATA, value)
         Firebase.analytics.logEvent(EVENT_METADATA, bundle)
+    }
+
+    fun logAboutOpen() {
+        Firebase.analytics.logEvent(EVENT_ABOUT_PAGE, Bundle())
+    }
+
+    fun logGoFundMeClicked() {
+        Firebase.analytics.logEvent(EVENT_GOFUNDME_CLICK, Bundle())
     }
 
     fun logBitmapDecode(value: String, bytesSize: Int) {

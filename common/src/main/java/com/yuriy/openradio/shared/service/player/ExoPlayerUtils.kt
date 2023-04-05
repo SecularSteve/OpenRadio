@@ -96,9 +96,6 @@ object ExoPlayerUtils {
     }
 
     fun getMediaMetadataCompat(mediaItem: MediaItem?, streamMetadata: String): MediaMetadataCompat {
-
-        MediaMetadataCompat
-        
         val item = MediaMetadataCompat.Builder()
         if (mediaItem == null) {
             item.id = AppUtils.EMPTY_STRING
