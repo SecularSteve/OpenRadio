@@ -319,6 +319,10 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
         val versionView = navigationView.getHeaderView(0).findTextView(R.id.drawer_ver_code_view)
         versionView.text = versionText
 
+        if (DependencyRegistryCommon.isGoogleApiAvailable.not()) {
+            navigationView.menu.removeItem(R.id.nav_google_drive)
+        }
+
         // Handle Add Radio Station button.
         addBtn.setOnClickListener {
             // Show Add Station Dialog

@@ -17,7 +17,6 @@
 package com.yuriy.openradio.shared.model.storage.drive
 
 import android.util.Base64
-import com.yuriy.openradio.shared.utils.AppLogger
 
 /**
  * Created by Chernyshov Yurii
@@ -29,12 +28,10 @@ internal class GoogleDriveSaveFile(isTerminator: Boolean) : GoogleDriveAPIChain(
 
     override fun handleRequest(request: GoogleDriveRequest, result: GoogleDriveResult) {
         val name = request.fileName
-        AppLogger.d("Save file '$name'")
         // Create new file and save data to it.
-        val data = Base64.encodeToString(request.data!!.toByteArray(), Base64.DEFAULT)
-        request.googleApiClient.createFile(result.folderId!!, name, data)
-                .addOnSuccessListener { fileId: String ->
-                    AppLogger.d("File '$fileId' created")
+        val data = Base64.encodeToString(request.data.toByteArray(), Base64.DEFAULT)
+        request.googleApiClient.createFile(result.folderId, name, data)
+                .addOnSuccessListener { _: String ->
                     request.listener.onUploadComplete()
                 }
                 .addOnFailureListener {

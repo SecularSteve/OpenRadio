@@ -22,6 +22,7 @@ import android.content.res.Configuration
 import android.net.ConnectivityManager
 import androidx.multidex.MultiDexApplication
 import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.yuriy.openradio.shared.model.ModelLayerImpl
 import com.yuriy.openradio.shared.model.eq.EqualizerLayer
@@ -84,6 +85,7 @@ object DependencyRegistryCommon {
     private var sIsTv = AtomicBoolean(false)
     private var sIsCar = AtomicBoolean(false)
     private var sIsCastAvailable = AtomicBoolean(false)
+    private var sIsGoogleApiAvailable = AtomicBoolean(false)
 
     @Volatile
     private var sInit = AtomicBoolean(false)
@@ -117,7 +119,7 @@ object DependencyRegistryCommon {
             false
         }
 
-        val isGoogleApiAvailable = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context)
+        val connectionResult = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context)
         isCastAvailable = try {
             CastContext.getSharedInstance(context)
             true
@@ -125,7 +127,8 @@ object DependencyRegistryCommon {
             AppLogger.e("Cast API availability exception '${e.message}'")
             false
         }
-        AppLogger.i("Google API:$isGoogleApiAvailable")
+        isGoogleApiAvailable = connectionResult == ConnectionResult.SUCCESS
+        AppLogger.i("Google API:$connectionResult")
         AppLogger.i("Cast API:$isCastAvailable")
 
         sSourcesLayer = SourcesLayerImpl(context)
@@ -179,6 +182,12 @@ object DependencyRegistryCommon {
 
         sInit.set(true)
     }
+
+    var isGoogleApiAvailable: Boolean
+        get() = sIsGoogleApiAvailable.get()
+        set(value) {
+            sIsGoogleApiAvailable.set(value)
+        }
 
     var isTv: Boolean
         get() = sIsTv.get()

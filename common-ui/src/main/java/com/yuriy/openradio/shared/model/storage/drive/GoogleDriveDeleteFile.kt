@@ -17,7 +17,7 @@
 package com.yuriy.openradio.shared.model.storage.drive
 
 import com.yuriy.openradio.shared.utils.AnalyticsUtils
-import com.yuriy.openradio.shared.utils.AppLogger
+import com.yuriy.openradio.shared.utils.AppUtils
 
 /**
  * Created by Chernyshov Yurii
@@ -29,12 +29,10 @@ internal class GoogleDriveDeleteFile(isTerminator: Boolean = false) : GoogleDriv
 
     override fun handleRequest(request: GoogleDriveRequest, result: GoogleDriveResult) {
         val name = request.fileName
-        AppLogger.d("Delete file '$name'")
-        if (result.fileId != null) {
-            request.googleApiClient.deleteFile(result.fileId!!)
+        if (result.fileId != AppUtils.EMPTY_STRING) {
+            request.googleApiClient.deleteFile(result.fileId)
                     .addOnSuccessListener {
                         val msg = "File '$name' deleted, path execution farther [$request/$result]"
-                        AppLogger.d(msg)
                         AnalyticsUtils.logGDriveFileDeleted(msg)
                         handleNext(request, result)
                     }
@@ -44,7 +42,6 @@ internal class GoogleDriveDeleteFile(isTerminator: Boolean = false) : GoogleDriv
                         )
                     }
         } else {
-            AppLogger.d("File '$name' not exists, nothing to delete, path execution farther")
             handleNext(request, result)
         }
     }

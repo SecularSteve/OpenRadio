@@ -17,7 +17,7 @@ package com.yuriy.openradio.shared.model.storage.drive
 
 import android.util.Base64
 import androidx.core.util.Pair
-import com.yuriy.openradio.shared.utils.AppLogger
+import com.yuriy.openradio.shared.utils.AppUtils
 
 /**
  * Created by Chernyshov Yurii
@@ -28,9 +28,8 @@ import com.yuriy.openradio.shared.utils.AppLogger
 internal class GoogleDriveReadFile(isTerminator: Boolean) : GoogleDriveAPIChain(isTerminator) {
 
     override fun handleRequest(request: GoogleDriveRequest, result: GoogleDriveResult) {
-        AppLogger.d("Read file '" + request.fileName + "'")
         val fileId = result.fileId
-        if (fileId == null) {
+        if (fileId == AppUtils.EMPTY_STRING) {
             request.listener.onError(
                     GoogleDriveError("Error while get file '" + request.fileName + "'")
             )
@@ -43,8 +42,7 @@ internal class GoogleDriveReadFile(isTerminator: Boolean) : GoogleDriveAPIChain(
                             request.fileName
                     )
                 }
-                .addOnFailureListener { e: Exception ->
-                    AppLogger.d("File read error:$e")
+                .addOnFailureListener { _: Exception ->
                     request.listener.onError(
                             GoogleDriveError("Error while open file '" + request.fileName + "'")
                     )

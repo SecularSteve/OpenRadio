@@ -57,6 +57,6 @@ class MediaItemCommandDependencies(
     }
 
     fun getMediaItems(): List<MediaBrowserCompat.MediaItem> {
-        return mMediaItems
+        return ArrayList(mMediaItems)
     }
 }

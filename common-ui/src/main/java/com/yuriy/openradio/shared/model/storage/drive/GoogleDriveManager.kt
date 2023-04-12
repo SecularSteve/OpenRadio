@@ -235,7 +235,7 @@ class GoogleDriveManager(private val mContext: Context, private val mListener: L
         listener: GoogleDriveRequest.Listener
     ) {
         val request = GoogleDriveRequest(
-            mGoogleDriveApiHelper!!, folderName, fileName, null, listener
+            mGoogleDriveApiHelper!!, folderName, fileName, AppUtils.EMPTY_STRING, listener
         )
         val result = GoogleDriveResult()
         val queryFolder = GoogleDriveQueryFolder()

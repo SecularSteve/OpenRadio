@@ -37,7 +37,6 @@ internal abstract class GoogleDriveQueryDrive(isTerminator: Boolean) : GoogleDri
     protected abstract fun setResult(result: GoogleDriveResult, driveFile: File?)
 
     override fun handleRequest(request: GoogleDriveRequest, result: GoogleDriveResult) {
-        AppLogger.d("Query resource '" + getName(request) + "'")
         request.listener.onStart()
         val task = getQueryTask(request)
         val latch = CountDownLatch(1)
@@ -93,10 +92,8 @@ internal abstract class GoogleDriveQueryDrive(isTerminator: Boolean) : GoogleDri
     }
 
     private fun getDriveFile(list: List<File>, name: String): File? {
-        AppLogger.d("Check resource '" + name + "', list of " + list.size)
         var result: File? = null
         for (file in list) {
-            AppLogger.d(" - file:$file")
             // All other fields are null, except name type and id.
             // Get the first record.
             if (name == file.name) {

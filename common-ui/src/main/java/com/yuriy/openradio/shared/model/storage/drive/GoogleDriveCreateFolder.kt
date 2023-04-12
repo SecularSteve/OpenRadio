@@ -15,7 +15,7 @@
  */
 package com.yuriy.openradio.shared.model.storage.drive
 
-import com.yuriy.openradio.shared.utils.AppLogger
+import com.yuriy.openradio.shared.utils.AppUtils
 
 /**
  * Created by Chernyshov Yurii
@@ -28,13 +28,11 @@ internal class GoogleDriveCreateFolder(isTerminator: Boolean = false) : GoogleDr
     override fun handleRequest(request: GoogleDriveRequest,
                                result: GoogleDriveResult) {
         val name = request.folderName
-        if (result.folderId != null) {
-            AppLogger.d("Folder $name exists, path execution farther")
+        if (result.folderId != AppUtils.EMPTY_STRING) {
             handleNext(request, result)
         } else {
             request.googleApiClient.createFolder(request.folderName)
-                    .addOnSuccessListener { folderId: String? ->
-                        AppLogger.d("Folder $name created, pass execution farther")
+                    .addOnSuccessListener { folderId: String ->
                         result.folderId = folderId
                         handleNext(request, result)
                     }

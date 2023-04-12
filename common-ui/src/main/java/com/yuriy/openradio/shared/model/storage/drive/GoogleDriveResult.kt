@@ -16,6 +16,8 @@
 
 package com.yuriy.openradio.shared.model.storage.drive
 
+import com.yuriy.openradio.shared.utils.AppUtils
+
 /**
  * Created by Chernyshov Yurii
  * At Android Studio
@@ -23,6 +25,6 @@ package com.yuriy.openradio.shared.model.storage.drive
  * E-Mail: chernyshov.yuriy@gmail.com
  */
 class GoogleDriveResult {
-    var folderId: String? = null
-    var fileId: String? = null
+    var folderId = AppUtils.EMPTY_STRING
+    var fileId = AppUtils.EMPTY_STRING
 }

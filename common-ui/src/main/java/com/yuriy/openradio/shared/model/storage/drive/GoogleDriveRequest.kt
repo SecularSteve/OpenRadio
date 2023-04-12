@@ -21,8 +21,10 @@ package com.yuriy.openradio.shared.model.storage.drive
  * On 06/07/17
  * E-Mail: chernyshov.yuriy@gmail.com
  */
-class GoogleDriveRequest(val googleApiClient: GoogleDriveHelper, val folderName: String, val fileName: String,
-                         val data: String?, val listener: Listener) {
+class GoogleDriveRequest(
+    val googleApiClient: GoogleDriveHelper, val folderName: String, val fileName: String,
+    val data: String, val listener: Listener
+) {
     interface Listener {
         fun onStart()
         fun onUploadComplete()

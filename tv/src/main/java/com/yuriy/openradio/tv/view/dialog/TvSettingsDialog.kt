@@ -22,6 +22,7 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ListView
+import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.utils.UiUtils
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.view.BaseDialogFragment
@@ -33,7 +34,6 @@ import com.yuriy.openradio.shared.view.dialog.SleepTimerDialog
 import com.yuriy.openradio.shared.view.dialog.SourceDialog
 import com.yuriy.openradio.shared.view.dialog.StreamBufferingDialog
 import com.yuriy.openradio.tv.R
-import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -61,7 +61,7 @@ class TvSettingsDialog : BaseDialogFragment() {
         title.text = titleText
         val listView = view.findViewById<ListView>(R.id.settings_tv_list_view)
         // TODO: Refactor this and the same from activity_main_drawer to string resources
-        val values = arrayOf(
+        val values = mutableListOf(
             getString(R.string.main_menu_general),
             getString(R.string.main_menu_source),
             getString(R.string.main_menu_network),
@@ -70,9 +70,10 @@ class TvSettingsDialog : BaseDialogFragment() {
             getString(R.string.main_menu_google_drive),
             getString(R.string.main_menu_about)
         )
-        val list = ArrayList<String>()
-        Collections.addAll(list, *values)
-        val adapter = ArrayAdapterExt(context, android.R.layout.simple_list_item_1, list)
+        if (DependencyRegistryCommon.isGoogleApiAvailable.not()) {
+            values.remove(getString(R.string.main_menu_google_drive))
+        }
+        val adapter = ArrayAdapterExt(context, android.R.layout.simple_list_item_1, values)
         listView.adapter = adapter
         listView.onItemClickListener =
             AdapterView.OnItemClickListener { _: AdapterView<*>?, _: View?, position: Int, _: Long ->

@@ -19,6 +19,7 @@ package com.yuriy.openradio.shared.model.storage.drive
 import com.google.android.gms.tasks.Task
 import com.google.api.services.drive.model.File
 import com.google.api.services.drive.model.FileList
+import com.yuriy.openradio.shared.utils.AppUtils
 
 /**
  * Created by Chernyshov Yurii
@@ -37,6 +38,6 @@ internal class GoogleDriveQueryFile(isTerminator: Boolean = false) : GoogleDrive
     }
 
     override fun setResult(result: GoogleDriveResult, driveFile: File?) {
-        result.fileId = driveFile?.id
+        result.fileId = driveFile?.id ?: AppUtils.EMPTY_STRING
     }
 }
