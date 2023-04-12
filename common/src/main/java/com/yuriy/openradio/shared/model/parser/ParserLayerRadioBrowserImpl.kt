@@ -17,6 +17,7 @@
 package com.yuriy.openradio.shared.model.parser
 
 import android.net.Uri
+import com.yuriy.openradio.shared.model.filter.Filter
 import com.yuriy.openradio.shared.model.media.Category
 import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.setVariant
@@ -38,8 +39,10 @@ import java.util.TreeSet
  * E-Mail: chernyshov.yuriy@gmail.com
  *
  * This is implementation of [ParserLayer] that designed to works with JSON as input format.
+ *
+ * @param mFilter Filter to exclude certain radio stations.
  */
-class ParserLayerRadioBrowserImpl : ParserLayer {
+class ParserLayerRadioBrowserImpl(private val mFilter: Filter) : ParserLayer {
 
     companion object {
         private const val TAG = "PLRBI"
@@ -170,6 +173,10 @@ class ParserLayerRadioBrowserImpl : ParserLayer {
                 bitrate = jsonObject.getInt(KEY_BIT_RATE)
             }
             radioStation.setVariant(bitrate, jsonObject.getString(KEY_URL))
+        }
+        if (mFilter.filter(radioStation)) {
+            AppLogger.e("Exclude:$radioStation")
+            return RadioStation.INVALID_INSTANCE
         }
         return radioStation
     }

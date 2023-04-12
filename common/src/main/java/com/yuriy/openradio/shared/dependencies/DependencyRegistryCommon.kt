@@ -27,6 +27,7 @@ import com.google.android.gms.common.GoogleApiAvailability
 import com.yuriy.openradio.shared.model.ModelLayerImpl
 import com.yuriy.openradio.shared.model.eq.EqualizerLayer
 import com.yuriy.openradio.shared.model.eq.EqualizerLayerImpl
+import com.yuriy.openradio.shared.model.filter.FilterImpl
 import com.yuriy.openradio.shared.model.media.RadioStationManagerLayer
 import com.yuriy.openradio.shared.model.media.RadioStationManagerLayerImpl
 import com.yuriy.openradio.shared.model.net.HTTPDownloaderImpl
@@ -269,7 +270,7 @@ object DependencyRegistryCommon {
 
     private fun getParserLayer(source: Source, set: Set<Country>): ParserLayer {
         return if (source == Source.RADIO_BROWSER) {
-            ParserLayerRadioBrowserImpl()
+            ParserLayerRadioBrowserImpl(FilterImpl())
         } else {
             ParserLayerWebRadioImpl(set)
         }
