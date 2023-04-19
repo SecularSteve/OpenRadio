@@ -149,8 +149,12 @@ object MediaId {
         if (sourcesLayer.getActiveSource() == Source.WEB_RADIO) {
             return false
         }
-        return (categoryMediaId.isNotEmpty()
-                && (MEDIA_ID_COUNTRY_STATIONS == categoryMediaId
-                || categoryMediaId.contains(MEDIA_ID_CHILD_CATEGORIES)))
+        return (
+                categoryMediaId.isNotEmpty() &&
+                        (MEDIA_ID_COUNTRY_STATIONS == categoryMediaId ||
+                                // To process list of a single selected country
+                                categoryMediaId.contains(MEDIA_ID_COUNTRIES_LIST) ||
+                                categoryMediaId.contains(MEDIA_ID_CHILD_CATEGORIES))
+                )
     }
 }
