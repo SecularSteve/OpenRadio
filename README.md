@@ -1,5 +1,7 @@
 # Open Radio #
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I2I1LGFPH)
+
 ### What is this ? ###
 
 * **Open Radio** is the project which is use [Android Auto SDK](http://developer.android.com/auto/index.html), innovative tool to bring Android Apps into vehicle's **Human Machine Interface (HMI)**, to provide live streaming of the world wide Radio Stations into the vehicle over Android mobile. As of end of 2019, Open Radio supported on Android TV. This is new feature and functionality is very limited. Updates will come in 2020!
