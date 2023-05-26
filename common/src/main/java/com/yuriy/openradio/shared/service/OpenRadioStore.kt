@@ -126,10 +126,11 @@ object OpenRadioStore {
     }
 
     /**
-     * Factory method to make [Intent] to update whether [RadioStation] is Favorite.
+     * Factory method to make [Intent] to update whether [com.yuriy.openradio.shared.model.media.RadioStation]
+     * is Favorite.
      *
      * @param context          Context of the callee.
-     * @param mediaDescription [MediaDescriptionCompat] of the [RadioStation].
+     * @param mediaDescription [MediaDescriptionCompat] of the [com.yuriy.openradio.shared.model.media.RadioStation].
      * @param isFavorite       Whether Radio station is Favorite or not.
      * @return [Intent].
      */

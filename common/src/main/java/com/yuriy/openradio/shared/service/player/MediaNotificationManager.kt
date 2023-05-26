@@ -20,7 +20,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.net.Uri
+import android.graphics.BitmapFactory
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import androidx.core.app.NotificationCompat
@@ -28,10 +28,6 @@ import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.utils.AppUtils
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
 /**
  * A wrapper class for ExoPlayer's PlayerNotificationManager. It sets up the notification shown to
@@ -49,7 +45,6 @@ class MediaNotificationManager(
         fun onCloseApp()
     }
 
-    private val mServiceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val mNotificationManager: PlayerNotificationManager
 
     init {
@@ -118,9 +113,6 @@ class MediaNotificationManager(
     private inner class DescriptionAdapter(private val mController: MediaControllerCompat) :
         PlayerNotificationManager.MediaDescriptionAdapter {
 
-        var mIconUri: Uri? = null
-        var mBitmap: Bitmap? = null
-
         override fun createCurrentContentIntent(player: Player): PendingIntent? =
             mController.sessionActivity
 
@@ -135,23 +127,12 @@ class MediaNotificationManager(
             callback: PlayerNotificationManager.BitmapCallback
         ): Bitmap? {
             val iconUri = mController.metadata?.description?.iconUri
-            return if (mIconUri != iconUri || mBitmap == null) {
-
-                // Cache the bitmap for the current song so that successive calls to
-                // `getCurrentLargeIcon` don't cause the bitmap to be recreated.
-                mIconUri = iconUri
-                mServiceScope.launch {
-                    mBitmap = iconUri?.let {
-                        // TODO: ?
-                        //resolveUriAsBitmap(it)
-                        null
-                    }
-                    mBitmap?.let { callback.onBitmap(it) }
+            iconUri?.let {
+                mContext.contentResolver.openInputStream(iconUri).use { stream ->
+                    callback.onBitmap(BitmapFactory.decodeStream(stream))
                 }
-                null
-            } else {
-                mBitmap
             }
+            return null
         }
     }
 

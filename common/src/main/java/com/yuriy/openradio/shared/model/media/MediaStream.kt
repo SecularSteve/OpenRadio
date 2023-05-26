@@ -83,7 +83,7 @@ class MediaStream private constructor() {
         }
     }
 
-    class Variant constructor(val bitrate: Int, val url: String) {
+    class Variant(val bitrate: Int, val url: String) {
 
         override fun toString(): String {
             return "Variant{url='$url', bitrate=$bitrate}"
@@ -110,6 +110,7 @@ class MediaStream private constructor() {
     companion object {
 
         const val BIT_RATE_DEFAULT = 320
+
         /**
          * Factory method to create instance of the [MediaStream].
          *

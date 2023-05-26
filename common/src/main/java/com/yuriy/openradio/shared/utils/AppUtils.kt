@@ -165,16 +165,6 @@ object AppUtils {
         return height.coerceAtMost(width)
     }
 
-    fun getApplicationVersionName(context: Context): String {
-        val packageInfo = getPackageInfo(context)
-        return if (packageInfo != null) {
-            packageInfo.versionName
-        } else {
-            AppLogger.w("Can't get application version")
-            "?"
-        }
-    }
-
     fun getApplicationVersionCode(context: Context): Int {
         val packageInfo = getPackageInfo(context)
         return if (packageInfo != null) {
@@ -204,6 +194,7 @@ object AppUtils {
     fun hasVersionS(): Boolean {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     }
+
     @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.TIRAMISU)
     fun hasVersionTiramisu(): Boolean {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
@@ -247,11 +238,6 @@ object AppUtils {
         if (newMediaId == MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST) {
             return false
         }
-        if (newMediaId != MediaId.MEDIA_ID_ROOT &&
-            newMediaId == prevMediaId
-        ) {
-            return true
-        }
-        return false
+        return newMediaId != MediaId.MEDIA_ID_ROOT && newMediaId == prevMediaId
     }
 }

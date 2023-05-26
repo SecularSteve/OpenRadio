@@ -691,11 +691,11 @@ class OpenRadioService : MediaBrowserServiceCompat() {
     }
 
     private fun onResult(set: Set<RadioStation>, pageNumber: Int) {
-        AppLogger.d("${set.size} children loaded")
+        AppLogger.d("${set.size} children loaded for $mCurrentParentId")
         while (mRestoreComplete.get().not()) {
             Thread.sleep(100)
         }
-        AppLogger.d("${set.size} children loaded and restore compete")
+        AppLogger.d("${set.size} children loaded, restore compete for $mCurrentParentId")
         if (set.isEmpty().not()) {
             if (pageNumber == 0) {
                 mBrowseStorage.clear()
@@ -996,13 +996,7 @@ class OpenRadioService : MediaBrowserServiceCompat() {
      * handleMessage() hook method to process Messages sent to
      * it from onStartCommand().
      */
-    private inner class ServiceHandler
-    /**
-     * Class constructor initializes the Looper.
-     *
-     * @param looper The Looper that we borrow from HandlerThread.
-     */
-    constructor(looper: Looper) : Handler(looper) {
+    private inner class ServiceHandler(looper: Looper) : Handler(looper) {
         /**
          * A factory method that creates a Message that contains
          * information of the command to perform.
