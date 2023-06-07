@@ -15,13 +15,9 @@
  */
 package com.yuriy.openradio.shared.model.media.item
 
-import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
 import com.yuriy.openradio.R
-import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommand.IUpdatePlaybackState
-import com.yuriy.openradio.shared.utils.MediaItemHelper
+import com.yuriy.openradio.shared.utils.MediaItemBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -41,10 +37,8 @@ class MediaItemAllCategories : MediaItemCommand {
     private var mJob: Job? = null
 
     override fun execute(playbackStateListener: IUpdatePlaybackState, dependencies: MediaItemCommandDependencies) {
-        // Use result.detach to allow calling result.sendResult from another thread:
-        dependencies.result.detach()
         if (dependencies.isSavedInstance) {
-            dependencies.result.sendResult(null)
+            dependencies.resultListener.onResult()
             return
         }
         mJob?.cancel()
@@ -52,7 +46,7 @@ class MediaItemAllCategories : MediaItemCommand {
             withTimeoutOrNull(MediaItemCommand.CMD_TIMEOUT_MS) {
                 // Load all categories into menu
                 loadAllCategories(playbackStateListener, dependencies)
-            } ?: dependencies.result.sendResult(null)
+            } ?: dependencies.resultListener.onResult()
         }
     }
 
@@ -76,20 +70,8 @@ class MediaItemAllCategories : MediaItemCommand {
         }
 
         for (category in set) {
-            val bundle = Bundle()
-            MediaItemHelper.setDrawableId(bundle, R.drawable.ic_child_categories)
-            dependencies.addMediaItem(
-                MediaBrowserCompat.MediaItem(
-                    MediaDescriptionCompat.Builder()
-                        .setMediaId(MediaId.MEDIA_ID_CHILD_CATEGORIES + category.id)
-                        .setTitle(category.title)
-                        .setExtras(bundle)
-                        .setSubtitle(category.getDescription(dependencies.context))
-                        .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
-                )
-            )
+            dependencies.addMediaItem(MediaItemBuilder.buildChildCategory(dependencies.context, category))
         }
-        dependencies.result.sendResult(dependencies.getMediaItems())
-        dependencies.resultListener.onResult()
+        dependencies.resultListener.onResult(dependencies.getMediaItems())
     }
 }

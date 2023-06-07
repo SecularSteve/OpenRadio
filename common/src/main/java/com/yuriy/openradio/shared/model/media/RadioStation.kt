@@ -16,16 +16,13 @@
 
 package com.yuriy.openradio.shared.model.media
 
-import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.text.TextUtils
-import com.yuriy.openradio.R
+import androidx.media3.common.MediaItem
 import com.yuriy.openradio.shared.model.storage.images.ImagesStore
 import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.utils.AppUtils
-import com.yuriy.openradio.shared.utils.MediaItemHelper
+import com.yuriy.openradio.shared.utils.MediaItemBuilder
 import java.io.Serializable
 import java.util.Locale
 
@@ -44,29 +41,9 @@ fun RadioStation.toMediaItemPlayable(
     isFavorite: Boolean = false,
     isLocal: Boolean = false,
     isUpdateLastPlayedField: Boolean = false
-): MediaBrowserCompat.MediaItem {
-    val title = this.name
-    val country = this.country
-    val genre = this.genre
-    val id = this.id
-    val bundle = Bundle()
-    MediaItemHelper.updateBitrateField(bundle, this.getStreamBitrate())
-    MediaItemHelper.updateFavoriteField(bundle, isFavorite)
-    MediaItemHelper.updateSortIdField(bundle, sortId)
-    MediaItemHelper.updateLocalRadioStationField(bundle, isLocal)
-    MediaItemHelper.updateLastPlayedField(bundle, isUpdateLastPlayedField)
-    MediaItemHelper.setDrawableId(bundle, R.drawable.ic_radio_station_empty)
-    val mediaDescription = MediaDescriptionCompat.Builder()
-        .setDescription(genre)
-        .setMediaId(id)
-        .setTitle(title)
-        .setSubtitle(country)
-        .setExtras(bundle)
-        // Used in Automotive to display art.
-        .setIconUri(this.imageUri)
-        .build()
-    return MediaBrowserCompat.MediaItem(
-        mediaDescription, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE,
+): MediaItem {
+    return MediaItemBuilder.buildPlayable(
+        this, sortId, isFavorite, isLocal, isUpdateLastPlayedField
     )
 }
 

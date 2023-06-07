@@ -18,19 +18,20 @@ package com.yuriy.openradio.shared.service.player
 
 import android.content.Context
 import android.support.v4.media.MediaMetadataCompat
-import com.google.android.exoplayer2.DefaultRenderersFactory
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.RenderersFactory
-import com.google.android.exoplayer2.database.DatabaseProvider
-import com.google.android.exoplayer2.database.StandaloneDatabaseProvider
-import com.google.android.exoplayer2.upstream.DataSource
-import com.google.android.exoplayer2.upstream.DefaultDataSource
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
-import com.google.android.exoplayer2.upstream.HttpDataSource
-import com.google.android.exoplayer2.upstream.cache.Cache
-import com.google.android.exoplayer2.upstream.cache.CacheDataSource
-import com.google.android.exoplayer2.upstream.cache.NoOpCacheEvictor
-import com.google.android.exoplayer2.upstream.cache.SimpleCache
+import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.database.DatabaseProvider
+import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.HttpDataSource
+import androidx.media3.datasource.cache.Cache
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.NoOpCacheEvictor
+import androidx.media3.datasource.cache.SimpleCache
+import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.RenderersFactory
 import com.yuriy.openradio.shared.extentions.album
 import com.yuriy.openradio.shared.extentions.albumArtUri
 import com.yuriy.openradio.shared.extentions.artist
@@ -58,6 +59,7 @@ object ExoPlayerUtils {
     private var sDatabaseProvider: DatabaseProvider? = null
     private var sUserAgent = AppUtils.EMPTY_STRING
 
+    @UnstableApi
     fun buildRenderersFactory(context: Context): RenderersFactory {
         return DefaultRenderersFactory(context.applicationContext)
             .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
@@ -66,6 +68,7 @@ object ExoPlayerUtils {
     /**
      * Returns a [DataSource.Factory].
      */
+    @UnstableApi
     @Synchronized
     fun getDataSourceFactory(context: Context): DataSource.Factory? {
         val userAgent = getUserAgent(context)
@@ -82,6 +85,7 @@ object ExoPlayerUtils {
         return sDataSourceFactory
     }
 
+    @UnstableApi
     @Synchronized
     fun getHttpDataSourceFactory(userAgent: String): HttpDataSource.Factory? {
         if (sHttpDataSourceFactory == null) {
@@ -112,6 +116,7 @@ object ExoPlayerUtils {
         return item.build()
     }
 
+    @UnstableApi
     private fun buildReadOnlyCacheDataSource(
         upstreamFactory: DataSource.Factory,
         cache: Cache
@@ -123,6 +128,7 @@ object ExoPlayerUtils {
             .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
     }
 
+    @UnstableApi
     @Synchronized
     private fun getDownloadCache(context: Context): Cache? {
         if (sDownloadCache == null) {
@@ -145,6 +151,7 @@ object ExoPlayerUtils {
         return sDownloadDirectory
     }
 
+    @UnstableApi
     @Synchronized
     private fun getDatabaseProvider(context: Context): DatabaseProvider? {
         if (sDatabaseProvider == null) {

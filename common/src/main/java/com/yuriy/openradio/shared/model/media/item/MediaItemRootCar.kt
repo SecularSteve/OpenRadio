@@ -32,7 +32,6 @@ import com.yuriy.openradio.shared.utils.MediaItemBuilder
 class MediaItemRootCar(private val mSource: Source) : MediaItemCommand {
 
     override fun execute(playbackStateListener: IUpdatePlaybackState, dependencies: MediaItemCommandDependencies) {
-        dependencies.result.detach()
         val context = dependencies.context
         // Show Favorites if they are exists.
         val favorites = dependencies.presenter.getAllFavorites()
@@ -45,7 +44,6 @@ class MediaItemRootCar(private val mSource: Source) : MediaItemCommand {
         }
         // Browse category to provide the rest of categories.
         dependencies.addMediaItem(MediaItemBuilder.buildBrowseMenuItem(context))
-        dependencies.result.sendResult(dependencies.getMediaItems())
-        dependencies.resultListener.onResult()
+        dependencies.resultListener.onResult(dependencies.getMediaItems())
     }
 }

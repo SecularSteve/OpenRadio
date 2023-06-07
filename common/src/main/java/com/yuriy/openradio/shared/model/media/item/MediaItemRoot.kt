@@ -34,7 +34,6 @@ class MediaItemRoot(private val mSource: Source) : MediaItemCommand {
 
     override fun execute(playbackStateListener: IUpdatePlaybackState, dependencies: MediaItemCommandDependencies) {
         val context = dependencies.context
-        dependencies.result.detach()
         // Show Favorites if they are exists.
         val favorites = dependencies.presenter.getAllFavorites()
         if (favorites.isNotEmpty()) {
@@ -62,7 +61,6 @@ class MediaItemRoot(private val mSource: Source) : MediaItemCommand {
             // Locals list
             dependencies.addMediaItem(MediaItemBuilder.buildDeviceLocalsMenuItem(context))
         }
-        dependencies.result.sendResult(dependencies.getMediaItems())
-        dependencies.resultListener.onResult()
+        dependencies.resultListener.onResult(dependencies.getMediaItems())
     }
 }

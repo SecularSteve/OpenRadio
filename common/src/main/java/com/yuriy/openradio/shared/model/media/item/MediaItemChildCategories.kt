@@ -36,8 +36,6 @@ class MediaItemChildCategories : IndexableMediaItemCommand() {
 
     override fun execute(playbackStateListener: IUpdatePlaybackState, dependencies: MediaItemCommandDependencies) {
         super.execute(playbackStateListener, dependencies)
-        // Use result.detach to allow calling result.sendResult from another thread:
-        dependencies.result.detach()
         if (dependencies.isSavedInstance) {
             deliverResult(dependencies)
             return
@@ -54,7 +52,7 @@ class MediaItemChildCategories : IndexableMediaItemCommand() {
                     dependencies.presenter.getStationsInCategory(childMenuId, pageNumber),
                     pageNumber
                 )
-            } ?: dependencies.result.sendResult(null)
+            } ?: dependencies.resultListener.onResult()
         }
     }
 }

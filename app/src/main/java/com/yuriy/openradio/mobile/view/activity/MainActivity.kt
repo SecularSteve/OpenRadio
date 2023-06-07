@@ -430,7 +430,9 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
         favoriteCheckView.buttonDrawable = AppCompatResources.getDrawable(applicationContext, R.drawable.src_favorite)
         favoriteCheckView.isChecked = false
         val mediaItem = mMainActivityPresenter.getLastMediaItem()
-        MediaItemsAdapter.handleFavoriteAction(favoriteCheckView, description, mediaItem, applicationContext)
+
+        // TODO:
+        //MediaItemsAdapter.handleFavoriteAction(favoriteCheckView, description, mediaItem, applicationContext)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {

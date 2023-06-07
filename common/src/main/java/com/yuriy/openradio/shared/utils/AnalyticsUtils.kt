@@ -17,7 +17,7 @@
 package com.yuriy.openradio.shared.utils
 
 import android.os.Bundle
-import com.google.android.exoplayer2.IllegalSeekPositionException
+import androidx.media3.common.IllegalSeekPositionException
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.ktx.Firebase

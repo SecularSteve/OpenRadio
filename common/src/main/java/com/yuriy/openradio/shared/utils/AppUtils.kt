@@ -26,7 +26,8 @@ import android.os.PowerManager
 import android.util.DisplayMetrics
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.fragment.app.FragmentActivity
-import com.google.android.exoplayer2.util.Util
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.common.util.Util
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
@@ -145,6 +146,7 @@ object AppUtils {
      *
      * //TODO: Find a better way to handle this. This value is not changing often, need to cache it.
      */
+    @UnstableApi
     fun getUserAgent(context: Context): String {
         val defaultValue = Util.getUserAgent(context, context.getString(R.string.app_name_user_agent))
         return if (AppPreferencesManager.isCustomUserAgent(context)) AppPreferencesManager.getCustomUserAgent(

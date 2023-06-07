@@ -71,10 +71,14 @@ class ParserLayerRadioBrowserImpl(private val mFilter: Filter) : ParserLayer {
     }
 
     override fun getRadioStations(data: String, mediaIdBuilder: MediaIdBuilder, uri: Uri): Set<RadioStation> {
+        if (data.isEmpty()) {
+            AppLogger.e("$TAG get RSs, data empty")
+            return emptySet()
+        }
         val array = try {
             JSONArray(data)
         } catch (e: Exception) {
-            AppLogger.e("$TAG to JSON Array, data:$data", e)
+            AppLogger.e("$TAG  get RSs, to JSON Array, data '$data'", e)
             return emptySet()
         }
         val result = TreeSet<RadioStation>()
@@ -82,7 +86,7 @@ class ParserLayerRadioBrowserImpl(private val mFilter: Filter) : ParserLayer {
             val jsonObject = try {
                 array[i] as JSONObject
             } catch (e: Exception) {
-                AppLogger.e("$TAG get stations, data:$data", e)
+                AppLogger.e("$TAG get RSs, data:$data", e)
                 continue
             }
             val radioStation = getRadioStation(jsonObject, mediaIdBuilder)
@@ -95,10 +99,14 @@ class ParserLayerRadioBrowserImpl(private val mFilter: Filter) : ParserLayer {
     }
 
     override fun getAllCategories(data: String): Set<Category> {
+        if (data.isEmpty()) {
+            AppLogger.e("$TAG get ACs, data empty")
+            return emptySet()
+        }
         val array = try {
             JSONArray(data)
         } catch (e: Exception) {
-            AppLogger.e("$TAG to JSON Array, data:$data", e)
+            AppLogger.e("$TAG get ACs, to JSON Array, data:$data", e)
             return emptySet()
         }
         val result = TreeSet<Category>()
@@ -106,7 +114,7 @@ class ParserLayerRadioBrowserImpl(private val mFilter: Filter) : ParserLayer {
             val jsonObject = try {
                 array[i] as JSONObject
             } catch (e: Exception) {
-                AppLogger.e("$TAG getCategories, data:$data", e)
+                AppLogger.e("$TAG get AC, data:$data", e)
                 continue
             }
             if (jsonObject.has(KEY_NAME)) {

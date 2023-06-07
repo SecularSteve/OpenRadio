@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2022, 2023. The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,111 +18,249 @@ package com.yuriy.openradio.shared.utils
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import com.yuriy.openradio.R
+import com.yuriy.openradio.shared.model.media.Category
 import com.yuriy.openradio.shared.model.media.MediaId
+import com.yuriy.openradio.shared.model.media.RadioStation
+import com.yuriy.openradio.shared.model.media.getStreamBitrate
 import com.yuriy.openradio.shared.service.location.Country
 import com.yuriy.openradio.shared.service.location.LocationService
 import java.util.Locale
 
 object MediaItemBuilder {
 
-    fun buildFavoritesMenuItem(context: Context): MediaBrowserCompat.MediaItem {
-        val builder = MediaDescriptionCompat.Builder()
-            .setMediaId(MediaId.MEDIA_ID_FAVORITES_LIST)
-            .setTitle(context.getString(R.string.favorites_list_title))
+    fun buildRootMediaItem(): MediaItem {
+        return MediaItem.Builder()
+            .setMediaId(MediaId.MEDIA_ID_ROOT)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setFolderType(MediaMetadata.FOLDER_TYPE_ALBUMS)
+                    .setIsPlayable(false)
+                    .build()
+            )
+            .build()
+    }
+
+    fun buildMediaItemListEnded(): MediaItem {
+        return MediaItem.Builder()
+            .setMediaId(MediaId.MEDIA_ID_LIST_ENDED)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setIsPlayable(false)
+                    .build()
+            )
+            .build()
+    }
+
+    fun buildChildCategory(context: Context, category: Category): MediaItem {
+        val bundle = Bundle()
+        MediaItemHelper.setDrawableId(bundle, R.drawable.ic_child_categories)
+        return MediaItem.Builder()
+            .setMediaId(MediaId.MEDIA_ID_CHILD_CATEGORIES + category.id)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setFolderType(MediaMetadata.FOLDER_TYPE_ALBUMS)
+                    .setTitle(category.title)
+                    .setSubtitle(category.getDescription(context))
+                    .setExtras(bundle)
+                    .setIsPlayable(false)
+                    .build()
+            )
+            .build()
+    }
+
+    fun buildChildCategories(): MediaItem {
+        val bundle = Bundle()
+        MediaItemHelper.setDrawableId(bundle, R.drawable.ic_radio_station_empty)
+        return MediaItem.Builder()
+            .setMediaId(MediaId.MEDIA_ID_CHILD_CATEGORIES)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setExtras(bundle)
+                    .setIsPlayable(false)
+                    .build()
+            )
+            .build()
+    }
+
+    fun buildFavoritesMenuItem(context: Context): MediaItem {
         val bundle = Bundle()
         MediaItemHelper.setDrawableId(bundle, R.drawable.ic_stars_black_24dp)
-        builder.setExtras(bundle)
-        return MediaBrowserCompat.MediaItem(builder.build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE)
+        return MediaItem.Builder()
+            .setMediaId(MediaId.MEDIA_ID_FAVORITES_LIST)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(context.getString(R.string.favorites_list_title))
+                    .setExtras(bundle)
+                    .setIsPlayable(false)
+                    .build()
+            )
+            .build()
     }
 
-    fun buildRecentMenuItem(context: Context): MediaBrowserCompat.MediaItem {
-        val builder = MediaDescriptionCompat.Builder()
-            .setMediaId(MediaId.MEDIA_ID_RECENT_STATIONS)
-            .setTitle(context.getString(R.string.new_stations_title))
+    fun buildRecentMenuItem(context: Context): MediaItem {
         val bundle = Bundle()
         MediaItemHelper.setDrawableId(bundle, R.drawable.ic_fiber_new_black_24dp)
-        builder.setExtras(bundle)
-        return MediaBrowserCompat.MediaItem(builder.build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE)
+        return MediaItem.Builder()
+            .setMediaId(MediaId.MEDIA_ID_RECENT_STATIONS)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setFolderType(MediaMetadata.FOLDER_TYPE_ALBUMS)
+                    .setTitle(context.getString(R.string.new_stations_title))
+                    .setExtras(bundle)
+                    .setIsPlayable(false)
+                    .build()
+            )
+            .build()
     }
 
-    fun buildBrowseMenuItem(context: Context): MediaBrowserCompat.MediaItem {
-        val builder = MediaDescriptionCompat.Builder()
+    fun buildBrowseMenuItem(context: Context): MediaItem {
+        return MediaItem.Builder()
             .setMediaId(MediaId.MEDIA_ID_BROWSE_CAR)
-            .setTitle(context.getString(R.string.browse_title))
-        return MediaBrowserCompat.MediaItem(builder.build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setFolderType(MediaMetadata.FOLDER_TYPE_ALBUMS)
+                    .setTitle(context.getString(R.string.browse_title))
+                    .setIsPlayable(false)
+                    .build()
+            )
+            .build()
     }
 
-    fun buildPopularMenuItem(context: Context): MediaBrowserCompat.MediaItem {
-        val builder = MediaDescriptionCompat.Builder()
-            .setMediaId(MediaId.MEDIA_ID_POPULAR_STATIONS)
-            .setTitle(context.getString(R.string.popular_stations_title))
+    fun buildPopularMenuItem(context: Context): MediaItem {
         val bundle = Bundle()
         MediaItemHelper.setDrawableId(bundle, R.drawable.ic_trending_up_black_24dp)
-        builder.setExtras(bundle)
-        return MediaBrowserCompat.MediaItem(builder.build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE)
+        return MediaItem.Builder()
+            .setMediaId(MediaId.MEDIA_ID_POPULAR_STATIONS)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setFolderType(MediaMetadata.FOLDER_TYPE_ALBUMS)
+                    .setTitle(context.getString(R.string.popular_stations_title))
+                    .setExtras(bundle)
+                    .setIsPlayable(false)
+                    .build()
+            )
+            .build()
     }
 
-    fun buildCategoriesMenuItem(context: Context): MediaBrowserCompat.MediaItem {
-        val builder = MediaDescriptionCompat.Builder()
-            .setMediaId(MediaId.MEDIA_ID_ALL_CATEGORIES)
-            .setTitle(context.getString(R.string.all_categories_title))
+    fun buildCategoriesMenuItem(context: Context): MediaItem {
         val bundle = Bundle()
         MediaItemHelper.setDrawableId(bundle, R.drawable.ic_all_categories)
-        builder.setExtras(bundle)
-        return MediaBrowserCompat.MediaItem(builder.build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE)
+        return MediaItem.Builder()
+            .setMediaId(MediaId.MEDIA_ID_ALL_CATEGORIES)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setFolderType(MediaMetadata.FOLDER_TYPE_ALBUMS)
+                    .setTitle(context.getString(R.string.all_categories_title))
+                    .setExtras(bundle)
+                    .setIsPlayable(false)
+                    .build()
+            )
+            .build()
     }
 
-    fun buildCountriesMenuItem(context: Context): MediaBrowserCompat.MediaItem {
-        val builder = MediaDescriptionCompat.Builder()
-            .setMediaId(MediaId.MEDIA_ID_COUNTRIES_LIST)
-            .setTitle(context.getString(R.string.countries_list_title))
+    fun buildCountriesMenuItem(context: Context): MediaItem {
         val bundle = Bundle()
         MediaItemHelper.setDrawableId(bundle, R.drawable.ic_public_black_24dp)
-        builder.setExtras(bundle)
-        return MediaBrowserCompat.MediaItem(builder.build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE)
+        return MediaItem.Builder()
+            .setMediaId(MediaId.MEDIA_ID_COUNTRIES_LIST)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setFolderType(MediaMetadata.FOLDER_TYPE_ALBUMS)
+                    .setTitle(context.getString(R.string.countries_list_title))
+                    .setExtras(bundle)
+                    .setIsPlayable(false)
+                    .build()
+            )
+            .build()
     }
 
-    fun buildCountryMenuItem(context: Context, countryCode: String): MediaBrowserCompat.MediaItem {
+    fun buildCountryMenuItem(context: Context, countryCode: String): MediaItem {
         val identifier = context.resources.getIdentifier(
             "flag_" + countryCode.lowercase(Locale.ROOT),
             "drawable", context.packageName
         )
         val bundle = Bundle()
         MediaItemHelper.setDrawableId(bundle, identifier)
-        val builder = MediaDescriptionCompat.Builder()
+        return MediaItem.Builder()
             .setMediaId(MediaId.MEDIA_ID_COUNTRY_STATIONS)
-            .setTitle(LocationService.COUNTRY_CODE_TO_NAME[countryCode])
-            .setExtras(bundle)
-        return MediaBrowserCompat.MediaItem(builder.build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setFolderType(MediaMetadata.FOLDER_TYPE_ALBUMS)
+                    .setTitle(LocationService.COUNTRY_CODE_TO_NAME[countryCode])
+                    .setExtras(bundle)
+                    .setIsPlayable(false)
+                    .build()
+            )
+            .build()
     }
 
-    fun buildCountryMenuItem(context: Context, country: Country): MediaBrowserCompat.MediaItem {
-        val builder = MediaDescriptionCompat.Builder()
-            .setMediaId(
-                MediaId.MEDIA_ID_COUNTRIES_LIST + country.code
-            )
-            .setTitle(country.name)
-            .setSubtitle(country.code)
+    fun buildCountryMenuItem(context: Context, country: Country): MediaItem {
         val identifier = context.resources.getIdentifier(
             "flag_" + country.code.lowercase(Locale.ROOT),
             "drawable", context.packageName
         )
         val bundle = Bundle()
         MediaItemHelper.setDrawableId(bundle, identifier)
-        builder.setExtras(bundle)
-        return MediaBrowserCompat.MediaItem(builder.build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE)
+        return MediaItem.Builder()
+            .setMediaId(MediaId.MEDIA_ID_COUNTRIES_LIST + country.code)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setFolderType(MediaMetadata.FOLDER_TYPE_ALBUMS)
+                    .setTitle(country.name)
+                    .setSubtitle(country.code)
+                    .setExtras(bundle)
+                    .setIsPlayable(false)
+                    .build()
+            )
+            .build()
     }
 
-    fun buildDeviceLocalsMenuItem(context: Context): MediaBrowserCompat.MediaItem {
-        val builder = MediaDescriptionCompat.Builder()
-            .setMediaId(MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST)
-            .setTitle(context.getString(R.string.local_radio_stations_list_title))
+    fun buildDeviceLocalsMenuItem(context: Context): MediaItem {
         val bundle = Bundle()
         MediaItemHelper.setDrawableId(bundle, R.drawable.ic_locals)
-        builder.setExtras(bundle)
-        return MediaBrowserCompat.MediaItem(builder.build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE)
+        return MediaItem.Builder()
+            .setMediaId(MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setFolderType(MediaMetadata.FOLDER_TYPE_ALBUMS)
+                    .setTitle(context.getString(R.string.local_radio_stations_list_title))
+                    .setExtras(bundle)
+                    .setIsPlayable(false)
+                    .build()
+            )
+            .build()
+    }
+
+    fun buildPlayable(
+        radioStation: RadioStation,
+        sortId: Int,
+        isFavorite: Boolean = false,
+        isLocal: Boolean = false,
+        isUpdateLastPlayedField: Boolean = false
+    ): MediaItem {
+        val bundle = Bundle()
+        MediaItemHelper.updateBitrateField(bundle, radioStation.getStreamBitrate())
+        MediaItemHelper.updateFavoriteField(bundle, isFavorite)
+        MediaItemHelper.updateSortIdField(bundle, sortId)
+        MediaItemHelper.updateLocalRadioStationField(bundle, isLocal)
+        MediaItemHelper.updateLastPlayedField(bundle, isUpdateLastPlayedField)
+        MediaItemHelper.setDrawableId(bundle, R.drawable.ic_radio_station_empty)
+        return MediaItem.Builder()
+            .setMediaId(radioStation.id)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setFolderType(MediaMetadata.FOLDER_TYPE_NONE)
+                    .setTitle(radioStation.name)
+                    .setSubtitle(radioStation.country)
+                    .setDescription(radioStation.genre)
+                    .setArtworkUri(radioStation.imageUri)
+                    .setExtras(bundle)
+                    .setIsPlayable(true)
+                    .build()
+            )
+            .build()
     }
 }

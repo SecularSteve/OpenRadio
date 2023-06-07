@@ -34,8 +34,6 @@ class MediaItemRecentStations : MediaItemCommandImpl() {
 
     override fun execute(playbackStateListener: IUpdatePlaybackState, dependencies: MediaItemCommandDependencies) {
         super.execute(playbackStateListener, dependencies)
-        // Use result.detach to allow calling result.sendResult from another thread:
-        dependencies.result.detach()
         if (dependencies.isSavedInstance) {
             deliverResult(dependencies)
             return
@@ -49,7 +47,7 @@ class MediaItemRecentStations : MediaItemCommandImpl() {
                     dependencies,
                     dependencies.presenter.getRecentlyAddedStations()
                 )
-            } ?: dependencies.result.sendResult(null)
+            } ?: dependencies.resultListener.onResult()
         }
     }
 

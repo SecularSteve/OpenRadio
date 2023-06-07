@@ -16,6 +16,8 @@
         android:name="android.hardware.screen.landscape"
         android:required="false" />
 
+    <uses-sdk tools:overrideLibrary="androidx.car" />
+
     <queries>
         <package android:name="com.google.android.carassistant" />
     </queries>
@@ -56,6 +58,7 @@
             tools:ignore="ExportedService">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />
+                <action android:name="androidx.media3.session.MediaLibraryService"/>
             </intent-filter>
         </service>
 

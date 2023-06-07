@@ -38,8 +38,6 @@ class MediaItemSearchFromApp : IndexableMediaItemCommand() {
         dependencies: MediaItemCommandDependencies
     ) {
         super.execute(playbackStateListener, dependencies)
-        // Use result.detach to allow calling result.sendResult from another thread:
-        dependencies.result.detach()
         if (dependencies.isSavedInstance) {
             deliverResult(dependencies)
             return
@@ -52,7 +50,7 @@ class MediaItemSearchFromApp : IndexableMediaItemCommand() {
                     dependencies,
                     dependencies.presenter.getSearchStations(AppUtils.getSearchQueryFromBundle(dependencies.options))
                 )
-            } ?: dependencies.result.sendResult(null)
+            } ?: dependencies.resultListener.onResult()
         }
     }
 }

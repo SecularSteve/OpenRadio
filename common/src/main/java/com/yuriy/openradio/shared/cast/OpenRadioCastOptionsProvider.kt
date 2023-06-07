@@ -17,13 +17,15 @@
 package com.yuriy.openradio.shared.cast
 
 import android.content.Context
-import com.google.android.exoplayer2.ext.cast.DefaultCastOptionsProvider
+import androidx.media3.cast.DefaultCastOptionsProvider
+import androidx.media3.common.util.UnstableApi
 import com.google.android.gms.cast.framework.CastOptions
 import com.google.android.gms.cast.framework.OptionsProvider
 import com.google.android.gms.cast.framework.SessionProvider
 
 class OpenRadioCastOptionsProvider : OptionsProvider {
 
+    @UnstableApi
     override fun getCastOptions(context: Context): CastOptions {
         return CastOptions.Builder()
             .setResumeSavedSession(false)

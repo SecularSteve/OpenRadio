@@ -19,29 +19,27 @@ package com.yuriy.openradio.shared.service.player
 import android.app.Notification
 import android.content.Context
 import android.net.Uri
-import android.support.v4.media.session.MediaSessionCompat
 import android.webkit.MimeTypeMap
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.DefaultLoadControl
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.IllegalSeekPositionException
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.PlaybackException
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.audio.AudioAttributes
-import com.google.android.exoplayer2.ext.cast.CastPlayer
-import com.google.android.exoplayer2.ext.cast.SessionAvailabilityListener
-import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
-import com.google.android.exoplayer2.metadata.Metadata
-import com.google.android.exoplayer2.metadata.icy.IcyInfo
-import com.google.android.exoplayer2.metadata.id3.TextInformationFrame
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
-import com.google.android.exoplayer2.source.UnrecognizedInputFormatException
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
-import com.google.android.exoplayer2.ui.PlayerNotificationManager
-import com.google.android.exoplayer2.upstream.HttpDataSource
-import com.google.android.exoplayer2.util.MimeTypes
-import com.google.android.exoplayer2.util.Util
+import androidx.media3.cast.CastPlayer
+import androidx.media3.cast.SessionAvailabilityListener
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
+import androidx.media3.common.IllegalSeekPositionException
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Metadata
+import androidx.media3.common.MimeTypes
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.common.util.Util
+import androidx.media3.datasource.HttpDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.UnrecognizedInputFormatException
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.extractor.metadata.icy.IcyInfo
+import androidx.media3.extractor.metadata.id3.TextInformationFrame
 import com.google.android.gms.cast.framework.CastContext
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
@@ -75,6 +73,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * @param mContext  Application context.
  * @param mListener Listener for the wrapper's events.
  */
+@UnstableApi
 class OpenRadioPlayer(
     private val mContext: Context,
     private val mListener: Listener,
@@ -129,10 +128,6 @@ class OpenRadioPlayer(
      * Number of currently detected playback exceptions.
      */
     private val mNumOfExceptions = AtomicInteger(0)
-
-    private lateinit var mNotificationManager: MediaNotificationManager
-
-    private lateinit var mMediaSessionConnector: MediaSessionConnector
 
     private var mIsForegroundService = false
 
@@ -212,25 +207,8 @@ class OpenRadioPlayer(
         mEqualizerLayer.init(mExoPlayer.audioSessionId)
     }
 
-    fun onCreate(sessionToken: MediaSessionCompat.Token, mediaSessionConnector: MediaSessionConnector) {
-        /**
-         * The notification manager will use our player and media session to decide when to post
-         * notifications. When notifications are posted or removed our listener will be called, this
-         * allows us to promote the service to foreground (required so that we're not killed if
-         * the main UI is not visible).
-         */
-        mNotificationManager = MediaNotificationManager(
-            mContext,
-            sessionToken,
-            PlayerNotificationListener(),
-            NotificationListener()
-        )
-        mNotificationManager.showNotificationForPlayer(mCurrentPlayer)
-        mMediaSessionConnector = mediaSessionConnector
-        mMediaSessionConnector.setPlayer(mCurrentPlayer)
-        mMediaSessionConnector.setMediaMetadataProvider { player ->
-            ExoPlayerUtils.getMediaMetadataCompat(player.currentMediaItem, mStreamMetadata)
-        }
+    fun getPlayer(): Player {
+        return mCurrentPlayer
     }
 
     /**
@@ -238,9 +216,6 @@ class OpenRadioPlayer(
      */
     fun prepare(mediaId: String) {
         AppLogger.d("Prepare '$mediaId', cast[${mCastPlayer?.isCastSessionAvailable}]")
-        if (this::mMediaSessionConnector.isInitialized) {
-            mMediaSessionConnector.invalidateMediaSessionMetadata()
-        }
         mNumOfExceptions.set(0)
         mIndex = 0
         synchronized(mMediaItems) {
@@ -407,9 +382,6 @@ class OpenRadioPlayer(
                 OpenRadioService.MASTER_VOLUME_DEFAULT
             ).toFloat() / 100.0f
         )
-        if (this::mMediaSessionConnector.isInitialized) {
-            mMediaSessionConnector.setPlayer(mCurrentPlayer)
-        }
         previousPlayer?.stop(true)
     }
 
@@ -422,7 +394,6 @@ class OpenRadioPlayer(
 
     private fun updateStreamMetadata(msg: String) {
         mStreamMetadata = msg
-        mMediaSessionConnector.invalidateMediaSessionMetadata()
     }
 
     /**
@@ -499,15 +470,10 @@ class OpenRadioPlayer(
                         mListener.onStopForeground(false)
                         mIsForegroundService = false
                     }
-                    if (this@OpenRadioPlayer::mNotificationManager.isInitialized) {
-                        mNotificationManager.showNotificationForPlayer(mCurrentPlayer)
-                    }
                     mListener.onReady()
                 }
                 else -> {
-                    if (this@OpenRadioPlayer::mNotificationManager.isInitialized) {
-                        mNotificationManager.hideNotification()
-                    }
+                    //
                 }
             }
         }
@@ -596,39 +562,6 @@ class OpenRadioPlayer(
          */
         override fun onCastSessionUnavailable() {
             switchToPlayer(mCurrentPlayer, mExoPlayer)
-        }
-    }
-
-    /**
-     * Listen for notification events.
-     */
-    private inner class PlayerNotificationListener : PlayerNotificationManager.NotificationListener {
-
-        override fun onNotificationPosted(
-            notificationId: Int,
-            notification: Notification,
-            ongoing: Boolean
-        ) {
-            if (ongoing && mIsForegroundService.not()) {
-                try {
-                    mListener.onStartForeground(notificationId, notification)
-                    mIsForegroundService = true
-                } catch (throwable: Throwable) {
-                    AnalyticsUtils.logMessage("Cnt strt frgrd:${throwable.stackTraceToString()}")
-                }
-            }
-        }
-
-        override fun onNotificationCancelled(notificationId: Int, dismissedByUser: Boolean) {
-            mIsForegroundService = false
-            mListener.onStopForeground(true)
-        }
-    }
-
-    private inner class NotificationListener : MediaNotificationManager.Listener {
-
-        override fun onCloseApp() {
-            mListener.onCloseApp()
         }
     }
 

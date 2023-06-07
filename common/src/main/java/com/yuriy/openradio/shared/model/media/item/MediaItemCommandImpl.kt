@@ -16,14 +16,11 @@
 
 package com.yuriy.openradio.shared.model.media.item
 
-import android.support.v4.media.MediaBrowserCompat
 import com.yuriy.openradio.R
-import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommand.IUpdatePlaybackState
 import com.yuriy.openradio.shared.model.media.toMediaItemPlayable
-import com.yuriy.openradio.shared.utils.MediaItemHelper
-import com.yuriy.openradio.shared.utils.PlayerUtils
+import com.yuriy.openradio.shared.utils.MediaItemBuilder
 import kotlinx.coroutines.Job
 import java.util.TreeSet
 
@@ -51,22 +48,11 @@ abstract class MediaItemCommandImpl internal constructor() : MediaItemCommand {
     ) {
         if (set.isEmpty()) {
             if (doLoadNoDataReceived()) {
-                val track = MediaItemHelper.buildMediaMetadataForEmptyCategory(
-                    dependencies.context,
-                    MediaId.MEDIA_ID_CHILD_CATEGORIES
-                )
-                val mediaDescription = track.description
-                val mediaItem = MediaBrowserCompat.MediaItem(
-                    mediaDescription, MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
-                )
-                MediaItemHelper.setDrawableId(mediaItem.description.extras, R.drawable.ic_radio_station_empty)
-                dependencies.addMediaItem(mediaItem)
-                dependencies.result.sendResult(dependencies.getMediaItems())
-                dependencies.resultListener.onResult()
+                dependencies.addMediaItem(MediaItemBuilder.buildChildCategories())
+                dependencies.resultListener.onResult(dependencies.getMediaItems())
                 playbackStateListener.updatePlaybackState(dependencies.context.getString(R.string.no_data_message))
             } else {
-                dependencies.result.sendResult(PlayerUtils.createListEndedResult())
-                dependencies.resultListener.onResult()
+                dependencies.resultListener.onResult(dependencies.getMediaItems())
             }
             return
         }
@@ -85,7 +71,6 @@ abstract class MediaItemCommandImpl internal constructor() : MediaItemCommand {
                 )
             )
         }
-        dependencies.result.sendResult(dependencies.getMediaItems())
-        dependencies.resultListener.onResult(set, pageNumber)
+        dependencies.resultListener.onResult(dependencies.getMediaItems(), pageNumber)
     }
 }

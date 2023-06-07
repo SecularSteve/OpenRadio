@@ -40,8 +40,6 @@ class MediaItemSearchFromService : IndexableMediaItemCommand() {
         dependencies: MediaItemCommandDependencies
     ) {
         super.execute(playbackStateListener, dependencies)
-        // Use result.detach to allow calling result.sendResult from another thread:
-        dependencies.result.detach()
         if (dependencies.isSavedInstance) {
             deliverResult(dependencies)
             return
@@ -62,7 +60,7 @@ class MediaItemSearchFromService : IndexableMediaItemCommand() {
                         }
                     )
                 )
-            } ?: dependencies.result.sendResult(null)
+            } ?: dependencies.resultListener.onResult()
         }
     }
 }

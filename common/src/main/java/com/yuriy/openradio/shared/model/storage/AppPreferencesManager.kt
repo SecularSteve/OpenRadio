@@ -17,7 +17,8 @@ package com.yuriy.openradio.shared.model.storage
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.google.android.exoplayer2.DefaultLoadControl
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultLoadControl
 
 /**
  * Created by Yuriy Chernyshov
@@ -120,6 +121,7 @@ object AppPreferencesManager {
         editor.apply()
     }
 
+    @UnstableApi
     fun getMinBuffer(context: Context): Int {
         return getSharedPreferences(context).getInt(PREFS_KEY_MIN_BUFFER, DefaultLoadControl.DEFAULT_MIN_BUFFER_MS)
     }
@@ -130,6 +132,7 @@ object AppPreferencesManager {
         editor.apply()
     }
 
+    @UnstableApi
     fun getMaxBuffer(context: Context): Int {
         return getSharedPreferences(context).getInt(PREFS_KEY_MAX_BUFFER, DefaultLoadControl.DEFAULT_MAX_BUFFER_MS)
     }

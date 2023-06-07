@@ -17,6 +17,7 @@
 package com.yuriy.openradio.mobile.view.activity
 
 import android.support.v4.media.MediaBrowserCompat
+import androidx.media3.common.MediaItem
 import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.toMediaItemPlayable
 import com.yuriy.openradio.shared.model.storage.FavoritesStorage
@@ -31,7 +32,7 @@ class MainActivityPresenterImpl(
         return mLatestRadioStationStorage.get()
     }
 
-    override fun getLastMediaItem(): MediaBrowserCompat.MediaItem {
+    override fun getLastMediaItem(): MediaItem {
         val radioStation = getLastRadioStation()
         return radioStation.toMediaItemPlayable(
             isFavorite = mFavoritesStorage.isFavorite(radioStation)

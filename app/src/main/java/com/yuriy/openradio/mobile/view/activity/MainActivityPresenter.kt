@@ -16,7 +16,7 @@
 
 package com.yuriy.openradio.mobile.view.activity
 
-import android.support.v4.media.MediaBrowserCompat
+import androidx.media3.common.MediaItem
 import com.yuriy.openradio.shared.model.media.RadioStation
 
 /**
@@ -26,5 +26,5 @@ interface MainActivityPresenter {
 
     fun getLastRadioStation(): RadioStation
 
-    fun getLastMediaItem(): MediaBrowserCompat.MediaItem
+    fun getLastMediaItem(): MediaItem
 }

@@ -22,32 +22,37 @@ import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.ConditionVariable
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import android.os.Message
-import android.os.ResultReceiver
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.media.MediaBrowserServiceCompat
 import androidx.media.utils.MediaConstants
-import com.google.android.exoplayer2.PlaybackException
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
-import com.google.android.exoplayer2.ext.mediasession.TimelineQueueNavigator
-import com.google.android.exoplayer2.source.UnrecognizedInputFormatException
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.source.UnrecognizedInputFormatException
+import androidx.media3.session.LibraryResult
+import androidx.media3.session.MediaLibraryService
+import androidx.media3.session.MediaSession
+import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionResult
+import com.google.common.collect.ImmutableList
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.MoreExecutors
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.broadcast.AppLocalBroadcast
 import com.yuriy.openradio.shared.broadcast.BTConnectionReceiver
 import com.yuriy.openradio.shared.broadcast.BecomingNoisyReceiver
 import com.yuriy.openradio.shared.broadcast.RemoteControlReceiver
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
+import com.yuriy.openradio.shared.model.media.BrowseTree
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.MediaStream
 import com.yuriy.openradio.shared.model.media.RadioStation
@@ -61,13 +66,12 @@ import com.yuriy.openradio.shared.model.net.NetworkMonitorListener
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.model.storage.RadioStationsStorage
 import com.yuriy.openradio.shared.model.timer.SleepTimerListener
-import com.yuriy.openradio.shared.service.location.Country
 import com.yuriy.openradio.shared.service.player.OpenRadioPlayer
 import com.yuriy.openradio.shared.utils.AnalyticsUtils
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.IntentUtils
-import com.yuriy.openradio.shared.utils.MediaItemHelper
+import com.yuriy.openradio.shared.utils.MediaItemBuilder
 import com.yuriy.openradio.shared.utils.NetUtils
 import com.yuriy.openradio.shared.utils.PackageValidator
 import com.yuriy.openradio.shared.utils.PlayerUtils
@@ -79,6 +83,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import java.util.TreeSet
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -87,7 +92,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * On 12/13/14
  * E-Mail: chernyshov.yuriy@gmail.com
  */
-class OpenRadioService : MediaBrowserServiceCompat() {
+@UnstableApi
+class OpenRadioService : MediaLibraryService() {
 
     /**
      * Player to play Radio stream.
@@ -101,7 +107,7 @@ class OpenRadioService : MediaBrowserServiceCompat() {
     /**
      * Media Session.
      */
-    private lateinit var mSession: MediaSessionCompat
+    private lateinit var mSession: MediaLibrarySession
 
     private val mPackageValidator by lazy {
         PackageValidator(applicationContext, R.xml.allowed_media_browser_callers)
@@ -168,11 +174,18 @@ class OpenRadioService : MediaBrowserServiceCompat() {
     @Volatile
     private var mPlayerState = Player.STATE_IDLE
     private var mIsRestoreState = false
-    private lateinit var mMediaSessionConnector: MediaSessionConnector
 
     private lateinit var mPresenter: OpenRadioServicePresenter
     private val mSleepTimerListener = SleepTimerListenerImpl()
     private val mRemoteControlListener = RemoteControlListenerImpl()
+
+    private val mBrowseTree: BrowseTree by lazy {
+        BrowseTree()
+    }
+
+    private val mExecutorService by lazy {
+        MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor())
+    }
 
     /**
      * Default constructor.
@@ -192,7 +205,7 @@ class OpenRadioService : MediaBrowserServiceCompat() {
 
     interface ResultListener {
 
-        fun onResult(set: Set<RadioStation> = TreeSet(), pageNumber: Int = 1)
+        fun onResult(items: List<MediaItem> = ArrayList(), pageNumber: Int = 1)
     }
 
     private inner class StorageListener : RadioStationsStorage.Listener {
@@ -237,6 +250,14 @@ class OpenRadioService : MediaBrowserServiceCompat() {
         mPresenter = presenter
     }
 
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? {
+        return if ("android.media.session.MediaController" == controllerInfo.packageName
+            || mPackageValidator.isKnownCaller(controllerInfo.packageName, controllerInfo.uid)
+        ) {
+            mSession
+        } else null
+    }
+
     override fun onCreate() {
         super.onCreate()
         AppLogger.i("$TAG on create")
@@ -270,46 +291,64 @@ class OpenRadioService : MediaBrowserServiceCompat() {
         // Need this component for API 20 and earlier.
         val mediaButtonReceiver = ComponentName(applicationContext, RemoteControlReceiver::class.java)
         // Start a new MediaSession
-        mSession = MediaSessionCompat(applicationContext, "OpenRadioService", mediaButtonReceiver, null)
-            .apply {
-                setSessionActivity(sessionActivityPendingIntent)
-                isActive = true
+//        mSession = MediaSession.Builder(applicationContext, "OpenRadioService", mediaButtonReceiver, null)
+//            .apply {
+//                setSessionActivity(sessionActivityPendingIntent)
+//                isActive = true
+//            }
+        mSession = with(
+            MediaLibrarySession.Builder(
+                this, mPlayer.getPlayer(), ServiceCallback()
+            )
+        ) {
+            setId(packageName)
+            packageManager?.getLaunchIntentForPackage(packageName)?.let { sessionIntent ->
+                setSessionActivity(
+                    PendingIntent.getActivity(
+                        /* context= */ this@OpenRadioService,
+                        /* requestCode= */ 0,
+                        sessionIntent,
+                        if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE
+                        else PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+                )
             }
-        sessionToken = mSession.sessionToken
-        // ExoPlayer will manage the MediaSession for us.
-        mMediaSessionConnector = MediaSessionConnector(mSession)
-        mMediaSessionConnector.setPlaybackPreparer(PlaybackPreparer())
-        mMediaSessionConnector.setQueueNavigator(QueueNavigator(mSession))
-        mMediaSessionConnector.setCustomActionProviders(
-            object : MediaSessionConnector.CustomActionProvider {
+            build()
+        }
 
-                override fun onCustomAction(player: Player, action: String, extras: Bundle?) {
-                    if (action != CUSTOM_ACTION_THUMBS_UP) {
-                        return
-                    }
-                    mPresenter.updateRadioStationFavorite(mActiveRS)
-                    maybeNotifyRootCarChanged()
-                }
+//        mMediaSessionConnector.setPlaybackPreparer(PlaybackPreparer())
+//        mMediaSessionConnector.setQueueNavigator(QueueNavigator(mSession))
+//        mMediaSessionConnector.setCustomActionProviders(
+//            object : MediaSessionConnector.CustomActionProvider {
+//
+//                override fun onCustomAction(player: Player, action: String, extras: Bundle?) {
+//                    if (action != CUSTOM_ACTION_THUMBS_UP) {
+//                        return
+//                    }
+//                    mPresenter.updateRadioStationFavorite(mActiveRS)
+//                    maybeNotifyRootCarChanged()
+//                }
+//
+//                override fun getCustomAction(player: Player): PlaybackStateCompat.CustomAction? {
+//                    if (mActiveRS.isInvalid()) {
+//                        return null
+//                    }
+//                    var favoriteIcon = R.drawable.ic_favorite_off
+//                    if (mPresenter.isRadioStationFavorite(mActiveRS)) {
+//                        favoriteIcon = R.drawable.ic_favorite_on
+//                    }
+//                    return PlaybackStateCompat.CustomAction
+//                        .Builder(
+//                            CUSTOM_ACTION_THUMBS_UP,
+//                            this@OpenRadioService.getString(R.string.favorite),
+//                            favoriteIcon
+//                        )
+//                        .build()
+//                }
+//            }
+//        )
 
-                override fun getCustomAction(player: Player): PlaybackStateCompat.CustomAction? {
-                    if (mActiveRS.isInvalid()) {
-                        return null
-                    }
-                    var favoriteIcon = R.drawable.ic_favorite_off
-                    if (mPresenter.isRadioStationFavorite(mActiveRS)) {
-                        favoriteIcon = R.drawable.ic_favorite_on
-                    }
-                    return PlaybackStateCompat.CustomAction
-                        .Builder(
-                            CUSTOM_ACTION_THUMBS_UP,
-                            this@OpenRadioService.getString(R.string.favorite),
-                            favoriteIcon
-                        )
-                        .build()
-                }
-            }
-        )
-        mPlayer.onCreate(mSession.sessionToken, mMediaSessionConnector)
+        //mPlayer.onCreate(mSession.sessionToken, mMediaSessionConnector)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -333,10 +372,11 @@ class OpenRadioService : MediaBrowserServiceCompat() {
         }
         mDelayedStopHandler.removeCallbacksAndMessages(null)
         mPresenter.close()
-        if (this::mSession.isInitialized) {
-            mSession.run {
-                isActive = false
-                release()
+        mSession.run {
+            release()
+            if (player.playbackState != Player.STATE_IDLE) {
+                //player.removeListener(playerListener)
+                player.release()
             }
         }
         // Service is being killed, so make sure we release our resources
@@ -344,66 +384,44 @@ class OpenRadioService : MediaBrowserServiceCompat() {
         mPlayer.release()
     }
 
-    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
-        AnalyticsUtils.logMessage(
-            "$TAG GetRoot for clientPkgName=$clientPackageName, clientUid=$clientUid, " +
-                    "rootHints=${IntentUtils.bundleToString(rootHints)}"
-        )
-        // To ensure you are not allowing any arbitrary app to browse your app's contents, you
-        // need to check the origin:
-        if (mPackageValidator.isKnownCaller(clientPackageName, clientUid).not()) {
-            // If the request comes from an untrusted package, return null. No further calls will
-            // be made to other media browsing methods.
-            AppLogger.w("$TAG IGNORING request from untrusted package $clientPackageName")
-            return null
-        }
-        mIsPackageValid = true
-        mCurrentParentId = OpenRadioStore.getCurrentParentId(rootHints)
-        mIsRestoreState = OpenRadioStore.getRestoreState(rootHints)
-        val extras = Bundle()
-        extras.putBoolean(MediaConstants.BROWSER_SERVICE_EXTRAS_KEY_SEARCH_SUPPORTED, true)
-        mCurrentParentId = MediaId.MEDIA_ID_ROOT
-        return BrowserRoot(mCurrentParentId, extras)
-    }
+//    override fun onLoadChildren(parentId: String, result: Result<List<MediaBrowserCompat.MediaItem>>, options: Bundle) {
+//        handleOnLoadChildren(parentId, result, options)
+//    }
+//
+//    override fun onLoadChildren(parentId: String, result: Result<List<MediaBrowserCompat.MediaItem>>) {
+//        handleOnLoadChildren(parentId, result, Bundle())
+//    }
 
-    override fun onLoadChildren(parentId: String, result: Result<List<MediaBrowserCompat.MediaItem>>, options: Bundle) {
-        handleOnLoadChildren(parentId, result, options)
-    }
-
-    override fun onLoadChildren(parentId: String, result: Result<List<MediaBrowserCompat.MediaItem>>) {
-        handleOnLoadChildren(parentId, result, Bundle())
-    }
-
-    override fun onSearch(query: String, extras: Bundle?, result: Result<List<MediaBrowserCompat.MediaItem>>) {
-        val id = MediaId.MEDIA_ID_SEARCH_FROM_SERVICE
-        val command = mPresenter.getMediaItemCommand(id)
-        val dependencies = MediaItemCommandDependencies(
-            applicationContext, result, mPresenter, Country.COUNTRY_CODE_DEFAULT, id,
-            false, mIsRestoreState, AppUtils.makeSearchQueryBundle(query), mCommandScope,
-            object : ResultListener {
-                override fun onResult(set: Set<RadioStation>, pageNumber: Int) {
-                    if (pageNumber == 0) {
-                        mSearchStorage.clear()
-                    }
-                    mSearchStorage.addAll(set)
-                }
-            }
-        )
-        if (command != null) {
-            command.execute(
-                object : MediaItemCommand.IUpdatePlaybackState {
-
-                    override fun updatePlaybackState(error: String) {
-                        AppLogger.e("$TAG update playback state error $error")
-                    }
-                },
-                dependencies
-            )
-        } else {
-            AppLogger.w("$TAG skipping unmatched parentId: $id")
-            result.sendResult(null)
-        }
-    }
+//    override fun onSearch(query: String, extras: Bundle?, result: Result<List<MediaBrowserCompat.MediaItem>>) {
+//        val id = MediaId.MEDIA_ID_SEARCH_FROM_SERVICE
+//        val command = mPresenter.getMediaItemCommand(id)
+//        val dependencies = MediaItemCommandDependencies(
+//            applicationContext, result, mPresenter, Country.COUNTRY_CODE_DEFAULT, id,
+//            false, mIsRestoreState, AppUtils.makeSearchQueryBundle(query), mCommandScope,
+//            object : ResultListener {
+//                override fun onResult(set: Set<RadioStation>, pageNumber: Int) {
+//                    if (pageNumber == 0) {
+//                        mSearchStorage.clear()
+//                    }
+//                    mSearchStorage.addAll(set)
+//                }
+//            }
+//        )
+//        if (command != null) {
+//            command.execute(
+//                object : MediaItemCommand.IUpdatePlaybackState {
+//
+//                    override fun updatePlaybackState(error: String) {
+//                        AppLogger.e("$TAG update playback state error $error")
+//                    }
+//                },
+//                dependencies
+//            )
+//        } else {
+//            AppLogger.w("$TAG skipping unmatched parentId: $id")
+//            result.sendResult(null)
+//        }
+//    }
 
     private fun restoreActivePlaylist() {
         val pl = mPresenter.getAllFavorites()
@@ -434,7 +452,7 @@ class OpenRadioService : MediaBrowserServiceCompat() {
             // To force update Favorites list.
             mediaId = MediaId.MEDIA_ID_FAVORITES_LIST
         }
-        notifyChildrenChanged(mediaId)
+        //notifyChildrenChanged(mediaId)
     }
 
     private fun registerReceivers() {
@@ -453,42 +471,42 @@ class OpenRadioService : MediaBrowserServiceCompat() {
         mPresenter.removeRemoteControlListener()
     }
 
-    private fun handleOnLoadChildren(
-        parentId: String, result: Result<List<MediaBrowserCompat.MediaItem>>,
-        options: Bundle
-    ) {
-        AppLogger.i("$TAG OnLoadChildren $parentId, options:${IntentUtils.bundleToString(options)}")
-        val isSameCatalogue = AppUtils.isSameCatalogue(parentId, mCurrentParentId)
-        mCurrentParentId = parentId
-        val defaultCountryCode = mPresenter.getCountryCode()
-        // If Parent Id contains Country Code - use it in the API.
-        val countryCode = MediaId.getCountryCode(mCurrentParentId, defaultCountryCode)
-        val command = mPresenter.getMediaItemCommand(MediaId.getId(mCurrentParentId, AppUtils.EMPTY_STRING))
-        val dependencies = MediaItemCommandDependencies(
-            applicationContext, result, mPresenter, countryCode, mCurrentParentId,
-            isSameCatalogue, mIsRestoreState, options, mCommandScope,
-            object : ResultListener {
-                override fun onResult(set: Set<RadioStation>, pageNumber: Int) {
-                    this@OpenRadioService.onResult(set, pageNumber)
-                }
-            }
-        )
-        mIsRestoreState = false
-        if (command != null) {
-            command.execute(
-                object : MediaItemCommand.IUpdatePlaybackState {
-
-                    override fun updatePlaybackState(error: String) {
-                        AppLogger.e("$TAG update playback state error $error")
-                    }
-                },
-                dependencies
-            )
-        } else {
-            AppLogger.w("$TAG skipping unmatched parentId: $mCurrentParentId")
-            result.sendResult(null)
-        }
-    }
+//    private fun handleOnLoadChildren(
+//        parentId: String, result: Result<List<MediaBrowserCompat.MediaItem>>,
+//        options: Bundle
+//    ) {
+//        AppLogger.i("$TAG OnLoadChildren $parentId, options:${IntentUtils.bundleToString(options)}")
+//        val isSameCatalogue = AppUtils.isSameCatalogue(parentId, mCurrentParentId)
+//        mCurrentParentId = parentId
+//        val defaultCountryCode = mPresenter.getCountryCode()
+//        // If Parent Id contains Country Code - use it in the API.
+//        val countryCode = MediaId.getCountryCode(mCurrentParentId, defaultCountryCode)
+//        val command = mPresenter.getMediaItemCommand(MediaId.getId(mCurrentParentId, AppUtils.EMPTY_STRING))
+//        val dependencies = MediaItemCommandDependencies(
+//            applicationContext, result, mPresenter, countryCode, mCurrentParentId,
+//            isSameCatalogue, mIsRestoreState, options, mCommandScope,
+//            object : ResultListener {
+//                override fun onResult(set: Set<RadioStation>, pageNumber: Int) {
+//                    this@OpenRadioService.onResult(set, pageNumber)
+//                }
+//            }
+//        )
+//        mIsRestoreState = false
+//        if (command != null) {
+//            command.execute(
+//                object : MediaItemCommand.IUpdatePlaybackState {
+//
+//                    override fun updatePlaybackState(error: String) {
+//                        AppLogger.e("$TAG update playback state error $error")
+//                    }
+//                },
+//                dependencies
+//            )
+//        } else {
+//            AppLogger.w("$TAG skipping unmatched parentId: $mCurrentParentId")
+//            result.sendResult(null)
+//        }
+//    }
 
     /**
      * @param intent
@@ -624,9 +642,9 @@ class OpenRadioService : MediaBrowserServiceCompat() {
         }
         mDelayedStopHandler.removeCallbacksAndMessages(null)
 
-        if (mSession.isActive.not()) {
-            mSession.isActive = true
-        }
+//        if (mSession.isActive.not()) {
+//            mSession.isActive = true
+//        }
 
         // Release everything.
         relaxResources()
@@ -733,10 +751,10 @@ class OpenRadioService : MediaBrowserServiceCompat() {
      * @param mediaId ID of the Radio Station.
      */
     private fun handlePlayFromMediaId(mediaId: String) {
-        if (mediaId == MediaSessionCompat.QueueItem.UNKNOWN_ID.toString()) {
-            AppLogger.e("$TAG media id is invalid")
-            return
-        }
+        //if (mediaId == MediaSession.QueueItem.UNKNOWN_ID.toString()) {
+        //    AppLogger.e("$TAG media id is invalid")
+        //    return
+        //}
         setActiveRS(getStorage(mediaId).getById(mediaId))
         AppLogger.i("$TAG handle play $mActiveRS")
         // Play Radio Station
@@ -820,7 +838,7 @@ class OpenRadioService : MediaBrowserServiceCompat() {
             }
 
             OpenRadioStore.VALUE_NAME_UPDATE_TREE -> {
-                notifyChildrenChanged(mCurrentParentId)
+                //notifyChildrenChanged(mCurrentParentId)
             }
 
             OpenRadioStore.VALUE_NAME_CLEAR_CACHE -> {
@@ -843,9 +861,9 @@ class OpenRadioService : MediaBrowserServiceCompat() {
             }
 
             OpenRadioStore.VALUE_NAME_NOTIFY_CHILDREN_CHANGED -> {
-                notifyChildrenChanged(
-                    intent.getStringExtra(OpenRadioStore.EXTRA_KEY_PARENT_ID) ?: MediaId.MEDIA_ID_ROOT
-                )
+//                notifyChildrenChanged(
+//                    intent.getStringExtra(OpenRadioStore.EXTRA_KEY_PARENT_ID) ?: MediaId.MEDIA_ID_ROOT
+//                )
             }
 
             OpenRadioStore.VALUE_NAME_UPDATE_SORT_IDS -> {
@@ -859,7 +877,7 @@ class OpenRadioService : MediaBrowserServiceCompat() {
                 mPresenter.updateSortIds(
                     mediaId, sortId, categoryMediaId,
                 )
-                notifyChildrenChanged(categoryMediaId)
+//                notifyChildrenChanged(categoryMediaId)
             }
 
             OpenRadioStore.VALUE_NAME_TOGGLE_LAST_PLAYED_ITEM -> {
@@ -1041,92 +1059,92 @@ class OpenRadioService : MediaBrowserServiceCompat() {
         }
     }
 
-    private inner class QueueNavigator(mediaSession: MediaSessionCompat) : TimelineQueueNavigator(mediaSession) {
+//    private inner class QueueNavigator(mediaSession: MediaSessionCompat) : TimelineQueueNavigator(mediaSession) {
+//
+//        override fun getMediaDescription(player: Player, windowIndex: Int): MediaDescriptionCompat {
+//            if (windowIndex < getStorage(mActiveRS.id).size()) {
+//                val value = getStorage(mActiveRS.id).getAt(windowIndex)
+//                val item = MediaItemHelper.metadataFromRadioStation(applicationContext, value)
+//                return item.description
+//            }
+//            return MediaDescriptionCompat.Builder().build()
+//        }
+//
+//        override fun onSkipToPrevious(player: Player) {
+//            super.onSkipToPrevious(player)
+//            mPlayer.skipToPrevious()
+//        }
+//
+//        override fun onSkipToQueueItem(player: Player, id: Long) {
+//            super.onSkipToQueueItem(player, id)
+//            mPlayer.skipToQueueItem()
+//        }
+//
+//        override fun onSkipToNext(player: Player) {
+//            super.onSkipToNext(player)
+//            mPlayer.skipToNext()
+//        }
+//    }
 
-        override fun getMediaDescription(player: Player, windowIndex: Int): MediaDescriptionCompat {
-            if (windowIndex < getStorage(mActiveRS.id).size()) {
-                val value = getStorage(mActiveRS.id).getAt(windowIndex)
-                val item = MediaItemHelper.metadataFromRadioStation(applicationContext, value)
-                return item.description
-            }
-            return MediaDescriptionCompat.Builder().build()
-        }
-
-        override fun onSkipToPrevious(player: Player) {
-            super.onSkipToPrevious(player)
-            mPlayer.skipToPrevious()
-        }
-
-        override fun onSkipToQueueItem(player: Player, id: Long) {
-            super.onSkipToQueueItem(player, id)
-            mPlayer.skipToQueueItem()
-        }
-
-        override fun onSkipToNext(player: Player) {
-            super.onSkipToNext(player)
-            mPlayer.skipToNext()
-        }
-    }
-
-    private inner class PlaybackPreparer : MediaSessionConnector.PlaybackPreparer {
-
-        private val mTag = "PlbckPreparer"
-
-        override fun onCommand(player: Player, command: String, extras: Bundle?, cb: ResultReceiver?): Boolean {
-            AppLogger.d("$mTag command:$command ${IntentUtils.bundleToString(extras)}")
-            return false
-        }
-
-        /**
-         * Open Radio supports preparing (and playing) from search, as well as media ID, so those
-         * capabilities are declared here.
-         *
-         * TODO: Add support for ACTION_PREPARE and ACTION_PLAY, which mean "prepare/play something".
-         */
-        override fun getSupportedPrepareActions(): Long =
-            PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID or
-                    PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID or
-                    PlaybackStateCompat.ACTION_PREPARE_FROM_SEARCH or
-                    PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
-
-        override fun onPrepare(playWhenReady: Boolean) {
-            AppLogger.d("$mTag prepare, play:$playWhenReady, cat:$mCurrentParentId")
-            if (playWhenReady.not()) {
-                return
-            }
-            if (mActiveRS.isInvalid()) {
-                AppLogger.w("$mTag no active rs found after restore")
-                return
-            }
-            handlePlayRequest()
-        }
-
-        override fun onPrepareFromMediaId(mediaId: String, playWhenReady: Boolean, extras: Bundle?) {
-            AppLogger.d(
-                "$mTag prepare from media id:$mediaId, play:$playWhenReady, ${IntentUtils.bundleToString(extras)}"
-            )
-            mStorageListener.onClear()
-            mStorageListener.onAddAll(getStorage(mediaId).all)
-            handlePlayFromMediaId(mediaId)
-        }
-
-        /**
-         * This method is used by the Google Assistant to respond to requests such as:
-         * - Play Geisha from Wake Up on Open Radio
-         * - Play electronic music on Open Radio
-         * - Play music on Open Radio
-         */
-        override fun onPrepareFromSearch(query: String, playWhenReady: Boolean, extras: Bundle?) {
-            AppLogger.d("$mTag prepare from search '$query'")
-            performSearch(query)
-        }
-
-        override fun onPrepareFromUri(uri: Uri, playWhenReady: Boolean, extras: Bundle?) {
-            AppLogger.d(
-                "$mTag prepare from uri:$uri, play:$playWhenReady, ${IntentUtils.bundleToString(extras)}"
-            )
-        }
-    }
+//    private inner class PlaybackPreparer : MediaSessionConnector.PlaybackPreparer {
+//
+//        private val mTag = "PlbckPreparer"
+//
+//        override fun onCommand(player: Player, command: String, extras: Bundle?, cb: ResultReceiver?): Boolean {
+//            AppLogger.d("$mTag command:$command ${IntentUtils.bundleToString(extras)}")
+//            return false
+//        }
+//
+//        /**
+//         * Open Radio supports preparing (and playing) from search, as well as media ID, so those
+//         * capabilities are declared here.
+//         *
+//         * TODO: Add support for ACTION_PREPARE and ACTION_PLAY, which mean "prepare/play something".
+//         */
+//        override fun getSupportedPrepareActions(): Long =
+//            PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID or
+//                    PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID or
+//                    PlaybackStateCompat.ACTION_PREPARE_FROM_SEARCH or
+//                    PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
+//
+//        override fun onPrepare(playWhenReady: Boolean) {
+//            AppLogger.d("$mTag prepare, play:$playWhenReady, cat:$mCurrentParentId")
+//            if (playWhenReady.not()) {
+//                return
+//            }
+//            if (mActiveRS.isInvalid()) {
+//                AppLogger.w("$mTag no active rs found after restore")
+//                return
+//            }
+//            handlePlayRequest()
+//        }
+//
+//        override fun onPrepareFromMediaId(mediaId: String, playWhenReady: Boolean, extras: Bundle?) {
+//            AppLogger.d(
+//                "$mTag prepare from media id:$mediaId, play:$playWhenReady, ${IntentUtils.bundleToString(extras)}"
+//            )
+//            mStorageListener.onClear()
+//            mStorageListener.onAddAll(getStorage(mediaId).all)
+//            handlePlayFromMediaId(mediaId)
+//        }
+//
+//        /**
+//         * This method is used by the Google Assistant to respond to requests such as:
+//         * - Play Geisha from Wake Up on Open Radio
+//         * - Play electronic music on Open Radio
+//         * - Play music on Open Radio
+//         */
+//        override fun onPrepareFromSearch(query: String, playWhenReady: Boolean, extras: Bundle?) {
+//            AppLogger.d("$mTag prepare from search '$query'")
+//            performSearch(query)
+//        }
+//
+//        override fun onPrepareFromUri(uri: Uri, playWhenReady: Boolean, extras: Bundle?) {
+//            AppLogger.d(
+//                "$mTag prepare from uri:$uri, play:$playWhenReady, ${IntentUtils.bundleToString(extras)}"
+//            )
+//        }
+//    }
 
     private inner class SleepTimerListenerImpl : SleepTimerListener {
 
@@ -1150,6 +1168,177 @@ class OpenRadioService : MediaBrowserServiceCompat() {
 
         override fun onMediaPauseStop() {
             handlePauseRequest()
+        }
+    }
+
+    private inner class ServiceCallback : MediaLibrarySession.Callback {
+
+        @UnstableApi
+        override fun onGetLibraryRoot(
+            session: MediaLibrarySession, browser: MediaSession.ControllerInfo, params: LibraryParams?
+        ): ListenableFuture<LibraryResult<MediaItem>> {
+            AnalyticsUtils.logMessage(
+                "$TAG GetLibraryRoot for clientPkgName=${browser.packageName}, clientUid=${browser.uid}"
+            )
+            // By default, all known clients are permitted to search, but only tell unknown callers
+            // about search if permitted by the [BrowseTree].
+            mIsPackageValid = mPackageValidator.isKnownCaller(browser.packageName, browser.uid)
+            val rootExtras = Bundle().apply {
+                putBoolean(
+                    MediaConstants.BROWSER_SERVICE_EXTRAS_KEY_SEARCH_SUPPORTED,
+                    mIsPackageValid
+                )
+            }
+            //mIsRestoreState = OpenRadioStore.getRestoreState(rootHints)
+            val libraryParams = LibraryParams.Builder().setExtras(rootExtras).build()
+            val rootMediaItem = if (!mIsPackageValid) {
+                MediaItem.EMPTY
+            } else if (params?.isRecent == true) {
+                // TODO:
+                MediaItemBuilder.buildRootMediaItem()
+            } else {
+                MediaItemBuilder.buildRootMediaItem()
+            }
+            return Futures.immediateFuture(LibraryResult.ofItem(rootMediaItem, libraryParams))
+        }
+
+        override fun onGetChildren(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            parentId: String,
+            page: Int,
+            pageSize: Int,
+            params: LibraryParams?
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
+            AppLogger.d("$TAG GetChildren for $parentId page $page pageSize $pageSize")
+            return callWhenSourceReady(parentId) {
+                LibraryResult.ofItemList(
+                    mBrowseTree[parentId] ?: ImmutableList.of(),
+                    LibraryParams.Builder().build()
+                )
+            }
+        }
+
+        override fun onGetItem(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            mediaId: String
+        ): ListenableFuture<LibraryResult<MediaItem>> {
+//            return callWhenMusicSourceReady {
+//                LibraryResult.ofItem(
+//                    mBrowseTree.getMediaItemByMediaId(mediaId) ?: MediaItem.EMPTY,
+//                    LibraryParams.Builder().build()
+//                )
+//            }
+            AppLogger.d("$TAG GetItem for $mediaId")
+            return Futures.immediateFuture(
+                LibraryResult.ofItem(
+                    MediaItem.EMPTY,
+                    LibraryParams.Builder().build()
+                )
+            )
+        }
+
+        override fun onSearch(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            query: String,
+            params: LibraryParams?
+        ): ListenableFuture<LibraryResult<Void>> {
+//            return callWhenMusicSourceReady {
+//                val searchResult = musicSource.search(query, params?.extras ?: Bundle())
+//                mSession.notifySearchResultChanged(browser, query, searchResult.size, params)
+//                LibraryResult.ofVoid()
+//            }
+            return Futures.immediateFuture(
+                LibraryResult.ofVoid()
+            )
+        }
+
+        override fun onGetSearchResult(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            query: String,
+            page: Int,
+            pageSize: Int,
+            params: LibraryParams?
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
+//            return callWhenMusicSourceReady {
+//                val searchResult = musicSource.search(query, params?.extras ?: Bundle())
+//                val fromIndex = max((page - 1) * pageSize, searchResult.size - 1)
+//                val toIndex = max(fromIndex + pageSize, searchResult.size)
+//                LibraryResult.ofItemList(searchResult.subList(fromIndex, toIndex), params)
+//            }
+            return Futures.immediateFuture(
+                LibraryResult.ofItemList(
+                    ImmutableList.of(),
+                    LibraryParams.Builder().build()
+                )
+            )
+        }
+
+        override fun onAddMediaItems(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            mediaItems: MutableList<MediaItem>
+        ): ListenableFuture<MutableList<MediaItem>> {
+//            return callWhenMusicSourceReady {
+//                mediaItems.map { mBrowseTree.getMediaItemByMediaId(it.mediaId)!! }.toMutableList()
+//            }
+            AppLogger.d("$TAG AddMediaItems ")
+            return Futures.immediateFuture(
+                ImmutableList.of()
+            )
+        }
+
+        override fun onCustomCommand(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            customCommand: SessionCommand,
+            args: Bundle
+        ): ListenableFuture<SessionResult> {
+            return Futures.immediateFuture(SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED))
+        }
+
+        private fun <T> callWhenSourceReady(parentId: String, action: () -> T): ListenableFuture<T> {
+            if (mBrowseTree[parentId] != null) {
+                return Futures.immediateFuture(action())
+            }
+
+            val command = mPresenter.getMediaItemCommand(MediaId.getId(parentId, AppUtils.EMPTY_STRING))
+            val defaultCountryCode = mPresenter.getCountryCode()
+            // If Parent Id contains Country Code - use it in the API.
+            val countryCode = MediaId.getCountryCode(parentId, defaultCountryCode)
+            val conditionVariable = ConditionVariable()
+            val dependencies = MediaItemCommandDependencies(
+                applicationContext, mPresenter, countryCode, mCurrentParentId,
+                false, mIsRestoreState, Bundle(), mCommandScope,
+                object : ResultListener {
+
+                    override fun onResult(items: List<MediaItem>, pageNumber: Int) {
+                        AppLogger.d("$TAG loaded ${items.size} items for $parentId")
+                        mBrowseTree[parentId] = ArrayList(items)
+                        conditionVariable.open()
+                    }
+                }
+            )
+            if (command != null) {
+                command.execute(
+                    object : MediaItemCommand.IUpdatePlaybackState {
+
+                        override fun updatePlaybackState(error: String) {
+                            AppLogger.e("$TAG update playback state error $error")
+                        }
+                    },
+                    dependencies
+                )
+            } else {
+                AppLogger.w("$TAG skipping unmatched parentId: $parentId")
+            }
+            return mExecutorService.submit<T> {
+                conditionVariable.block()
+                action()
+            }
         }
     }
 

@@ -21,7 +21,8 @@ import android.content.Context
 import android.os.Bundle
 import android.text.TextUtils
 import android.widget.EditText
-import com.google.android.exoplayer2.DefaultLoadControl
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultLoadControl
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.utils.SafeToast.showAnyThread
@@ -85,6 +86,7 @@ class StreamBufferingDialog : BaseDialogFragment() {
 
     companion object {
 
+        @UnstableApi
         fun handleRestoreButton(
             minBuffer: EditText,
             maxBuffer: EditText,

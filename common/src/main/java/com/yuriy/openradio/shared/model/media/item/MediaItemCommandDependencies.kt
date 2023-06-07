@@ -18,8 +18,7 @@ package com.yuriy.openradio.shared.model.media.item
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
-import androidx.media.MediaBrowserServiceCompat
+import androidx.media3.common.MediaItem
 import com.yuriy.openradio.shared.service.OpenRadioService.ResultListener
 import com.yuriy.openradio.shared.service.OpenRadioServicePresenter
 import kotlinx.coroutines.CoroutineScope
@@ -39,7 +38,6 @@ class MediaItemCommandDependencies(
      * Context of the application.
      */
     val context: Context,
-    val result: MediaBrowserServiceCompat.Result<List<MediaBrowserCompat.MediaItem>>,
     val presenter: OpenRadioServicePresenter,
     val countryCode: String,
     val parentId: String,
@@ -50,13 +48,13 @@ class MediaItemCommandDependencies(
     val resultListener: ResultListener
 ) {
 
-    private val mMediaItems = ArrayList<MediaBrowserCompat.MediaItem>()
+    private val mMediaItems = ArrayList<MediaItem>()
 
-    fun addMediaItem(item: MediaBrowserCompat.MediaItem) {
+    fun addMediaItem(item: MediaItem) {
         mMediaItems.add(item)
     }
 
-    fun getMediaItems(): List<MediaBrowserCompat.MediaItem> {
+    fun getMediaItems(): List<MediaItem> {
         return ArrayList(mMediaItems)
     }
 }

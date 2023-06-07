@@ -24,8 +24,9 @@ import android.graphics.BitmapFactory
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import androidx.core.app.NotificationCompat
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.ui.PlayerNotificationManager
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.PlayerNotificationManager
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.utils.AppUtils
 
@@ -33,6 +34,7 @@ import com.yuriy.openradio.shared.utils.AppUtils
  * A wrapper class for ExoPlayer's PlayerNotificationManager. It sets up the notification shown to
  * the user during audio playback and provides track metadata, such as track title and icon image.
  */
+@UnstableApi
 class MediaNotificationManager(
     private val mContext: Context,
     sessionToken: MediaSessionCompat.Token,

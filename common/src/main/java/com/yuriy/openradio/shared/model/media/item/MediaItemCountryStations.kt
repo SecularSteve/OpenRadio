@@ -35,8 +35,6 @@ class MediaItemCountryStations : IndexableMediaItemCommand() {
 
     override fun execute(playbackStateListener: IUpdatePlaybackState, dependencies: MediaItemCommandDependencies) {
         super.execute(playbackStateListener, dependencies)
-        // Use result.detach to allow calling result.sendResult from another thread:
-        dependencies.result.detach()
         if (dependencies.isSavedInstance) {
             deliverResult(dependencies)
             return
@@ -56,7 +54,7 @@ class MediaItemCountryStations : IndexableMediaItemCommand() {
                     dependencies.presenter.getStationsByCountry(dependencies.countryCode, pageNumber),
                     pageNumber
                 )
-            } ?: dependencies.result.sendResult(null)
+            } ?: dependencies.resultListener.onResult()
         }
     }
 }

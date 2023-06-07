@@ -20,7 +20,7 @@ import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
 import android.view.View
-import com.google.android.exoplayer2.ExoPlayerLibraryInfo
+import androidx.media3.common.MediaLibraryInfo
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.utils.AnalyticsUtils
 import com.yuriy.openradio.shared.utils.IntentUtils
@@ -44,7 +44,7 @@ class AboutDialog : BaseDialogFragment() {
         setWindowDimensions(view, 0.9f, 0.9f)
         val context = requireContext()
         val exoPlayerVersion = view.findTextView(R.id.about_exo_player_ver_link_view)
-        val exoPlayerVersionText = getString(R.string.about_exo_text) + " " + ExoPlayerLibraryInfo.VERSION
+        val exoPlayerVersionText = getString(R.string.about_exo_text) + " " + MediaLibraryInfo.VERSION
         exoPlayerVersion.text = exoPlayerVersionText
 
         setOnClickOnText(context, view, R.id.about_author_link_view, IntentUtils.AUTHOR_PROFILE_URL)

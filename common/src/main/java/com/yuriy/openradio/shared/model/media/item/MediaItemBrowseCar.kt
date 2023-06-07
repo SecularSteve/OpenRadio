@@ -34,7 +34,6 @@ class MediaItemBrowseCar(private val mSource: Source) : MediaItemCommand {
 
     override fun execute(playbackStateListener: IUpdatePlaybackState, dependencies: MediaItemCommandDependencies) {
         val context = dependencies.context
-        dependencies.result.detach()
         if (mSource == Source.RADIO_BROWSER) {
             // Popular Radio Stations
             dependencies.addMediaItem(MediaItemBuilder.buildPopularMenuItem(context))
@@ -55,7 +54,6 @@ class MediaItemBrowseCar(private val mSource: Source) : MediaItemCommand {
             // Locals list
             dependencies.addMediaItem(MediaItemBuilder.buildDeviceLocalsMenuItem(context))
         }
-        dependencies.result.sendResult(dependencies.getMediaItems())
-        dependencies.resultListener.onResult()
+        dependencies.resultListener.onResult(dependencies.getMediaItems())
     }
 }

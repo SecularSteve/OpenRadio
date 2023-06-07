@@ -42,8 +42,6 @@ class MediaItemFavoritesList : MediaItemCommand {
         playbackStateListener: IUpdatePlaybackState,
         dependencies: MediaItemCommandDependencies
     ) {
-        // Use result.detach to allow calling result.sendResult from another thread:
-        dependencies.result.detach()
         mJob?.cancel()
         mJob = dependencies.mScope.launch(Dispatchers.IO) {
             withTimeoutOrNull(MediaItemCommand.CMD_TIMEOUT_MS) {
@@ -57,9 +55,8 @@ class MediaItemFavoritesList : MediaItemCommand {
                         radioStation.toMediaItemPlayable(isFavorite = true)
                     )
                 }
-                dependencies.result.sendResult(dependencies.getMediaItems())
-                dependencies.resultListener.onResult(list)
-            } ?: dependencies.result.sendResult(null)
+                dependencies.resultListener.onResult(dependencies.getMediaItems())
+            } ?: dependencies.resultListener.onResult()
         }
     }
 }

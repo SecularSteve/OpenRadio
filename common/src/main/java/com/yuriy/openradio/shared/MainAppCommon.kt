@@ -19,9 +19,10 @@ package com.yuriy.openradio.shared
 import android.content.Context
 import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
-import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.gms.security.ProviderInstaller
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
@@ -91,6 +92,7 @@ open class MainAppCommon : MultiDexApplication() {
          *
          * @param context Context of a callee.
          */
+        @UnstableApi
         private fun correctBufferSettings(context: Context) {
             val maxBufferMs = AppPreferencesManager.getMaxBuffer(context)
             val minBufferMs = AppPreferencesManager.getMinBuffer(context)

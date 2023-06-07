@@ -40,14 +40,12 @@ class MediaItemCountriesList : MediaItemCommand {
     private var mJob: Job? = null
 
     override fun execute(playbackStateListener: IUpdatePlaybackState, dependencies: MediaItemCommandDependencies) {
-        // Use result.detach to allow calling result.sendResult from another thread:
-        dependencies.result.detach()
         mJob?.cancel()
         mJob = dependencies.mScope.launch(Dispatchers.IO) {
             withTimeoutOrNull(MediaItemCommand.CMD_TIMEOUT_MS) {
                 // Load all countries into menu
                 loadAllCountries(playbackStateListener, dependencies)
-            } ?: dependencies.result.sendResult(null)
+            } ?: dependencies.resultListener.onResult()
         }
     }
 
@@ -77,8 +75,7 @@ class MediaItemCountriesList : MediaItemCommand {
             }
             dependencies.addMediaItem(MediaItemBuilder.buildCountryMenuItem(dependencies.context, country))
         }
-        dependencies.result.sendResult(dependencies.getMediaItems())
-        dependencies.resultListener.onResult()
+        dependencies.resultListener.onResult(dependencies.getMediaItems())
     }
 
     companion object {
