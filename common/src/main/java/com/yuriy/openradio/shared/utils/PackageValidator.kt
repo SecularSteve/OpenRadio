@@ -114,10 +114,6 @@ class PackageValidator(context: Context, @XmlRes xmlResId: Int) {
         } != null
 
         val isCallerKnown = when {
-            // Have no idea why these packages call Open Radio on some devices.
-            platformSignature == AppUtils.EMPTY_STRING -> false
-            callingPackage == "com.android.systemui" -> false
-            callingPackage == "com.android.bluetooth" -> false
             // If it's our own app making the call, allow it.
             callingUid == Process.myUid() -> true
             // If it's one of the apps on the allow list, allow it.

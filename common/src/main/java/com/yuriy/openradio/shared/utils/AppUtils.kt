@@ -20,17 +20,21 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.util.DisplayMetrics
+import android.webkit.MimeTypeMap
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.fragment.app.FragmentActivity
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
+import java.util.Locale
 import java.util.TreeSet
 
 /**
@@ -241,5 +245,28 @@ object AppUtils {
             return false
         }
         return newMediaId != MediaId.MEDIA_ID_ROOT && newMediaId == prevMediaId
+    }
+
+    /**
+     * Utility method to extract stream mime type from the stream extension (if exists).
+     */
+    fun getMimeTypeFromUri(uri: Uri): String {
+        val mime: String =
+            when (MimeTypeMap.getFileExtensionFromUrl(uri.toString()).lowercase(Locale.getDefault())) {
+                "aacp", "aac" -> MimeTypes.AUDIO_AAC
+                "ac3" -> MimeTypes.AUDIO_AC3
+                "ac4" -> MimeTypes.AUDIO_AC4
+                "flac" -> MimeTypes.AUDIO_FLAC
+                "mp3" -> MimeTypes.AUDIO_MPEG
+                "ogg", "oga" -> MimeTypes.AUDIO_OGG
+                "opus" -> MimeTypes.AUDIO_OPUS
+                "wav" -> MimeTypes.AUDIO_WAV
+                "weba" -> MimeTypes.AUDIO_WEBM
+                "m4a" -> "audio/m4a"
+                "m3u", "m3u8" -> MimeTypes.APPLICATION_M3U8
+                "ts" -> MimeTypes.VIDEO_MP2T
+                else -> MimeTypes.AUDIO_UNKNOWN
+            }
+        return mime
     }
 }

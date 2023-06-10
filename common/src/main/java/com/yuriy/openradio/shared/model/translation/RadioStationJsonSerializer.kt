@@ -18,7 +18,7 @@ package com.yuriy.openradio.shared.model.translation
 
 import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.getStreamBitrate
-import com.yuriy.openradio.shared.model.media.getStreamUrl
+import com.yuriy.openradio.shared.model.media.getStreamUrlFixed
 import com.yuriy.openradio.shared.utils.AppLogger
 import org.json.JSONObject
 
@@ -45,7 +45,7 @@ class RadioStationJsonSerializer : RadioStationSerializer {
             jsonObject.put(RadioStationJsonHelper.KEY_COUNTRY, radioStation.country)
             jsonObject.put(RadioStationJsonHelper.KEY_COUNTRY_CODE, radioStation.countryCode)
             jsonObject.put(RadioStationJsonHelper.KEY_GENRE, radioStation.genre)
-            jsonObject.put(RadioStationJsonHelper.KEY_STREAM_URL, radioStation.getStreamUrl())
+            jsonObject.put(RadioStationJsonHelper.KEY_STREAM_URL, radioStation.getStreamUrlFixed())
             jsonObject.put(RadioStationJsonHelper.KEY_HOME_PAGE, radioStation.homePage)
             jsonObject.put(RadioStationJsonHelper.KEY_IS_LOCAL, radioStation.isLocal)
             jsonObject.put(RadioStationJsonHelper.KEY_SORT_ID, radioStation.sortId)

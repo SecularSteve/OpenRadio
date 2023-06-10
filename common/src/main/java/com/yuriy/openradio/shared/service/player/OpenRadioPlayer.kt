@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2017-2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,29 @@ package com.yuriy.openradio.shared.service.player
 
 import android.app.Notification
 import android.content.Context
-import android.net.Uri
-import android.webkit.MimeTypeMap
+import android.os.Looper
+import android.view.Surface
+import android.view.SurfaceHolder
+import android.view.SurfaceView
+import android.view.TextureView
 import androidx.media3.cast.CastPlayer
 import androidx.media3.cast.SessionAvailabilityListener
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.DeviceInfo
 import androidx.media3.common.IllegalSeekPositionException
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Metadata
-import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
+import androidx.media3.common.TrackSelectionParameters
+import androidx.media3.common.Tracks
+import androidx.media3.common.VideoSize
+import androidx.media3.common.text.CueGroup
+import androidx.media3.common.util.Size
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.datasource.HttpDataSource
@@ -43,24 +54,19 @@ import androidx.media3.extractor.metadata.id3.TextInformationFrame
 import com.google.android.gms.cast.framework.CastContext
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
-import com.yuriy.openradio.shared.extentions.toMediaItemMetadata
 import com.yuriy.openradio.shared.model.eq.EqualizerLayer
-import com.yuriy.openradio.shared.model.media.RadioStation
-import com.yuriy.openradio.shared.model.media.getStreamUrlFixed
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.utils.AnalyticsUtils
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
-import com.yuriy.openradio.shared.utils.MediaItemHelper
 import com.yuriy.openradio.shared.utils.PlayerUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.net.HttpURLConnection
 import java.util.Collections
-import java.util.Locale
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.min
 
 /**
  * Created by Chernyshov Yurii
@@ -78,7 +84,7 @@ class OpenRadioPlayer(
     private val mContext: Context,
     private val mListener: Listener,
     private val mEqualizerLayer: EqualizerLayer
-) {
+) : Player {
     /**
      * Listener for the main public events.
      */
@@ -105,9 +111,11 @@ class OpenRadioPlayer(
      * The current player will either be an ExoPlayer (for local playback)
      * or a CastPlayer (for remote playback through a Cast device).
      */
-    private lateinit var mCurrentPlayer: Player
+    private var mPlayer: Player
 
-    private var mMediaItems = Collections.synchronizedList<MediaItem>(ArrayList())
+    private val mListeners = arrayListOf<Player.Listener>()
+
+    private var mPlaylist = Collections.synchronizedList<MediaItem>(ArrayList())
 
     /**
      * Handler for the ExoPlayer to handle events.
@@ -164,7 +172,7 @@ class OpenRadioPlayer(
         }
     }
 
-    private val mExoPlayer: ExoPlayer by lazy {
+    private val mExoPlayer: Player by lazy {
         AppLogger.i("Init ExoPlayer")
         val trackSelector = DefaultTrackSelector(mContext)
         trackSelector.parameters = DefaultTrackSelector.Parameters.Builder(mContext).build()
@@ -193,142 +201,584 @@ class OpenRadioPlayer(
             .setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
             .build()
         builder.setAudioAttributes(audioAttributes, true)
-        val exoPlayer = builder.build()
-        exoPlayer.addListener(mComponentListener)
-        exoPlayer.playWhenReady = true
-        exoPlayer
+        val player = builder.build()
+        player.addListener(mComponentListener)
+        player.playWhenReady = true
+        player
     }
 
     init {
-        switchToPlayer(
-            previousPlayer = null,
-            newPlayer = if (DependencyRegistryCommon.isCastAvailable) mCastPlayer!! else mExoPlayer
-        )
-        mEqualizerLayer.init(mExoPlayer.audioSessionId)
+        mPlayer = if (DependencyRegistryCommon.isCastAvailable) mCastPlayer!! else mExoPlayer
+        mEqualizerLayer.init((mExoPlayer as ExoPlayer).audioSessionId)
     }
 
-    fun getPlayer(): Player {
-        return mCurrentPlayer
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Player interface
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    override fun setVolume(value: Float) {
+        mPlayer.volume = value
+    }
+
+    override fun pause() {
+        mPlayer.pause()
+    }
+
+    override fun release() {
+        //mUiScope.launch { releaseIntrnl() }
+        mPlayer.release()
+        mPlaylist.clear()
+    }
+
+    override fun play() {
+        mPlayer.play()
+    }
+
+    override fun prepare() {
+        mPlayer.prepare()
+    }
+
+    override fun getApplicationLooper(): Looper {
+        return mPlayer.applicationLooper
+    }
+
+    override fun addListener(listener: Player.Listener) {
+        mPlayer.addListener(listener)
+        mListeners.add(listener)
+    }
+
+    override fun removeListener(listener: Player.Listener) {
+        mPlayer.removeListener(listener)
+        mListeners.remove(listener)
+    }
+
+    override fun setMediaItems(mediaItems: MutableList<MediaItem>) {
+        mPlayer.setMediaItems(mediaItems)
+        mPlaylist.clear()
+        mPlaylist.addAll(mediaItems)
+    }
+
+    override fun setMediaItems(mediaItems: MutableList<MediaItem>, resetPosition: Boolean) {
+        mPlayer.setMediaItems(mediaItems, resetPosition)
+        mPlaylist.clear()
+        mPlaylist.addAll(mediaItems)
+    }
+
+    override fun setMediaItems(mediaItems: MutableList<MediaItem>, startIndex: Int, startPositionMs: Long) {
+        mPlayer.setMediaItems(mediaItems, startIndex, startPositionMs)
+        mPlaylist.clear()
+        mPlaylist.addAll(mediaItems)
+    }
+
+    override fun setMediaItem(mediaItem: MediaItem) {
+        mPlayer.setMediaItem(mediaItem)
+        mPlaylist.clear()
+        mPlaylist.add(mediaItem)
+    }
+
+    override fun setMediaItem(mediaItem: MediaItem, startPositionMs: Long) {
+        mPlayer.setMediaItem(mediaItem, startPositionMs)
+        mPlaylist.clear()
+        mPlaylist.add(mediaItem)
+    }
+
+    override fun setMediaItem(mediaItem: MediaItem, resetPosition: Boolean) {
+        mPlayer.setMediaItem(mediaItem, resetPosition)
+        mPlaylist.clear()
+        mPlaylist.add(mediaItem)
+    }
+
+    override fun addMediaItem(mediaItem: MediaItem) {
+        mPlayer.addMediaItem(mediaItem)
+        mPlaylist.add(mediaItem)
+    }
+
+    override fun addMediaItem(index: Int, mediaItem: MediaItem) {
+        mPlayer.addMediaItem(index, mediaItem)
+        mPlaylist.add(index, mediaItem)
+    }
+
+    override fun addMediaItems(mediaItems: MutableList<MediaItem>) {
+        mPlayer.addMediaItems(mediaItems)
+        mPlaylist.addAll(mediaItems)
+    }
+
+    override fun addMediaItems(index: Int, mediaItems: MutableList<MediaItem>) {
+        mPlayer.addMediaItems(index, mediaItems)
+        mPlaylist.addAll(index, mediaItems)
+    }
+
+    override fun moveMediaItem(currentIndex: Int, newIndex: Int) {
+        mPlayer.moveMediaItem(currentIndex, newIndex)
+        mPlaylist.add(min(newIndex, mPlaylist.size), mPlaylist.removeAt(currentIndex))
+    }
+
+    override fun moveMediaItems(fromIndex: Int, toIndex: Int, newIndex: Int) {
+        val removedItems: ArrayDeque<MediaItem> = ArrayDeque()
+        val removedItemsLength = toIndex - fromIndex
+        for (i in removedItemsLength - 1 downTo 0) {
+            removedItems.addFirst(mPlaylist.removeAt(fromIndex + i))
+        }
+        mPlaylist.addAll(min(newIndex, mPlaylist.size), removedItems)
+    }
+
+    override fun removeMediaItem(index: Int) {
+        mPlayer.removeMediaItem(index)
+        mPlaylist.removeAt(index)
+    }
+
+    override fun removeMediaItems(fromIndex: Int, toIndex: Int) {
+        mPlayer.removeMediaItems(fromIndex, toIndex)
+        val removedItemsLength = toIndex - fromIndex
+        for (i in removedItemsLength - 1 downTo 0) {
+            mPlaylist.removeAt(fromIndex + i)
+        }
+    }
+
+    override fun clearMediaItems() {
+        mPlayer.clearMediaItems()
+        mPlaylist.clear()
+    }
+
+    override fun isCommandAvailable(command: Int): Boolean {
+        return mPlayer.isCommandAvailable(command)
+    }
+
+    override fun canAdvertiseSession(): Boolean {
+        return mPlayer.canAdvertiseSession()
+    }
+
+    override fun getAvailableCommands(): Player.Commands {
+        return mPlayer.availableCommands
+    }
+
+    override fun getPlaybackState(): Int {
+        return mPlayer.playbackState
+    }
+
+    override fun getPlaybackSuppressionReason(): Int {
+        return mPlayer.playbackSuppressionReason
+    }
+
+    override fun isPlaying(): Boolean {
+        return mPlayer.isPlaying
+    }
+
+    override fun getPlayerError(): PlaybackException? {
+        return mPlayer.playerError
+    }
+
+    override fun setPlayWhenReady(playWhenReady: Boolean) {
+        mPlayer.playWhenReady = playWhenReady
+    }
+
+    override fun getPlayWhenReady(): Boolean {
+        return mPlayer.playWhenReady
+    }
+
+    override fun setRepeatMode(repeatMode: Int) {
+        mPlayer.repeatMode = repeatMode
+    }
+
+    override fun getRepeatMode(): Int {
+        return mPlayer.repeatMode
+    }
+
+    override fun setShuffleModeEnabled(shuffleModeEnabled: Boolean) {
+        mPlayer.shuffleModeEnabled = shuffleModeEnabled
+    }
+
+    override fun getShuffleModeEnabled(): Boolean {
+        return mPlayer.shuffleModeEnabled
+    }
+
+    override fun isLoading(): Boolean {
+        return mPlayer.isLoading
+    }
+
+    override fun seekToDefaultPosition() {
+        mPlayer.seekToDefaultPosition()
+    }
+
+    override fun seekToDefaultPosition(mediaItemIndex: Int) {
+        mPlayer.seekToDefaultPosition(mediaItemIndex)
+    }
+
+    override fun seekTo(positionMs: Long) {
+        mPlayer.seekTo(positionMs)
+    }
+
+    override fun seekTo(mediaItemIndex: Int, positionMs: Long) {
+        mPlayer.seekTo(mediaItemIndex, positionMs)
+    }
+
+    override fun getSeekBackIncrement(): Long {
+        return mPlayer.seekBackIncrement
+    }
+
+    override fun seekBack() {
+        mPlayer.seekBack()
+    }
+
+    override fun getSeekForwardIncrement(): Long {
+        return mPlayer.seekForwardIncrement
+    }
+
+    override fun seekForward() {
+        mPlayer.seekForward()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun hasPrevious(): Boolean {
+        return mPlayer.hasPrevious()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun hasPreviousWindow(): Boolean {
+        return mPlayer.hasPreviousWindow()
+    }
+
+    override fun hasPreviousMediaItem(): Boolean {
+        return mPlayer.hasPreviousMediaItem()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun previous() {
+        mPlayer.previous()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun seekToPreviousWindow() {
+        mPlayer.seekToPreviousWindow()
+    }
+
+    override fun seekToPreviousMediaItem() {
+        mPlayer.seekToPreviousMediaItem()
+    }
+
+    override fun getMaxSeekToPreviousPosition(): Long {
+        return mPlayer.maxSeekToPreviousPosition
+    }
+
+    override fun seekToPrevious() {
+        mPlayer.seekToPrevious()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun hasNext(): Boolean {
+        return mPlayer.hasNext()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun hasNextWindow(): Boolean {
+        return mPlayer.hasNextWindow()
+    }
+
+    override fun hasNextMediaItem(): Boolean {
+        return mPlayer.hasNextMediaItem()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun next() {
+        mPlayer.next()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun seekToNextWindow() {
+        mPlayer.seekToNextWindow()
+    }
+
+    override fun seekToNextMediaItem() {
+        mPlayer.seekToNextMediaItem()
+    }
+
+    override fun seekToNext() {
+        mPlayer.seekToNext()
+    }
+
+    override fun setPlaybackParameters(playbackParameters: PlaybackParameters) {
+        mPlayer.playbackParameters = playbackParameters
+    }
+
+    override fun setPlaybackSpeed(speed: Float) {
+        mPlayer.setPlaybackSpeed(speed)
+    }
+
+    override fun getPlaybackParameters(): PlaybackParameters {
+        return mPlayer.playbackParameters
+    }
+
+    override fun stop() {
+        mPlayer.stop()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun stop(reset: Boolean) {
+        mPlayer.stop(reset)
+        if (reset) {
+            mPlaylist.clear()
+        }
+    }
+
+    override fun getCurrentTracks(): Tracks {
+        return mPlayer.currentTracks
+    }
+
+    override fun getTrackSelectionParameters(): TrackSelectionParameters {
+        return mPlayer.trackSelectionParameters
+    }
+
+    override fun setTrackSelectionParameters(parameters: TrackSelectionParameters) {
+        mPlayer.trackSelectionParameters = parameters
+    }
+
+    override fun getMediaMetadata(): MediaMetadata {
+        return mPlayer.mediaMetadata
+    }
+
+    override fun getPlaylistMetadata(): MediaMetadata {
+        return mPlayer.playlistMetadata
+    }
+
+    override fun setPlaylistMetadata(mediaMetadata: MediaMetadata) {
+        mPlayer.playlistMetadata = mediaMetadata
+    }
+
+    override fun getCurrentManifest(): Any? {
+        return mPlayer.currentManifest
+    }
+
+    override fun getCurrentTimeline(): Timeline {
+        return mPlayer.currentTimeline
+    }
+
+    override fun getCurrentPeriodIndex(): Int {
+        return mPlayer.currentPeriodIndex
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun getCurrentWindowIndex(): Int {
+        return mPlayer.currentWindowIndex
+    }
+
+    override fun getCurrentMediaItemIndex(): Int {
+        return mPlayer.currentMediaItemIndex
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun getNextWindowIndex(): Int {
+        return mPlayer.nextWindowIndex
+    }
+
+    override fun getNextMediaItemIndex(): Int {
+        return mPlayer.nextMediaItemIndex
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun getPreviousWindowIndex(): Int {
+        return mPlayer.previousWindowIndex
+    }
+
+    override fun getPreviousMediaItemIndex(): Int {
+        return mPlayer.previousMediaItemIndex
+    }
+
+    override fun getCurrentMediaItem(): MediaItem? {
+        return mPlayer.currentMediaItem
+    }
+
+    override fun getMediaItemCount(): Int {
+        return mPlayer.mediaItemCount
+    }
+
+    override fun getMediaItemAt(index: Int): MediaItem {
+        return mPlayer.getMediaItemAt(index)
+    }
+
+    override fun getDuration(): Long {
+        return mPlayer.duration
+    }
+
+    override fun getCurrentPosition(): Long {
+        return mPlayer.currentPosition
+    }
+
+    override fun getBufferedPosition(): Long {
+        return mPlayer.bufferedPosition
+    }
+
+    override fun getBufferedPercentage(): Int {
+        return mPlayer.bufferedPercentage
+    }
+
+    override fun getTotalBufferedDuration(): Long {
+        return mPlayer.totalBufferedDuration
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun isCurrentWindowDynamic(): Boolean {
+        return mPlayer.isCurrentWindowDynamic
+    }
+
+    override fun isCurrentMediaItemDynamic(): Boolean {
+        return mPlayer.isCurrentMediaItemDynamic
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun isCurrentWindowLive(): Boolean {
+        return mPlayer.isCurrentWindowLive
+    }
+
+    override fun isCurrentMediaItemLive(): Boolean {
+        return mPlayer.isCurrentMediaItemLive
+    }
+
+    override fun getCurrentLiveOffset(): Long {
+        return mPlayer.currentLiveOffset
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun isCurrentWindowSeekable(): Boolean {
+        return mPlayer.isCurrentWindowSeekable
+    }
+
+    override fun isCurrentMediaItemSeekable(): Boolean {
+        return mPlayer.isCurrentMediaItemSeekable
+    }
+
+    override fun isPlayingAd(): Boolean {
+        return mPlayer.isPlayingAd
+    }
+
+    override fun getCurrentAdGroupIndex(): Int {
+        return mPlayer.currentAdGroupIndex
+    }
+
+    override fun getCurrentAdIndexInAdGroup(): Int {
+        return mPlayer.currentAdIndexInAdGroup
+    }
+
+    override fun getContentDuration(): Long {
+        return mPlayer.contentDuration
+    }
+
+    override fun getContentPosition(): Long {
+        return mPlayer.contentPosition
+    }
+
+    override fun getContentBufferedPosition(): Long {
+        return mPlayer.contentBufferedPosition
+    }
+
+    override fun getAudioAttributes(): AudioAttributes {
+        return mPlayer.audioAttributes
+    }
+
+    override fun getVolume(): Float {
+        return mPlayer.volume
+    }
+
+    override fun clearVideoSurface() {
+        mPlayer.clearVideoSurface()
+    }
+
+    override fun clearVideoSurface(surface: Surface?) {
+        mPlayer.clearVideoSurface(surface)
+    }
+
+    override fun setVideoSurface(surface: Surface?) {
+        mPlayer.setVideoSurface(surface)
+    }
+
+    override fun setVideoSurfaceHolder(surfaceHolder: SurfaceHolder?) {
+        mPlayer.setVideoSurfaceHolder(surfaceHolder)
+    }
+
+    override fun clearVideoSurfaceHolder(surfaceHolder: SurfaceHolder?) {
+        mPlayer.clearVideoSurfaceHolder(surfaceHolder)
+    }
+
+    override fun setVideoSurfaceView(surfaceView: SurfaceView?) {
+        mPlayer.setVideoSurfaceView(surfaceView)
+    }
+
+    override fun clearVideoSurfaceView(surfaceView: SurfaceView?) {
+        mPlayer.clearVideoSurfaceView(surfaceView)
+    }
+
+    override fun setVideoTextureView(textureView: TextureView?) {
+        mPlayer.setVideoTextureView(textureView)
+    }
+
+    override fun clearVideoTextureView(textureView: TextureView?) {
+        mPlayer.clearVideoTextureView(textureView)
+    }
+
+    override fun getVideoSize(): VideoSize {
+        return mPlayer.videoSize
+    }
+
+    override fun getSurfaceSize(): Size {
+        return mPlayer.surfaceSize
+    }
+
+    override fun getCurrentCues(): CueGroup {
+        return mPlayer.currentCues
+    }
+
+    override fun getDeviceInfo(): DeviceInfo {
+        return mPlayer.deviceInfo
+    }
+
+    override fun getDeviceVolume(): Int {
+        return mPlayer.deviceVolume
+    }
+
+    override fun isDeviceMuted(): Boolean {
+        return mPlayer.isDeviceMuted
+    }
+
+    override fun setDeviceVolume(volume: Int) {
+        mPlayer.deviceVolume = volume
+    }
+
+    override fun increaseDeviceVolume() {
+        mPlayer.increaseDeviceVolume()
+    }
+
+    override fun decreaseDeviceVolume() {
+        mPlayer.decreaseDeviceVolume()
+    }
+
+    override fun setDeviceMuted(muted: Boolean) {
+        mPlayer.isDeviceMuted = muted
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    fun updatePlayer() {
+        if (DependencyRegistryCommon.isCastAvailable) {
+            switchToPlayer(mCastPlayer!!)
+        }
     }
 
     /**
      * Prepare player to play URI.
      */
-    fun prepare(mediaId: String) {
-        AppLogger.d("Prepare '$mediaId', cast[${mCastPlayer?.isCastSessionAvailable}]")
-        mNumOfExceptions.set(0)
-        mIndex = 0
-        synchronized(mMediaItems) {
-            for ((index, mediaItem) in mMediaItems.withIndex()) {
-                if (mediaItem.mediaId == mediaId) {
-                    mIndex = index
-                    break
-                }
-            }
-        }
-        prepareWithList(mIndex)
-    }
-
-    @Synchronized
-    fun clearItems() {
-        AppLogger.d("$LOG_TAG clear items")
-        mMediaItems.clear()
-        AppLogger.d("$LOG_TAG has ${mMediaItems.size} items")
-    }
-
-    @Synchronized
-    fun add(item: RadioStation, position: Int) {
-        AppLogger.d("$LOG_TAG add item")
-        for (i in mMediaItems) {
-            if (i.mediaId == item.id) {
-                AppLogger.w("$LOG_TAG skip add duplicate item")
-                return
-            }
-        }
-        mMediaItems.add(position, rsToPlayerMediaItem(mContext, item))
-        AppLogger.d("$LOG_TAG has ${mMediaItems.size} items")
-    }
-
-    @Synchronized
-    fun addItems(set: Set<RadioStation>) {
-        AppLogger.d("$LOG_TAG add ${set.size} items")
-        mMediaItems.addAll(rssToPlayerMediaItems(mContext, set))
-        AppLogger.d("$LOG_TAG has ${mMediaItems.size} items")
-    }
-
-    @Synchronized
-    fun updateItem(item: RadioStation) {
-        AppLogger.d("$LOG_TAG update $item")
-        for ((idx, i) in mMediaItems.withIndex()) {
-            if (i.mediaId == item.id) {
-                mMediaItems[idx] = rsToPlayerMediaItem(mContext, item)
-                return
-            }
-        }
-    }
-
-    fun mediaItemCount(): Int {
-        return mCurrentPlayer.mediaItemCount
-    }
-
-    /**
-     * Sets volume.
-     *
-     * @param value Value of the volume.
-     */
-    fun setVolume(value: Float) {
-        AppLogger.d("$LOG_TAG volume to $value")
-        mCurrentPlayer.volume = value
-    }
-
-    /**
-     * Play current stream based on the URI passed to [prepare] method.
-     */
-    fun play() {
-        if (isPlaying) {
-            return
-        }
-        AppLogger.d("$LOG_TAG play")
-        prepareWithList(mIndex)
-    }
-
-    /**
-     * Pause current stream based on the URI passed to [prepare] method.
-     */
-    fun pause() {
-        if (isPlaying.not()) {
-            return
-        }
-        AppLogger.d("$LOG_TAG pause")
-        mCurrentPlayer.stop()
-        mCurrentPlayer.playWhenReady = false
-    }
-
-    fun skipToPrevious() {
-        mIndex -= 1
-    }
-
-    fun skipToQueueItem() {
-        // Not in use.
-    }
-
-    fun skipToNext() {
-        mIndex += 1
-    }
-
-    /**
-     * Returns a value corresponded to whether or not current stream is playing.
-     *
-     * @return `true` in case of current stream is playing, `false` otherwise.
-     */
-    val isPlaying: Boolean
-        get() {
-            val isPlaying = mCurrentPlayer.isPlaying || mCurrentPlayer.isLoading ||
-                    mCurrentPlayer.playbackState == Player.STATE_BUFFERING ||
-                    mCurrentPlayer.playbackState == Player.STATE_READY
-            AppLogger.d("$LOG_TAG is playing:$isPlaying")
-            return isPlaying
-        }
+//    fun prepare(mediaId: String) {
+//        AppLogger.d("Prepare '$mediaId', cast[${mCastPlayer?.isCastSessionAvailable}]")
+//        mNumOfExceptions.set(0)
+//        mIndex = 0
+//        synchronized(mMediaItems) {
+//            for ((index, mediaItem) in mMediaItems.withIndex()) {
+//                if (mediaItem.mediaId == mediaId) {
+//                    mIndex = index
+//                    break
+//                }
+//            }
+//        }
+//        prepareWithList(mIndex)
+//    }
 
     /**
      * Resets the player to its uninitialized state.
@@ -338,58 +788,67 @@ class OpenRadioPlayer(
         stopCurrentPlayer()
     }
 
-    /**
-     * Release the player and associated resources.
-     */
-    fun release() {
-        mUiScope.launch { releaseIntrnl() }
-    }
-
     fun isStoppedByNetwork(): Boolean {
         return mStoppedByNetwork
     }
 
     private fun prepareWithList(index: Int) {
         try {
-            mCurrentPlayer.playWhenReady = true
-            mCurrentPlayer.setMediaItems(mMediaItems, index, 0)
-            mCurrentPlayer.prepare()
+            mPlayer.playWhenReady = true
+            mPlayer.setMediaItems(mPlaylist, index, 0)
+            mPlayer.prepare()
         } catch (e: IllegalSeekPositionException) {
-            AnalyticsUtils.logIllegalSeekPosition(mMediaItems.size, e)
+            AnalyticsUtils.logIllegalSeekPosition(mPlaylist.size, e)
         }
     }
 
     private fun stopCurrentPlayer() {
-        mCurrentPlayer.clearMediaItems()
-        mCurrentPlayer.stop()
+        mPlayer.clearMediaItems()
+        mPlayer.stop()
     }
 
-    private fun switchToPlayer(previousPlayer: Player?, newPlayer: Player) {
-        AppLogger.i("$LOG_TAG prev player: $previousPlayer")
-        AppLogger.i("$LOG_TAG new  player: $newPlayer")
-        if (previousPlayer == newPlayer) {
+    private fun switchToPlayer(player: Player) {
+        AppLogger.i("$LOG_TAG prev player: $mPlayer")
+        AppLogger.i("$LOG_TAG new  player: $player")
+        if (mPlayer == player) {
             return
         }
-        mCurrentPlayer = newPlayer
-        AppLogger.i("$LOG_TAG curr player: $mCurrentPlayer")
-        if (previousPlayer != null) {
-            stopCurrentPlayer()
-            prepareWithList(mIndex)
+        // Remove add all listeners before changing the player state.
+        for (listener in mListeners) {
+            mPlayer.removeListener(listener)
+            player.addListener(listener)
         }
-        setVolume(
-            AppPreferencesManager.getMasterVolume(
-                mContext,
-                OpenRadioService.MASTER_VOLUME_DEFAULT
-            ).toFloat() / 100.0f
-        )
-        previousPlayer?.stop(true)
+        // Add/remove our listener we use to workaround the missing metadata support of CastPlayer.
+        //mCurrentPlayer.removeListener(playerListener)
+        //player.addListener(playerListener)
+
+        player.repeatMode = mPlayer.repeatMode
+        player.shuffleModeEnabled = mPlayer.shuffleModeEnabled
+        player.playlistMetadata = mPlayer.playlistMetadata
+        player.trackSelectionParameters = mPlayer.trackSelectionParameters
+        player.volume = mPlayer.volume
+        player.playWhenReady = mPlayer.playWhenReady
+
+        // Prepare the new player.
+        player.setMediaItems(mPlaylist, currentMediaItemIndex, mPlayer.contentPosition)
+        player.prepare()
+
+        // Stop the previous player. Don't release so it can be used again.
+        mPlayer.clearMediaItems()
+        mPlayer.stop()
+
+        mPlayer = player
+        volume = AppPreferencesManager.getMasterVolume(
+            mContext,
+            OpenRadioService.MASTER_VOLUME_DEFAULT
+        ).toFloat() / 100.0f
     }
 
     private fun releaseIntrnl() {
         AppLogger.d("$LOG_TAG release intrl")
         mEqualizerLayer.deinit()
         reset()
-        mCurrentPlayer.release()
+        mPlayer.release()
     }
 
     private fun updateStreamMetadata(msg: String) {
@@ -425,6 +884,7 @@ class OpenRadioPlayer(
                     is IcyInfo -> {
                         title = entry.title ?: AppUtils.EMPTY_STRING
                     }
+
                     is TextInformationFrame -> {
                         when (entry.id) {
                             ExoPlayerUtils.METADATA_ID_TT2,
@@ -436,6 +896,7 @@ class OpenRadioPlayer(
                             }
                         }
                     }
+
                     else -> {
                         AnalyticsUtils.logMetadata(msg)
                     }
@@ -462,7 +923,7 @@ class OpenRadioPlayer(
                     if (playerState == Player.STATE_BUFFERING) {
                         updateStreamMetadata(mBufferingLabel)
                     }
-                    if (playerState == Player.STATE_READY && mCurrentPlayer.playWhenReady.not()) {
+                    if (playerState == Player.STATE_READY && mPlayer.playWhenReady.not()) {
                         // If playback is paused we remove the foreground state which allows the
                         // notification to be dismissed. An alternative would be to provide a
                         // "close" button in the notification which stops playback and clears
@@ -472,6 +933,7 @@ class OpenRadioPlayer(
                     }
                     mListener.onReady()
                 }
+
                 else -> {
                     //
                 }
@@ -482,16 +944,28 @@ class OpenRadioPlayer(
             if (player.isPlaying && mStreamMetadata == mBufferingLabel) {
                 updateStreamMetadata(mLiveStreamLabel)
             }
+            if (events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)
+                && !events.contains(Player.EVENT_MEDIA_METADATA_CHANGED)) {
+                // CastPlayer does not support onMetaDataChange. We can trigger this here when the
+                // media item changes.
+                if (mPlaylist.isNotEmpty()) {
+                    for (listener in mListeners) {
+                        listener.onMediaMetadataChanged(
+                            mPlaylist[player.currentMediaItemIndex].mediaMetadata
+                        )
+                    }
+                }
+            }
             if (events.contains(Player.EVENT_TIMELINE_CHANGED).not()
                 && (events.contains(Player.EVENT_POSITION_DISCONTINUITY)
-                || events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)
-                || events.contains(Player.EVENT_PLAY_WHEN_READY_CHANGED))
+                        || events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)
+                        || events.contains(Player.EVENT_PLAY_WHEN_READY_CHANGED))
             ) {
-                val index = if (mMediaItems.isNotEmpty()) {
+                val index = if (mPlaylist.isNotEmpty()) {
                     Util.constrainValue(
                         player.currentMediaItemIndex,
                         0,
-                        mMediaItems.size - 1
+                        mPlaylist.size - 1
                     )
                 } else -1
                 if (index != -1) {
@@ -538,6 +1012,7 @@ class OpenRadioPlayer(
                     HttpURLConnection.HTTP_FORBIDDEN -> {
                         msg = context.getString(R.string.media_stream_http_403)
                     }
+
                     HttpURLConnection.HTTP_NOT_FOUND -> {
                         msg = context.getString(R.string.media_stream_http_404)
                     }
@@ -554,14 +1029,14 @@ class OpenRadioPlayer(
          * remote Cast receiver rather than play audio locally.
          */
         override fun onCastSessionAvailable() {
-            switchToPlayer(mCurrentPlayer, mCastPlayer!!)
+            switchToPlayer(mCastPlayer!!)
         }
 
         /**
          * Called when a Cast session has ended and the user wishes to control playback locally.
          */
         override fun onCastSessionUnavailable() {
-            switchToPlayer(mCurrentPlayer, mExoPlayer)
+            switchToPlayer(mExoPlayer)
         }
     }
 
@@ -575,46 +1050,5 @@ class OpenRadioPlayer(
          *
          */
         private const val MAX_EXCEPTIONS_COUNT = 5
-
-        /**
-         * Utility method to extract stream mime type from the stream extension (if exists).
-         */
-        private fun getMimeTypeFromUri(uri: Uri): String {
-            val mime: String =
-                when (MimeTypeMap.getFileExtensionFromUrl(uri.toString()).lowercase(Locale.getDefault())) {
-                    "aacp", "aac" -> MimeTypes.AUDIO_AAC
-                    "ac3" -> MimeTypes.AUDIO_AC3
-                    "ac4" -> MimeTypes.AUDIO_AC4
-                    "flac" -> MimeTypes.AUDIO_FLAC
-                    "mp3" -> MimeTypes.AUDIO_MPEG
-                    "ogg", "oga" -> MimeTypes.AUDIO_OGG
-                    "opus" -> MimeTypes.AUDIO_OPUS
-                    "wav" -> MimeTypes.AUDIO_WAV
-                    "weba" -> MimeTypes.AUDIO_WEBM
-                    "m4a" -> "audio/m4a"
-                    "m3u", "m3u8" -> MimeTypes.APPLICATION_M3U8
-                    "ts" -> MimeTypes.VIDEO_MP2T
-                    else -> MimeTypes.AUDIO_UNKNOWN
-                }
-            return mime
-        }
-
-        private fun rssToPlayerMediaItems(context: Context, value: Set<RadioStation>): List<MediaItem> {
-            val list = ArrayList<MediaItem>()
-            for (item in value) {
-                list.add(rsToPlayerMediaItem(context, item))
-            }
-            return list
-        }
-
-        private fun rsToPlayerMediaItem(context: Context, value: RadioStation): MediaItem {
-            val uri = Uri.parse(value.getStreamUrlFixed())
-            return MediaItem.Builder()
-                .setMediaId(value.id)
-                .setUri(uri)
-                .setMediaMetadata(MediaItemHelper.metadataFromRadioStation(context, value).toMediaItemMetadata())
-                .setMimeType(getMimeTypeFromUri(uri))
-                .build()
-        }
     }
 }

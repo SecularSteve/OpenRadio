@@ -25,7 +25,7 @@ import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.RadioStationToAdd
-import com.yuriy.openradio.shared.model.media.getStreamUrl
+import com.yuriy.openradio.shared.model.media.getStreamUrlFixed
 import com.yuriy.openradio.shared.model.media.isInvalid
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.SafeToast.showAnyThread
@@ -114,7 +114,7 @@ class EditStationDialog : BaseAddEditStationDialog() {
      */
     private fun handleUI(radioStation: RadioStation) {
         mNameEdit.setText(radioStation.name)
-        mUrlEdit.setText(radioStation.getStreamUrl())
+        mUrlEdit.setText(radioStation.getStreamUrlFixed())
         mCountriesSpinner.setSelection(getCountryPosition(radioStation.country))
         mGenresSpinner.setSelection(getGenrePosition(radioStation.genre))
         mAddToFavCheckView.isChecked = mEditStationPresenter.isRadioStationFavorite(radioStation)

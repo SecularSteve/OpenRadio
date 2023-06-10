@@ -52,29 +52,25 @@ fun RadioStation.isInvalid(): Boolean {
             || TextUtils.isEmpty(this.id)
 }
 
-fun RadioStation.getStreamUrl(): String {
-    return this.mediaStream.getVariant(0).url
-}
-
 fun RadioStation.getStreamUrlFixed(): String {
     if (this.isMediaStreamFixedEmpty().not()) {
         return this.mediaStreamFixed.getVariant(0).url
     }
-    return this.mediaStream.getVariant(0).url
+    return mediaStream.getVariant(0).url
 }
 
 fun RadioStation.getStreamBitrate(): Int {
-    return this.mediaStream.getVariant(0).bitrate
+    return mediaStream.getVariant(0).bitrate
 }
 
 fun RadioStation.setVariant(bitrate: Int, url: String) {
-    this.mediaStream.clear()
-    this.mediaStream.setVariant(bitrate, url)
+    mediaStream.clear()
+    mediaStream.setVariant(bitrate, url)
 }
 
 fun RadioStation.setVariantFixed(bitrate: Int, url: String) {
-    this.mediaStreamFixed.clear()
-    this.mediaStreamFixed.setVariant(bitrate, url)
+    mediaStreamFixed.clear()
+    mediaStreamFixed.setVariant(bitrate, url)
 }
 
 class RadioStation : Serializable, Comparable<RadioStation> {

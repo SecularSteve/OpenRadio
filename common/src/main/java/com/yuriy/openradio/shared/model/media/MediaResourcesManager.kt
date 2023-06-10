@@ -28,6 +28,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.utils.AppLogger
+import com.yuriy.openradio.shared.utils.IntentUtils
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -276,31 +277,26 @@ class MediaResourcesManager(context: Context, className: String) {
         }
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
-            if (state == null) {
-                AppLogger.e("$mClassName playbackStateChanged to null state")
-                return
+            state?.let {
+                mCurrentState = it
+                mListener?.onPlaybackStateChanged(it)
             }
-            mCurrentState = state
-            mListener?.onPlaybackStateChanged(state)
         }
 
-        override fun onQueueChanged(queue: List<MediaSessionCompat.QueueItem>) {
-            mListener?.onQueueChanged(queue)
+        override fun onQueueChanged(queue: List<MediaSessionCompat.QueueItem>?) {
+            queue?.let { mListener?.onQueueChanged(it) }
         }
 
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
-            if (metadata == null) {
-                AppLogger.e("$mClassName metadata changed null")
-                return
+            metadata?.let {
+                AppLogger.d("TRACE::M::${IntentUtils.bundleToString(it.bundle)}")
+                AppLogger.d("TRACE::D::${IntentUtils.bundleToString(it.description.extras)}")
+                mListener?.onMetadataChanged(it)
             }
-            mListener?.onMetadataChanged(metadata)
         }
 
         fun dispatchLatestState() {
-            if (mCurrentState == null) {
-                return
-            }
-            onPlaybackStateChanged(mCurrentState)
+            mCurrentState?.let { onPlaybackStateChanged(it) }
         }
     }
 }

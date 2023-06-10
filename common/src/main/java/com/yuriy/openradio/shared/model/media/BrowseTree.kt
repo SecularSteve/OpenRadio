@@ -11,6 +11,11 @@ class BrowseTree {
 
     operator fun set(mediaId: String, children: MutableList<MediaItem>) {
         mMediaIdToChildren[mediaId] = children
+        children.forEach { mediaItem ->
+            run {
+                mMediaIdToMediaItem[mediaItem.mediaId] = mediaItem
+            }
+        }
     }
 
     fun getMediaItemByMediaId(mediaId: String) = mMediaIdToMediaItem[mediaId]

@@ -31,11 +31,9 @@ object PlayerUtils {
      * @return
      */
     fun isEndOfList(list: List<MediaBrowserCompat.MediaItem?>?): Boolean {
-        // TODO:
-//        return (list == null
-//                || list.size == 1
-//                && (list[0] == null || list[0] === mMediaItemListEnded))
-        return true
+        return (list == null
+                || list.size == 1
+                && (list[0] == null || list[0]?.mediaId === mMediaItemListEnded.mediaId))
     }
 
     fun playerStateToString(state: Int): String {

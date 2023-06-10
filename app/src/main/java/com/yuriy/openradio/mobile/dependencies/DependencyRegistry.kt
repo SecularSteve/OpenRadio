@@ -16,9 +16,6 @@
 
 package com.yuriy.openradio.mobile.dependencies
 
-import com.yuriy.openradio.mobile.view.activity.MainActivity
-import com.yuriy.openradio.mobile.view.activity.MainActivityPresenter
-import com.yuriy.openradio.mobile.view.activity.MainActivityPresenterImpl
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.dependencies.FavoritesStorageDependency
 import com.yuriy.openradio.shared.dependencies.LatestRadioStationStorageDependency
@@ -28,7 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 object DependencyRegistry : FavoritesStorageDependency, LatestRadioStationStorageDependency {
 
-    private lateinit var sMainActivityPresenter: MainActivityPresenter
     private lateinit var sFavoritesStorage: FavoritesStorage
     private lateinit var sLatestRadioStationStorage: LatestRadioStationStorage
 
@@ -42,10 +38,6 @@ object DependencyRegistry : FavoritesStorageDependency, LatestRadioStationStorag
 
         DependencyRegistryCommon.injectFavoritesStorage(this)
         DependencyRegistryCommon.injectLatestRadioStationStorage(this)
-        sMainActivityPresenter = MainActivityPresenterImpl(
-            sFavoritesStorage,
-            sLatestRadioStationStorage
-        )
 
         sInit.set(true)
     }
@@ -56,9 +48,5 @@ object DependencyRegistry : FavoritesStorageDependency, LatestRadioStationStorag
 
     override fun configureWith(latestRadioStationStorage: LatestRadioStationStorage) {
         sLatestRadioStationStorage = latestRadioStationStorage
-    }
-
-    fun inject(dependency: MainActivity) {
-        dependency.configureWith(sMainActivityPresenter)
     }
 }

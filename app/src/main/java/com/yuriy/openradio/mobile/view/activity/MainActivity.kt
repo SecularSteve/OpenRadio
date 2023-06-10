@@ -38,15 +38,12 @@ import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.material.navigation.NavigationView
 import com.yuriy.openradio.mobile.R
-import com.yuriy.openradio.mobile.dependencies.DependencyRegistry
 import com.yuriy.openradio.mobile.view.list.MobileMediaItemsAdapter
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiverCallback
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
 import com.yuriy.openradio.shared.model.media.MediaId
-import com.yuriy.openradio.shared.model.media.getStreamBitrate
-import com.yuriy.openradio.shared.model.media.isInvalid
 import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.presenter.MediaPresenterListener
 import com.yuriy.openradio.shared.utils.AppLogger
@@ -114,16 +111,11 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
     private lateinit var mPauseBtn: View
     private lateinit var mProgressBarCrs: ProgressBar
     private lateinit var mMediaPresenter: MediaPresenter
-    private lateinit var mMainActivityPresenter: MainActivityPresenter
     private lateinit var mCastContext: CastContext
     private var mSavedInstanceState = Bundle()
 
     init {
         mLocalBroadcastReceiverCb = LocalBroadcastReceiverCallback()
-    }
-
-    fun configureWith(presenter: MainActivityPresenter) {
-        mMainActivityPresenter = presenter
     }
 
     override fun configureWith(mediaPresenter: MediaPresenter) {
@@ -152,8 +144,6 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppLogger.d("$CLASS_NAME OnCreate:$savedInstanceState")
-
-        DependencyRegistry.inject(this)
 
         if (savedInstanceState != null) {
             mSavedInstanceState = Bundle(savedInstanceState)
@@ -409,12 +399,9 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
      * @param metadata Metadata related to currently playing Radio Station.
      */
     private fun handleMetadataChanged(metadata: MediaMetadataCompat) {
-        val radioStation = mMainActivityPresenter.getLastRadioStation()
-        if (radioStation.isInvalid()) {
-            // TODO: Improve this.
-            return
-        }
         val description = metadata.description
+        //AppLogger.d("TRACE::M::${IntentUtils.bundleToString(metadata.bundle)}")
+        //AppLogger.d("TRACE::D::${IntentUtils.bundleToString(description.extras)}")
         val nameView = findTextView(R.id.crs_name_view)
         nameView.text = description.title
         mMediaPresenter.updateDescription(
@@ -423,15 +410,13 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
         findProgressBar(R.id.crs_img_progress_view).gone()
         val imgView = findImageView(R.id.crs_img_view)
         MediaItemsAdapter.updateImage(applicationContext, description, imgView)
-        MediaItemsAdapter.updateBitrateView(
-            radioStation.getStreamBitrate(), findTextView(R.id.crs_bitrate_view), true
-        )
+        //MediaItemsAdapter.updateBitrateView(
+        //    radioStation.getStreamBitrate(), findTextView(R.id.crs_bitrate_view), true
+        //)
         val favoriteCheckView = findCheckBox(R.id.crs_favorite_check_view)
         favoriteCheckView.buttonDrawable = AppCompatResources.getDrawable(applicationContext, R.drawable.src_favorite)
         favoriteCheckView.isChecked = false
-        val mediaItem = mMainActivityPresenter.getLastMediaItem()
-
-        // TODO:
+        //val mediaItem = mMainActivityPresenter.getLastMediaItem()
         //MediaItemsAdapter.handleFavoriteAction(favoriteCheckView, description, mediaItem, applicationContext)
     }
 

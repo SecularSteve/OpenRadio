@@ -55,6 +55,7 @@
             android:name="com.yuriy.openradio.shared.service.OpenRadioService"
             android:enabled="true"
             android:exported="true"
+            android:foregroundServiceType="mediaPlayback"
             tools:ignore="ExportedService">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />

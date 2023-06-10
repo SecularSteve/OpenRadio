@@ -107,4 +107,11 @@ Adding New Keys:
             74:B6:FB:F7:10:E8:D9:0D:44:D3:40:12:58:89:B4:23:06:A6:2C:43:79:D0:E5:A6:62:20:E3:A6:8A:BF:90:E2
         </key>
     </signature>
+
+    <signature
+        name="System UI"
+        package="com.android.systemui">
+        <key>30:1a:a3:cb:08:11:34:50:1c:45:f1:42:2a:bc:66:c2:42:24:fd:5d:ed:5f:dc:8f:17:e6:97:17:6f:d8:66:aa</key>
+    </signature>
+
 </allowed_callers>

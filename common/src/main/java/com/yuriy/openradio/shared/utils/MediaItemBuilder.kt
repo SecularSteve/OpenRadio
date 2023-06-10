@@ -17,6 +17,7 @@
 package com.yuriy.openradio.shared.utils
 
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -25,6 +26,7 @@ import com.yuriy.openradio.shared.model.media.Category
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.getStreamBitrate
+import com.yuriy.openradio.shared.model.media.getStreamUrlFixed
 import com.yuriy.openradio.shared.service.location.Country
 import com.yuriy.openradio.shared.service.location.LocationService
 import java.util.Locale
@@ -48,6 +50,7 @@ object MediaItemBuilder {
             .setMediaId(MediaId.MEDIA_ID_LIST_ENDED)
             .setMediaMetadata(
                 MediaMetadata.Builder()
+                    .setFolderType(MediaMetadata.FOLDER_TYPE_ALBUMS)
                     .setIsPlayable(false)
                     .build()
             )
@@ -78,6 +81,7 @@ object MediaItemBuilder {
             .setMediaId(MediaId.MEDIA_ID_CHILD_CATEGORIES)
             .setMediaMetadata(
                 MediaMetadata.Builder()
+                    .setFolderType(MediaMetadata.FOLDER_TYPE_ALBUMS)
                     .setExtras(bundle)
                     .setIsPlayable(false)
                     .build()
@@ -92,6 +96,7 @@ object MediaItemBuilder {
             .setMediaId(MediaId.MEDIA_ID_FAVORITES_LIST)
             .setMediaMetadata(
                 MediaMetadata.Builder()
+                    .setFolderType(MediaMetadata.FOLDER_TYPE_ALBUMS)
                     .setTitle(context.getString(R.string.favorites_list_title))
                     .setExtras(bundle)
                     .setIsPlayable(false)
@@ -248,8 +253,11 @@ object MediaItemBuilder {
         MediaItemHelper.updateLocalRadioStationField(bundle, isLocal)
         MediaItemHelper.updateLastPlayedField(bundle, isUpdateLastPlayedField)
         MediaItemHelper.setDrawableId(bundle, R.drawable.ic_radio_station_empty)
+        val uri = Uri.parse(radioStation.getStreamUrlFixed())
         return MediaItem.Builder()
             .setMediaId(radioStation.id)
+            .setUri(uri)
+            .setMimeType(AppUtils.getMimeTypeFromUri(uri))
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setFolderType(MediaMetadata.FOLDER_TYPE_NONE)
