@@ -18,6 +18,7 @@ package com.yuriy.openradio.tv.view.list
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.media3.common.util.UnstableApi
 import com.yuriy.openradio.shared.utils.MediaItemHelper
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
@@ -41,21 +42,22 @@ class TvMediaItemsAdapter (private var mContext: Context) : MediaItemsAdapter() 
         )
     }
 
+    @UnstableApi
     override fun onBindViewHolder(holder: MediaItemViewHolder, position: Int) {
         val mediaItem = getItem(position) ?: return
-        val description = mediaItem.description
-        val isPlayable = mediaItem.isPlayable
+        val mediaMetadata = mediaItem.mediaMetadata
+        val isPlayable = mediaMetadata.isPlayable ?: false
         holder.mRoot?.setOnClickListener {
             listener?.onItemSelected(mediaItem, position)
         }
-        handleNameAndDescriptionView(holder.mNameView, holder.mDescriptionView, description, parentId)
-        updateImage(mContext, description, holder.mImageView)
+        handleNameAndDescriptionView(holder.mNameView, holder.mDescriptionView, mediaMetadata, parentId)
+        updateImage(mContext, mediaMetadata, holder.mImageView)
         updateBitrateView(
             MediaItemHelper.getBitrateField(mediaItem), holder.mBitrateView, isPlayable
         )
         if (isPlayable) {
             handleFavoriteAction(
-                    holder.mFavoriteCheckView, description, mediaItem, mContext
+                    holder.mFavoriteCheckView, mediaItem, mContext
             )
             holder.mSettingsView?.setOnClickListener(OnSettingsListener(mediaItem))
             holder.mSettingsView?.visible()

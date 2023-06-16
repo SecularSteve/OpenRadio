@@ -19,7 +19,6 @@ package com.yuriy.openradio.shared.model.media.item
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommand.IUpdatePlaybackState
-import com.yuriy.openradio.shared.model.media.toMediaItemPlayable
 import com.yuriy.openradio.shared.utils.MediaItemBuilder
 import kotlinx.coroutines.Job
 import java.util.TreeSet
@@ -66,11 +65,11 @@ abstract class MediaItemCommandImpl internal constructor() : MediaItemCommand {
     ) {
         for (radioStation in set) {
             dependencies.addMediaItem(
-                radioStation.toMediaItemPlayable(
-                    isFavorite = dependencies.presenter.isRadioStationFavorite(radioStation)
+                MediaItemBuilder.buildPlayable(
+                    radioStation, dependencies.presenter.isRadioStationFavorite(radioStation)
                 )
             )
         }
-        dependencies.resultListener.onResult(dependencies.getMediaItems(), pageNumber)
+        dependencies.resultListener.onResult(dependencies.getMediaItems(), set, pageNumber)
     }
 }

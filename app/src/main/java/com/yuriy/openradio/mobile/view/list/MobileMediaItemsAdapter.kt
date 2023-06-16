@@ -17,12 +17,13 @@
 package com.yuriy.openradio.mobile.view.list
 
 import android.content.Context
-import android.support.v4.media.MediaBrowserCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
+import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import com.xenione.libs.swipemaker.SwipeLayout
 import com.yuriy.openradio.mobile.R
 import com.yuriy.openradio.shared.utils.MediaItemHelper
@@ -46,19 +47,20 @@ class MobileMediaItemsAdapter(private var mContext: Context) : MediaItemsAdapter
         )
     }
 
+    @UnstableApi
     override fun onBindViewHolder(holder: MediaItemViewHolder, position: Int) {
         val mediaItem = getItem(position) ?: return
-        val description = mediaItem.description
-        val isPlayable = mediaItem.isPlayable
-        handleNameAndDescriptionView(holder.mNameView, holder.mDescriptionView, description, parentId)
-        updateImage(mContext, description, holder.mImageView)
+        val mediaMetadata = mediaItem.mediaMetadata
+        val isPlayable = mediaMetadata.isPlayable ?: false
+        handleNameAndDescriptionView(holder.mNameView, holder.mDescriptionView, mediaMetadata, parentId)
+        updateImage(mContext, mediaMetadata, holder.mImageView)
         updateBitrateView(
             MediaItemHelper.getBitrateField(mediaItem), holder.mBitrateView, isPlayable
         )
         holder.mFavoriteCheckView.buttonDrawable = AppCompatResources.getDrawable(mContext, R.drawable.src_favorite)
         if (isPlayable) {
             handleFavoriteAction(
-                holder.mFavoriteCheckView, description, mediaItem, mContext
+                holder.mFavoriteCheckView, mediaItem, mContext
             )
         } else {
             holder.mFavoriteCheckView.gone()
@@ -78,7 +80,7 @@ class MobileMediaItemsAdapter(private var mContext: Context) : MediaItemsAdapter
         (holder.mRoot as BothSideCoordinatorLayout).sync()
     }
 
-    private inner class OnItemTapListener(private val mItem: MediaBrowserCompat.MediaItem, private val mPosition: Int) :
+    private inner class OnItemTapListener(private val mItem: MediaItem, private val mPosition: Int) :
         View.OnClickListener {
 
         override fun onClick(view: View) {

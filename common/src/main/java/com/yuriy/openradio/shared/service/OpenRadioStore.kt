@@ -20,6 +20,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.support.v4.media.MediaDescriptionCompat
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.util.UnstableApi
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.IntentUtils
@@ -130,16 +132,17 @@ object OpenRadioStore {
      * is Favorite.
      *
      * @param context          Context of the callee.
-     * @param mediaDescription [MediaDescriptionCompat] of the [com.yuriy.openradio.shared.model.media.RadioStation].
+     * @param mediaMetadata [MediaDescriptionCompat] of the [com.yuriy.openradio.shared.model.media.RadioStation].
      * @param isFavorite       Whether Radio station is Favorite or not.
      * @return [Intent].
      */
+    @UnstableApi
     fun makeUpdateIsFavoriteIntent(
-        context: Context, mediaDescription: MediaDescriptionCompat?, isFavorite: Boolean
+        context: Context, mediaMetadata: MediaMetadata, isFavorite: Boolean
     ): Intent {
         val intent = makeStartServiceIntent(context)
         intent.putExtra(KEY_NAME_COMMAND_NAME, VALUE_NAME_GET_RADIO_STATION_COMMAND)
-        intent.putExtra(EXTRA_KEY_MEDIA_DESCRIPTION, mediaDescription)
+        intent.putExtra(EXTRA_KEY_MEDIA_DESCRIPTION, mediaMetadata.toBundle())
         intent.putExtra(EXTRA_KEY_IS_FAVORITE, isFavorite)
         return intent
     }

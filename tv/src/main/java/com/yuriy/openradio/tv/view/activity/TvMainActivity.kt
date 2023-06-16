@@ -17,20 +17,22 @@
 package com.yuriy.openradio.tv.view.activity
 
 import android.content.Intent
+import android.media.session.PlaybackState
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.view.View
 import android.widget.ProgressBar
 import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.MainThread
 import androidx.fragment.app.FragmentActivity
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiverCallback
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
 import com.yuriy.openradio.shared.model.media.MediaId
+import com.yuriy.openradio.shared.model.media.MediaItemsSubscription
 import com.yuriy.openradio.shared.model.media.getStreamBitrate
 import com.yuriy.openradio.shared.model.media.isInvalid
 import com.yuriy.openradio.shared.presenter.MediaPresenter
@@ -89,7 +91,6 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
             findViewById(R.id.tv_current_radio_station_view), mediaItemsAdapter,
             mediaSubscriptionCb, mediaPresenterImpl, mLocalBroadcastReceiverCb
         )
-        mMediaPresenter.connect()
     }
 
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -147,12 +148,13 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
      * Process call back from the Search Dialog.
      */
     private fun onActivityResultCallback(data: Intent?) {
-        var bundle = Bundle()
-        if (data != null && data.extras != null) {
-            bundle = Bundle(data.extras)
-        }
+        // TODO: Bundles!
+//        var bundle = Bundle()
+//        if (data != null && data.extras != null) {
+//            bundle = Bundle(data.extras)
+//        }
         mMediaPresenter.unsubscribeFromItem(MediaId.MEDIA_ID_SEARCH_FROM_APP)
-        mMediaPresenter.addMediaItemToStack(MediaId.MEDIA_ID_SEARCH_FROM_APP, bundle)
+        mMediaPresenter.addMediaItemToStack(MediaId.MEDIA_ID_SEARCH_FROM_APP)
     }
 
     /**
@@ -184,7 +186,7 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
     }
 
     @MainThread
-    private fun handlePlaybackStateChanged(state: PlaybackStateCompat) {
+    private fun handlePlaybackStateChanged(state: PlaybackState) {
         when (state.state) {
             PlaybackStateCompat.STATE_BUFFERING, PlaybackStateCompat.STATE_PLAYING -> {
                 if (this::mPlayBtn.isInitialized) {
@@ -264,21 +266,20 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
      *
      * @param metadata Metadata related to currently playing Radio Station.
      */
-    private fun handleMetadataChanged(metadata: MediaMetadataCompat) {
+    private fun handleMetadataChanged(metadata: MediaMetadata) {
         val radioStation = mTvMainActivityPresenter.getLastRadioStation()
         if (radioStation.isInvalid()) {
             // TODO: Improve this.
             return
         }
-        val description = metadata.description
         val nameView = findTextView(R.id.tv_crs_name_view)
-        nameView.text = description.title
+        nameView.text = metadata.title
         mMediaPresenter.updateDescription(
-            findTextView(R.id.tv_crs_description_view), description
+            findTextView(R.id.tv_crs_description_view), metadata
         )
         findProgressBar(R.id.tv_crs_img_progress_view).gone()
         val imgView = findImageView(R.id.tv_crs_img_view)
-        MediaItemsAdapter.updateImage(applicationContext, description, imgView)
+        MediaItemsAdapter.updateImage(applicationContext, metadata, imgView)
         MediaItemsAdapter.updateBitrateView(
             radioStation.getStreamBitrate(),
             findTextView(R.id.tv_crs_bitrate_view), true
@@ -287,7 +288,7 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
 
     private fun handleChildrenLoaded(
         parentId: String,
-        children: List<MediaBrowserCompat.MediaItem>
+        children: List<MediaItem>
     ) {
         if (mMediaPresenter.getOnSaveInstancePassed()) {
             AppLogger.w("$CLASS_NAME can not perform on children loaded after OnSaveInstanceState")
@@ -305,19 +306,11 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
         mMediaPresenter.handleEditRadioStationMenu(view)
     }
 
-    private inner class MediaBrowserSubscriptionCallback : MediaBrowserCompat.SubscriptionCallback() {
+    private inner class MediaBrowserSubscriptionCallback : MediaItemsSubscription {
 
         override fun onChildrenLoaded(
             parentId: String,
-            children: List<MediaBrowserCompat.MediaItem>,
-            options: Bundle
-        ) {
-            handleChildrenLoaded(parentId, children)
-        }
-
-        override fun onChildrenLoaded(
-            parentId: String,
-            children: List<MediaBrowserCompat.MediaItem>
+            children: List<MediaItem>
         ) {
             handleChildrenLoaded(parentId, children)
         }
@@ -335,11 +328,11 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
             this@TvMainActivity.showProgressBar()
         }
 
-        override fun handleMetadataChanged(metadata: MediaMetadataCompat) {
+        override fun handleMetadataChanged(metadata: MediaMetadata) {
             this@TvMainActivity.handleMetadataChanged(metadata)
         }
 
-        override fun handlePlaybackStateChanged(state: PlaybackStateCompat) {
+        override fun handlePlaybackStateChanged(state: PlaybackState) {
             this@TvMainActivity.handlePlaybackStateChanged(state)
         }
     }

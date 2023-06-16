@@ -2,6 +2,7 @@ package com.yuriy.openradio.shared.model.net
 
 import android.net.Uri
 import androidx.core.util.Pair
+import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.model.media.RadioStationToAdd
 import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.utils.AppLogger
@@ -88,32 +89,32 @@ class UrlLayerRadioBrowserImpl: UrlLayer {
     override fun getStationsInCategory(categoryId: String, pageNumber: Int): Uri {
         return Uri.parse(
             BASE_URL + "stations/bytag/" + encodeValue(categoryId) + "?hidebroken=true&order=name"
-                    + "&offset=" + (pageNumber * (ITEMS_PER_PAGE + 1))
-                    + "&limit=" + ITEMS_PER_PAGE
+                    + "&offset=" + (pageNumber * (DependencyRegistryCommon.PAGE_SIZE + 1))
+                    + "&limit=" + DependencyRegistryCommon.PAGE_SIZE
         )
     }
 
     override fun getStationsByCountry(countryCode: String, pageNumber: Int): Uri {
         return Uri.parse(
             BASE_URL + "stations/bycountrycodeexact/" + countryCode
-                    + "?offset=" + (pageNumber * (ITEMS_PER_PAGE + 1))
-                    + "&limit=" + ITEMS_PER_PAGE
+                    + "?offset=" + (pageNumber * (DependencyRegistryCommon.PAGE_SIZE + 1))
+                    + "&limit=" + DependencyRegistryCommon.PAGE_SIZE
         )
     }
 
     override fun getPopularStations(): Uri {
-        return Uri.parse(BASE_URL + "stations/topclick/" + ITEMS_PER_PAGE)
+        return Uri.parse(BASE_URL + "stations/topclick/" + DependencyRegistryCommon.PAGE_SIZE)
     }
 
     override fun getRecentlyAddedStations(): Uri {
-        return Uri.parse(BASE_URL + "stations/lastchange/" + ITEMS_PER_PAGE)
+        return Uri.parse(BASE_URL + "stations/lastchange/" + DependencyRegistryCommon.PAGE_SIZE)
     }
 
     override fun getSearchUrl(query: String): Uri {
         return Uri.parse(
             BASE_URL + "stations/search?name=" + encodeValue(query)
                     + "&offset=" + 0
-                    + "&limit=" + ITEMS_PER_PAGE
+                    + "&limit=" + DependencyRegistryCommon.PAGE_SIZE
         )
     }
 
@@ -169,10 +170,6 @@ class UrlLayerRadioBrowserImpl: UrlLayer {
     companion object {
 
         private const val TAG = "ULRBI"
-        /**
-         * Number of Radio Stations in each page.
-         */
-        private const val ITEMS_PER_PAGE = 200
         private const val LOOK_UP_DNS = "all.api.radio-browser.info"
         private const val BASE_URL_PREFIX = "https://do-look-up-dns-first"
         /**

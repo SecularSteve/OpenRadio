@@ -18,13 +18,15 @@ package com.yuriy.openradio.shared.view.list
 
 import android.content.Context
 import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.view.View
 import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.model.media.MediaId
@@ -44,11 +46,11 @@ import com.yuriy.openradio.shared.utils.visible
 abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
 
     interface Listener {
-        fun onItemSettings(item: MediaBrowserCompat.MediaItem)
-        fun onItemSelected(item: MediaBrowserCompat.MediaItem, position: Int)
+        fun onItemSettings(item: MediaItem)
+        fun onItemSelected(item: MediaItem, position: Int)
     }
 
-    private val mAdapterData = ListAdapterData<MediaBrowserCompat.MediaItem>()
+    private val mAdapterData = ListAdapterData<MediaItem>()
     private var mActiveItemId = MediaSessionCompat.QueueItem.UNKNOWN_ID
     var parentId = MediaId.MEDIA_ID_ROOT
     var listener: Listener? = null
@@ -68,7 +70,7 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
         return mAdapterData.itemsCount
     }
 
-    fun getItem(position: Int): MediaBrowserCompat.MediaItem? {
+    fun getItem(position: Int): MediaItem? {
         return mAdapterData.getItem(position)
     }
 
@@ -84,9 +86,9 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
     /**
      * Add [MediaBrowserCompat.MediaItem]s into the collection.
      *
-     * @param value [MediaBrowserCompat.MediaItem]s.
+     * @param value [MediaItem]s.
      */
-    fun addAll(value: List<MediaBrowserCompat.MediaItem>) {
+    fun addAll(value: List<MediaItem>) {
         mAdapterData.addAll(value)
     }
 
@@ -101,15 +103,11 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
         clearData()
     }
 
-    inner class OnSettingsListener(item: MediaBrowserCompat.MediaItem) :
-        View.OnClickListener {
-
-        private val mItem = MediaBrowserCompat.MediaItem(item.description, item.flags)
+    @UnstableApi
+    inner class OnSettingsListener(private val mItem: MediaItem) : View.OnClickListener {
 
         override fun onClick(view: View) {
-            listener?.onItemSettings(
-                MediaBrowserCompat.MediaItem(mItem.description, mItem.flags)
-            )
+            listener?.onItemSettings(mItem)
         }
     }
 
@@ -142,17 +140,17 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
          *
          * @param nameView
          * @param descriptionView
-         * @param description
+         * @param mediaMetadata
          * @param parentId
          */
         fun handleNameAndDescriptionView(
             nameView: TextView,
             descriptionView: TextView,
-            description: MediaDescriptionCompat,
+            mediaMetadata: MediaMetadata,
             parentId: String
         ) {
-            nameView.text = description.title
-            descriptionView.text = description.subtitle
+            nameView.text = mediaMetadata.title
+            descriptionView.text = mediaMetadata.subtitle
             val layoutParams = nameView.layoutParams as RelativeLayout.LayoutParams
             if (MediaId.MEDIA_ID_ROOT == parentId) {
                 layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE)
@@ -167,34 +165,30 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
         /**
          * Updates an image view of the Media Item.
          *
-         * @param description Media Description of the Media Item.
+         * @param mediaMetadata Media Description of the Media Item.
          * @param view        Image View to apply image to.
          */
-        fun updateImage(context: Context, description: MediaDescriptionCompat, view: ImageView) {
+        fun updateImage(context: Context, mediaMetadata: MediaMetadata, view: ImageView) {
             view.visible()
             // Show placeholder before load an image.
             view.setImageResource(R.drawable.ic_radio_station)
-            if (description.iconBitmap != null) {
-                view.setImageBitmap(description.iconBitmap)
-            } else {
-                val iconId = MediaItemHelper.getDrawableId(description.extras)
-                if (MediaItemHelper.isDrawableIdValid(iconId)) {
-                    view.setImageResource(iconId)
-                }
-                val imageUrl = ImagesStore.getImageUrl(description.iconUri)
-                if (imageUrl.isEmpty()) {
-                    return
-                }
-                val imageUri = description.iconUri ?: return
-                val id = ImagesStore.getId(imageUri)
-                // Mark view by tag, later on, when image downloaded and callback invoked in presenter
-                // it will be possible to re-open stream and apply bytes to correct image view.
-                view.tag = id
-                context.contentResolver.openInputStream(imageUri)?.use {
-                    // Get bytes if available. If not, the callback in presenter will hook downloaded bytes
-                    // later on.
-                    view.setImageBitmap(it.readBytes())
-                }
+            val iconId = MediaItemHelper.getDrawableId(mediaMetadata.extras)
+            if (MediaItemHelper.isDrawableIdValid(iconId)) {
+                view.setImageResource(iconId)
+            }
+            val imageUrl = ImagesStore.getImageUrl(mediaMetadata.artworkUri)
+            if (imageUrl.isEmpty()) {
+                return
+            }
+            val imageUri = mediaMetadata.artworkUri ?: return
+            val id = ImagesStore.getId(imageUri)
+            // Mark view by tag, later on, when image downloaded and callback invoked in presenter
+            // it will be possible to re-open stream and apply bytes to correct image view.
+            view.tag = id
+            context.contentResolver.openInputStream(imageUri)?.use {
+                // Get bytes if available. If not, the callback in presenter will hook downloaded bytes
+                // later on.
+                view.setImageBitmap(it.readBytes())
             }
         }
 
@@ -202,13 +196,12 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
          * Handle "Add | Remove to | from Favorites".
          *
          * @param checkBox    Favorite check box view.
-         * @param description Media aItem description.
          * @param mediaItem   Media Item.
          * @param context     Current context.
          */
+        @UnstableApi
         fun handleFavoriteAction(
-            checkBox: CheckBox, description: MediaDescriptionCompat?,
-            mediaItem: MediaBrowserCompat.MediaItem?, context: Context
+            checkBox: CheckBox, mediaItem: MediaItem, context: Context
         ) {
             checkBox.isChecked = MediaItemHelper.isFavoriteField(mediaItem)
             checkBox.visible()
@@ -220,7 +213,7 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
                 // the Media Description
                 val intent = OpenRadioStore.makeUpdateIsFavoriteIntent(
                     context,
-                    description,
+                    mediaItem.mediaMetadata,
                     isChecked
                 )
                 // Send Intent to the OpenRadioService.

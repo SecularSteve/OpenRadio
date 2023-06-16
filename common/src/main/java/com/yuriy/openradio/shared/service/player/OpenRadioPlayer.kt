@@ -94,11 +94,9 @@ class OpenRadioPlayer(
 
         fun onHandledError(error: PlaybackException)
 
-        fun onReady()
+        fun onReady(mediaItem: MediaItem)
 
         fun onIndexOnQueueChanges(value: Int)
-
-        fun onPlaybackStateChanged(playbackState: Int)
 
         fun onStartForeground(notificationId: Int, notification: Notification)
 
@@ -860,19 +858,6 @@ class OpenRadioPlayer(
      */
     private inner class ComponentListener : Player.Listener {
 
-        @Deprecated("Deprecated in Java")
-        override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-            AppLogger.d(
-                "$LOG_TAG player state changed $playbackState"
-            )
-        }
-
-        override fun onPlayerErrorChanged(error: PlaybackException?) {
-            AppLogger.d(
-                "$LOG_TAG player error changed $error"
-            )
-        }
-
         override fun onMetadata(metadata: Metadata) {
             for (i in 0 until metadata.length()) {
                 val entry = metadata[i]
@@ -913,10 +898,10 @@ class OpenRadioPlayer(
         }
 
         override fun onPlaybackStateChanged(playerState: Int) {
+            val mediaItem = mPlayer.currentMediaItem
             AppLogger.d(
-                "$LOG_TAG playback state changed ${PlayerUtils.playerStateToString(playerState)}"
+                "$LOG_TAG playback ${PlayerUtils.playerStateToString(playerState)} for $mediaItem"
             )
-            mListener.onPlaybackStateChanged(playerState)
             when (playerState) {
                 Player.STATE_BUFFERING,
                 Player.STATE_READY -> {
@@ -931,7 +916,9 @@ class OpenRadioPlayer(
                         mListener.onStopForeground(false)
                         mIsForegroundService = false
                     }
-                    mListener.onReady()
+                    mediaItem?.let {
+                        mListener.onReady(it)
+                    }
                 }
 
                 else -> {
@@ -945,7 +932,8 @@ class OpenRadioPlayer(
                 updateStreamMetadata(mLiveStreamLabel)
             }
             if (events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)
-                && !events.contains(Player.EVENT_MEDIA_METADATA_CHANGED)) {
+                && !events.contains(Player.EVENT_MEDIA_METADATA_CHANGED)
+            ) {
                 // CastPlayer does not support onMetaDataChange. We can trigger this here when the
                 // media item changes.
                 if (mPlaylist.isNotEmpty()) {

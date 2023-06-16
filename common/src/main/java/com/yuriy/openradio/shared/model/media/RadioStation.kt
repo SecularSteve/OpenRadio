@@ -18,11 +18,9 @@ package com.yuriy.openradio.shared.model.media
 
 import android.support.v4.media.session.MediaSessionCompat
 import android.text.TextUtils
-import androidx.media3.common.MediaItem
 import com.yuriy.openradio.shared.model.storage.images.ImagesStore
 import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.utils.AppUtils
-import com.yuriy.openradio.shared.utils.MediaItemBuilder
 import java.io.Serializable
 import java.util.Locale
 
@@ -35,17 +33,6 @@ import java.util.Locale
  * [RadioStation] is a value object that holds information
  * about concrete Radio Station.
  */
-
-fun RadioStation.toMediaItemPlayable(
-    sortId: Int = this.sortId,
-    isFavorite: Boolean = false,
-    isLocal: Boolean = false,
-    isUpdateLastPlayedField: Boolean = false
-): MediaItem {
-    return MediaItemBuilder.buildPlayable(
-        this, sortId, isFavorite, isLocal, isUpdateLastPlayedField
-    )
-}
 
 fun RadioStation.isInvalid(): Boolean {
     return this == RadioStation.INVALID_INSTANCE

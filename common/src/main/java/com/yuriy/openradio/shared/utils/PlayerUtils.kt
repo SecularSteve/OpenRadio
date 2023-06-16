@@ -16,7 +16,7 @@
 
 package com.yuriy.openradio.shared.utils
 
-import android.support.v4.media.MediaBrowserCompat
+import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 
 object PlayerUtils {
@@ -30,7 +30,7 @@ object PlayerUtils {
      * @param list
      * @return
      */
-    fun isEndOfList(list: List<MediaBrowserCompat.MediaItem?>?): Boolean {
+    fun isEndOfList(list: List<MediaItem?>?): Boolean {
         return (list == null
                 || list.size == 1
                 && (list[0] == null || list[0]?.mediaId === mMediaItemListEnded.mediaId))

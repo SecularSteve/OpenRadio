@@ -16,20 +16,30 @@
 
 package com.yuriy.openradio.shared.model.media
 
-import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
-import android.os.Bundle
-import android.os.RemoteException
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaControllerCompat
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
+import androidx.lifecycle.MutableLiveData
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.session.MediaBrowser
+import androidx.media3.session.MediaController
+import androidx.media3.session.MediaLibraryService
+import androidx.media3.session.SessionToken
+import androidx.work.await
+import com.google.common.collect.ImmutableList
+import com.google.common.util.concurrent.MoreExecutors
+import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
+import com.yuriy.openradio.shared.extentions.isEnded
+import com.yuriy.openradio.shared.extentions.isPlayEnabled
 import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.utils.AppLogger
-import com.yuriy.openradio.shared.utils.IntentUtils
-import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * Created by Chernyshov Yurii
@@ -37,116 +47,70 @@ import java.util.concurrent.atomic.AtomicBoolean
  * On 29/06/17
  * E-Mail: chernyshov.yuriy@gmail.com
  */
-class MediaResourcesManager(context: Context, className: String) {
+
+/**
+ *
+ *
+ * @param mListener Listener for the media resources events. Acts as proxy between this manager and callee Activity.
+ */
+class MediaResourcesManager(context: Context, className: String, private val mListener: MediaResourceManagerListener) {
     /**
      * Tag string to use in logging message.
      */
-    private val mClassName = "MdRsrcsMgr $className "
+    private val mClassName = "MdRsrcsMgr $className"
 
     /**
      * Browses media content offered by a [android.service.media.MediaBrowserService].
      */
-    private val mMediaBrowser: MediaBrowserCompat
+    private lateinit var mMediaBrowser: MediaBrowser
 
-    private val mIsConnectInvoked = AtomicBoolean(false)
+    private val mCoroutineContext = Dispatchers.Main
+    private val mScope = CoroutineScope(mCoroutineContext + SupervisorJob())
 
-    /**
-     * Controller of media content offered by a [android.service.media.MediaBrowserService].
-     */
-    private var mMediaController: MediaControllerCompat? = null
+    private val mPlayerListener = PlayerListener()
 
-    /**
-     * Listener of the media Controllers callbacks.
-     */
-    private val mMediaSessionCallback = MediaSessionCallback()
+    val player: Player get() = mMediaBrowser
 
-    /**
-     * Transport controls of the Media Controller.
-     */
-    private var mTransportControls: MediaControllerCompat.TransportControls? = null
+    val nowPlaying = MutableLiveData<MediaItem>()
+        .apply { postValue(MediaItem.EMPTY) }
 
-    /**
-     * Callee [Activity].
-     */
-    private var mActivity: Activity? = null
-
-    /**
-     * Listener for the media resources events. Acts as proxy between this manager and callee Activity.
-     */
-    private var mListener: MediaResourceManagerListener? = null
-    private val mSubscribed = HashSet<String>()
+    val rootMediaItem = MutableLiveData<MediaItem>()
+        .apply { postValue(MediaItem.EMPTY) }
 
     /**
      * Constructor.
      */
     init {
-        // Initialize Media Browser
-        val callback = MediaBrowserConnectionCallback()
-        mMediaBrowser = MediaBrowserCompat(
-            context,
-            ComponentName(context, OpenRadioService::class.java),
-            callback,
-            null
-        )
-    }
-
-    /**
-     * Creates Media Browser, assigns listener.
-     */
-    fun init(activity: Activity, listener: MediaResourceManagerListener) {
-        mActivity = activity
-        mListener = listener
-    }
-
-    /**
-     * Connects to the Media Browse service.
-     */
-    fun connect() {
-        if (mMediaBrowser.isConnected) {
-            AppLogger.w("$mClassName connect aborted, already connected")
-            // Register callbacks
-            mMediaController?.registerCallback(mMediaSessionCallback)
-            // Set actual media controller
-            MediaControllerCompat.setMediaController(mActivity!!, mMediaController)
-            // To update Play/Pause btn of the Currently Playing station. By default it shows spinner.
-            mMediaSessionCallback.dispatchLatestState()
-            return
-        }
-        if (mIsConnectInvoked.get()) {
-            return
-        }
-        try {
-            mMediaBrowser.connect()
-            mIsConnectInvoked.set(true)
-            AppLogger.i("$mClassName connected")
-        } catch (e: IllegalStateException) {
-            AppLogger.e("$mClassName can not connect", e)
+        mScope.launch {
+            AppLogger.d("$mClassName start browser")
+            mMediaBrowser =
+                MediaBrowser.Builder(
+                    context,
+                    SessionToken(context, ComponentName(context, OpenRadioService::class.java))
+                )
+                    .setListener(BrowserListener())
+                    .buildAsync()
+                    .await()
+            mMediaBrowser.addListener(mPlayerListener)
+            val root = mMediaBrowser.getLibraryRoot(null).await().value
+            rootMediaItem.postValue(root)
+            AppLogger.d("$mClassName root '${root?.mediaId}'")
+            mListener.onConnected()
         }
     }
 
-    /**
-     * Disconnects from the Media Browse service. After this, no more callbacks will be received.
-     */
-    fun disconnect() {
-        if (!mMediaBrowser.isConnected) {
-            AppLogger.w("$mClassName disconnect aborted, already disconnected")
-            return
-        }
-        if (!mIsConnectInvoked.get()) {
-            return
-        }
-        mMediaBrowser.disconnect()
-        mIsConnectInvoked.set(false)
-        AppLogger.i("$mClassName disconnected")
+    suspend fun getChildren(parentId: String): ImmutableList<MediaItem> {
+        return mMediaBrowser.getChildren(parentId, 0, DependencyRegistryCommon.PAGE_SIZE, null).await().value
+            ?: ImmutableList.of()
     }
 
     fun clean() {
-        mMediaController?.unregisterCallback(mMediaSessionCallback)
-        if (mActivity != null) {
-            MediaControllerCompat.setMediaController(mActivity!!, null)
+        rootMediaItem.postValue(MediaItem.EMPTY)
+        nowPlaying.postValue(MediaItem.EMPTY)
+        mMediaBrowser.let {
+            it.removeListener(mPlayerListener)
+            it.release()
         }
-        mActivity = null
-        mListener = null
     }
 
     /**
@@ -155,36 +119,17 @@ class MediaResourcesManager(context: Context, className: String) {
      *
      * @param parentId The id of the parent media item whose list of children will be subscribed.
      * @param callback The callback to receive the list of children.
-     * @param options Options to pass to Media Browser when do subscribe.
      */
-    fun subscribe(parentId: String,
-                  callback: MediaBrowserCompat.SubscriptionCallback?,
-                  options: Bundle = Bundle()) {
+    fun subscribe(
+        parentId: String,
+        callback: MediaItemsSubscription?
+    ) {
         AppLogger.i("$mClassName subscribe:$parentId")
-        if (callback == null) {
-            AppLogger.e("$mClassName subscribe listener is null")
-            return
+        mScope.launch {
+            callback?.onChildrenLoaded(
+                parentId, getChildren(parentId).toMutableList()
+            )
         }
-        if (mSubscribed.contains(parentId)) {
-            AppLogger.w("$mClassName already subscribed")
-            return
-        }
-        mSubscribed.add(parentId)
-        mMediaBrowser.subscribe(parentId, options, callback)
-    }
-
-    /**
-     * Unsubscribe for changes to the children of the specified media id.
-     *
-     * @param parentId The id of the parent media item whose list of children will be unsubscribed.
-     */
-    fun unsubscribe(parentId: String) {
-        if (!mSubscribed.contains(parentId)) {
-            return
-        }
-        AppLogger.i("$mClassName unsubscribe:$parentId, $mMediaBrowser")
-        mSubscribed.remove(parentId)
-        mMediaBrowser.unsubscribe(parentId)
     }
 
     /**
@@ -194,109 +139,128 @@ class MediaResourcesManager(context: Context, className: String) {
      * @return Root Id.
      */
     val root: String
-        get() = mMediaBrowser.root
+        // TODO:
+        get() = mMediaBrowser.getLibraryRoot(null).get()?.value?.mediaId ?: ""
 
     /**
      * @return Metadata.
      */
-    val mediaMetadata: MediaMetadataCompat?
-        get() = if (mMediaController != null) mMediaController?.metadata else null
+    val mediaMetadata: MediaMetadata?
+        get() = null
+
+    private fun updateNowPlaying(player: Player) {
+        val mediaItem = player.currentMediaItem ?: MediaItem.EMPTY
+        if (mediaItem == MediaItem.EMPTY) {
+            return
+        }
+        // The current media item from the CastPlayer may have lost some information.
+        val mediaItemFuture = mMediaBrowser.getItem(mediaItem.mediaId)
+        mediaItemFuture.addListener(
+            Runnable {
+                val fullMediaItem = mediaItemFuture.get().value ?: return@Runnable
+                nowPlaying.postValue(
+                    mediaItem.buildUpon().setMediaMetadata(fullMediaItem.mediaMetadata).build()
+                )
+            },
+            MoreExecutors.directExecutor()
+        )
+    }
 
     /**
      * @param mediaId media id of the item to play.
      */
-    fun playFromMediaId(mediaId: String?) {
-        mTransportControls?.playFromMediaId(mediaId, null)
-    }
+    fun playFromMediaId(mediaId: String, parentMediaId: String) {
+        val nowPlaying = nowPlaying.value
+        val player = player ?: return
+        val pauseThenPlaying = false
 
-    private fun handleMediaBrowserConnected() {
-        if (mActivity == null) {
-            AppLogger.e("$mClassName media browser connected when context is null, disconnect")
-            disconnect()
-            return
-        }
+        val isPrepared = player.playbackState != Player.STATE_IDLE
+        if (isPrepared && mediaId == nowPlaying?.mediaId) {
+            when {
+                player.isPlaying ->
+                    if (pauseThenPlaying) player.pause() else Unit
 
-        // Initialize Media Controller
-        mMediaController = try {
-            MediaControllerCompat(
-                mActivity?.applicationContext,
-                mMediaBrowser.sessionToken
-            )
-        } catch (e: RemoteException) {
-            AppLogger.e("handleMediaBrowserConnected", e)
-            return
-        }
-
-        // Initialize Transport Controls
-        mTransportControls = mMediaController?.transportControls
-        // Register callbacks
-        mMediaController?.registerCallback(mMediaSessionCallback)
-
-        // Set actual media controller
-        MediaControllerCompat.setMediaController(mActivity!!, mMediaController)
-        mListener?.onConnected()
-    }
-
-    /**
-     * Callback object for the Media Browser connection events.
-     */
-    private inner class MediaBrowserConnectionCallback : MediaBrowserCompat.ConnectionCallback() {
-
-        override fun onConnected() {
-            AppLogger.i("$mClassName connected")
-            handleMediaBrowserConnected()
-        }
-
-        override fun onConnectionSuspended() {
-            AppLogger.w("$mClassName connection Suspended")
-            val manager = this@MediaResourcesManager
-            manager.mMediaController?.unregisterCallback(manager.mMediaSessionCallback)
-            manager.mTransportControls = null
-            manager.mMediaController = null
-            if (manager.mActivity != null) {
-                MediaControllerCompat.setMediaController(manager.mActivity!!, null)
+                player.isPlayEnabled -> player.play()
+                player.isEnded -> player.seekTo(C.TIME_UNSET)
+                else -> {
+                    AppLogger.w(
+                        "Playable item clicked but neither play nor pause are enabled!" +
+                                " (mediaId=${mediaId})"
+                    )
+                }
             }
-        }
-
-        override fun onConnectionFailed() {
-            AppLogger.e("$mClassName connection failed")
+        } else {
+            mScope.launch {
+                var playlist: MutableList<MediaItem> = arrayListOf()
+                // load the children of the parent if requested
+                parentMediaId?.let {
+                    playlist = getChildren(parentMediaId).let { children ->
+                        children.filter {
+                            it.mediaMetadata.isPlayable ?: false
+                        }
+                    }.toMutableList()
+                }
+                if (playlist.isEmpty()) {
+                    //playlist.add(mediaItem)
+                }
+                //val indexOf = playlist.indexOf(mediaItem)
+                val indexOf = 0
+                val startWindowIndex = if (indexOf >= 0) indexOf else 0
+                player.setMediaItems(
+                    playlist, startWindowIndex, /* startPositionMs= */ C.TIME_UNSET
+                )
+                player.prepare()
+                player.play()
+            }
         }
     }
 
-    /**
-     * Receive callbacks from the [MediaControllerCompat].<br></br>
-     * Here we update our state such as which queue is being shown,
-     * the current title and description and the [PlaybackStateCompat].
-     */
-    private inner class MediaSessionCallback : MediaControllerCompat.Callback() {
-
-        private var mCurrentState: PlaybackStateCompat? = null
-
-        override fun onSessionDestroyed() {
-            AppLogger.i("$mClassName session destroyed. Need to fetch a new Media Session")
+    private inner class BrowserListener : MediaBrowser.Listener {
+        override fun onDisconnected(controller: MediaController) {
+            // TODO:
+            //release()
         }
 
-        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
-            state?.let {
-                mCurrentState = it
-                mListener?.onPlaybackStateChanged(it)
+        override fun onChildrenChanged(
+            browser: MediaBrowser,
+            parentId: String,
+            itemCount: Int,
+            params: MediaLibraryService.LibraryParams?
+        ) {
+            AppLogger.d("TODO: ChildrenChanged for $parentId")
+        }
+    }
+
+    private inner class PlayerListener : Player.Listener {
+
+        override fun onEvents(player: Player, events: Player.Events) {
+            if (events.contains(Player.EVENT_PLAY_WHEN_READY_CHANGED)
+                || events.contains(Player.EVENT_PLAYBACK_STATE_CHANGED)
+                || events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)
+            ) {
+                //updatePlaybackState(player)
+                if (player.playbackState != Player.STATE_IDLE) {
+                    //networkFailure.postValue(false)
+                }
+            }
+            if (events.contains(Player.EVENT_MEDIA_METADATA_CHANGED)
+                || events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)
+                || events.contains(Player.EVENT_PLAY_WHEN_READY_CHANGED)
+            ) {
+                updateNowPlaying(player)
             }
         }
 
-        override fun onQueueChanged(queue: List<MediaSessionCompat.QueueItem>?) {
-            queue?.let { mListener?.onQueueChanged(it) }
-        }
-
-        override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
-            metadata?.let {
-                AppLogger.d("TRACE::M::${IntentUtils.bundleToString(it.bundle)}")
-                AppLogger.d("TRACE::D::${IntentUtils.bundleToString(it.description.extras)}")
-                mListener?.onMetadataChanged(it)
+        override fun onPlayerErrorChanged(error: PlaybackException?) {
+            when (error?.errorCode) {
+                PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS,
+                PlaybackException.ERROR_CODE_IO_INVALID_HTTP_CONTENT_TYPE,
+                PlaybackException.ERROR_CODE_IO_CLEARTEXT_NOT_PERMITTED,
+                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT -> {
+                    //networkFailure.postValue(true)
+                }
             }
-        }
-
-        fun dispatchLatestState() {
-            mCurrentState?.let { onPlaybackStateChanged(it) }
         }
     }
 }

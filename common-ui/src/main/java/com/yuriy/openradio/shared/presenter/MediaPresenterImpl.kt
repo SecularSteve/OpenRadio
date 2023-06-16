@@ -22,6 +22,7 @@ import android.content.Context
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.database.ContentObserver
+import android.media.session.PlaybackState
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -29,8 +30,6 @@ import android.os.Looper
 import android.os.Message
 import android.os.Messenger
 import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
-import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.view.View
@@ -40,14 +39,17 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentTransaction
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.broadcast.AppLocalBroadcast
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiver
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiverCallback
-import com.yuriy.openradio.shared.extentions.id
 import com.yuriy.openradio.shared.model.media.MediaId
+import com.yuriy.openradio.shared.model.media.MediaItemsSubscription
 import com.yuriy.openradio.shared.model.media.MediaResourceManagerListener
 import com.yuriy.openradio.shared.model.media.MediaResourcesManager
 import com.yuriy.openradio.shared.model.net.NetworkLayer
@@ -85,8 +87,9 @@ class MediaPresenterImpl(
 ) : MediaPresenter {
     /**
      * Manager object that acts as interface between Media Resources and current Activity.
+     * Provided to this reference is a listener of events provided by Media Resource Manager.
      */
-    private val mMediaRsrMgr = MediaResourcesManager(mContext, javaClass.simpleName)
+    private val mMediaRsrMgr = MediaResourcesManager(mContext, javaClass.simpleName, MediaResourceManagerListenerImpl())
 
     /**
      * Stack of the media items.
@@ -105,7 +108,7 @@ class MediaPresenterImpl(
      * ID of the parent of current item (whether it is directory or Radio Station).
      */
     private var mCurrentParentId = AppUtils.EMPTY_STRING
-    private var mCallback: MediaBrowserCompat.SubscriptionCallback? = null
+    private var mCallback: MediaItemsSubscription? = null
     private var mActivity: FragmentActivity? = null
     private var mMainLayoutView: View? = null
     private var mListener: MediaPresenterListener? = null
@@ -142,7 +145,7 @@ class MediaPresenterImpl(
         activity: FragmentActivity, mainLayout: View,
         bundle: Bundle, listView: RecyclerView, currentRadioStationView: View,
         adapter: MediaItemsAdapter,
-        mediaSubscriptionCallback: MediaBrowserCompat.SubscriptionCallback,
+        mediaSubscriptionCallback: MediaItemsSubscription,
         listener: MediaPresenterListener,
         localReceiverCallback: AppLocalReceiverCallback
     ) {
@@ -156,9 +159,6 @@ class MediaPresenterImpl(
         mAdapter = adapter
         mCurrentRadioStationView = currentRadioStationView
         mSleepTimerModel.addSleepTimerListener(mTimerListener)
-        // Listener of events provided by Media Resource Manager.
-        val mediaRsrMgrLst = MediaResourceManagerListenerImpl()
-        mMediaRsrMgr.init(activity, mediaRsrMgrLst)
         val layoutManager = LinearLayoutManager(activity)
         mListView?.layoutManager = layoutManager
         // Set adapter
@@ -232,14 +232,9 @@ class MediaPresenterImpl(
 
     private fun disconnect() {
         mListView?.removeOnScrollListener(mScrollListener)
-        // Disconnect Media Browser
-        mMediaRsrMgr.disconnect()
     }
 
     private fun exitFromUi() {
-        for (item in mMediaItemsStack) {
-            mMediaRsrMgr.unsubscribe(item)
-        }
         mMediaItemsStack.clear()
         mActivity?.finish()
     }
@@ -254,7 +249,7 @@ class MediaPresenterImpl(
     }
 
     /**
-     * Updates root view is there was changes in collection.
+     * Updates root view if there was changes in collection.
      * Should be call only if current media id is [MediaId.MEDIA_ID_ROOT] or [MediaId.MEDIA_ID_BROWSE_CAR]
      * if application runs on car.
      */
@@ -277,27 +272,13 @@ class MediaPresenterImpl(
     override fun handleBackPressed(): Boolean {
         // If there is root category - close activity
         if (mMediaItemsStack.size == 1) {
-            // Un-subscribe from item
-            mMediaRsrMgr.unsubscribe(mMediaItemsStack.removeAt(0))
             // Clear stack
             mMediaItemsStack.clear()
             mContext.startService(OpenRadioStore.makeStopServiceIntent(mContext))
             return true
         }
-        var index = mMediaItemsStack.size - 1
-        if (index >= 0) {
-            // Get current media item and un-subscribe.
-            val currentMediaId = mMediaItemsStack.removeAt(index)
-            mMediaRsrMgr.unsubscribe(currentMediaId)
-        }
-
-        // Un-subscribe from all items.
-        for (mediaItemId in mMediaItemsStack) {
-            mMediaRsrMgr.unsubscribe(mediaItemId)
-        }
-
         // Subscribe to the previous item.
-        index = mMediaItemsStack.size - 1
+        val index = mMediaItemsStack.size - 1
         if (index >= 0) {
             val previousMediaId = mMediaItemsStack[index]
             if (previousMediaId.isNotEmpty()) {
@@ -320,12 +301,9 @@ class MediaPresenterImpl(
             }
             i++
         }
-
-        // Un-subscribe from item
-        mMediaRsrMgr.unsubscribe(mediaId!!)
     }
 
-    override fun addMediaItemToStack(mediaId: String, options: Bundle) {
+    override fun addMediaItemToStack(mediaId: String) {
         if (mCallback == null) {
             AppLogger.e("$TAG add media id to stack, callback null")
             return
@@ -338,15 +316,15 @@ class MediaPresenterImpl(
             mMediaItemsStack.add(mediaId)
         }
         mListener?.showProgressBar()
-        mMediaRsrMgr.subscribe(mediaId, mCallback, options)
+        mMediaRsrMgr.subscribe(mediaId, mCallback)
     }
 
-    override fun updateDescription(descriptionView: TextView?, description: MediaDescriptionCompat) {
+    override fun updateDescription(descriptionView: TextView?, mediaMetadata: MediaMetadata) {
         if (descriptionView == null) {
             return
         }
         descriptionView.text = MediaItemHelper.getDisplayDescription(
-            description, mContext.getString(R.string.media_description_default)
+            mediaMetadata, mContext.getString(R.string.media_description_default)
         )
         if (isPlaybackStateError(mContext, descriptionView.text.toString())) {
             descriptionView.setBackgroundColor(ContextCompat.getColor(mContext, R.color.or_color_red_light))
@@ -397,7 +375,7 @@ class MediaPresenterImpl(
         data[1] = clickPosition
     }
 
-    override fun handleItemSettings(item: MediaBrowserCompat.MediaItem) {
+    override fun handleItemSettings(item: MediaItem) {
         val transaction = getFragmentTransaction(mActivity)
         if (transaction == null) {
             AppLogger.w("$TAG can not handle settings with invalid transaction")
@@ -412,7 +390,8 @@ class MediaPresenterImpl(
         fragment.show(transaction, RSSettingsDialog.DIALOG_TAG)
     }
 
-    override fun handleItemSelected(item: MediaBrowserCompat.MediaItem, clickPosition: Int) {
+    @UnstableApi
+    override fun handleItemSelected(item: MediaItem, clickPosition: Int) {
         if (mActivity == null) {
             return
         }
@@ -420,27 +399,26 @@ class MediaPresenterImpl(
             return
         }
 
-        if (item.isBrowsable) {
-            if (item.description.title != null
-                && item.description.title == mActivity!!.getString(R.string.category_empty)
+        val data = item.mediaMetadata
+        val isBrowsable = data.isBrowsable ?: false
+        val isPlayable = data.isPlayable ?: false
+        if (isBrowsable) {
+            if (data.title != null
+                && data.title == mActivity!!.getString(R.string.category_empty)
             ) {
                 return
             }
         }
         updateListPositions(clickPosition)
-        mCurrentMediaId = item.mediaId.toString()
+        mCurrentMediaId = item.mediaId
 
         // If it is browsable - then we navigate to the next category
-        if (item.isBrowsable) {
+        if (isBrowsable) {
             addMediaItemToStack(mCurrentMediaId)
-        } else if (item.isPlayable) {
+        } else if (isPlayable) {
             // Else - we play an item
-            mMediaRsrMgr.playFromMediaId(mCurrentMediaId)
+            mMediaRsrMgr.playFromMediaId(mCurrentMediaId, mCurrentParentId)
         }
-    }
-
-    override fun connect() {
-        mMediaRsrMgr.connect()
     }
 
     override fun handlePermissionsResult(permissions: Array<String>, grantResults: IntArray) {
@@ -474,7 +452,7 @@ class MediaPresenterImpl(
     @SuppressLint("NotifyDataSetChanged")
     override fun handleChildrenLoaded(
         parentId: String,
-        children: List<MediaBrowserCompat.MediaItem>
+        children: List<MediaItem>
     ) {
         // Check whether category has changed.
         val isSameCatalogue = AppUtils.isSameCatalogue(parentId, mCurrentParentId)
@@ -626,15 +604,11 @@ class MediaPresenterImpl(
         handleMetadataChanged(mMediaRsrMgr.mediaMetadata)
     }
 
-    private fun handleMetadataChanged(metadata: MediaMetadataCompat?) {
+    private fun handleMetadataChanged(metadata: MediaMetadata?) {
         if (mListener == null) {
             return
         }
         if (metadata == null) {
-            return
-        }
-        val mediaId = metadata.id ?: AppUtils.EMPTY_STRING
-        if (mediaId.isBlank()) {
             return
         }
         if (mCurrentRadioStationView?.visibility != View.VISIBLE) {
@@ -667,17 +641,13 @@ class MediaPresenterImpl(
             handleMediaResourceManagerConnected()
         }
 
-        override fun onPlaybackStateChanged(state: PlaybackStateCompat) {
-            AppLogger.d("$TAG psc:$state")
+        override fun onPlaybackStateChanged(state: PlaybackState) {
+            AppLogger.d("$TAG psc:${state}")
             mCurrentPlaybackState = state.state
             this@MediaPresenterImpl.mListener?.handlePlaybackStateChanged(state)
         }
 
-        override fun onQueueChanged(queue: List<MediaSessionCompat.QueueItem>) {
-            AppLogger.d("$TAG qc:$queue")
-        }
-
-        override fun onMetadataChanged(metadata: MediaMetadataCompat) {
+        override fun onMetadataChanged(metadata: MediaMetadata) {
             handleMetadataChanged(metadata)
         }
     }
@@ -698,11 +668,12 @@ class MediaPresenterImpl(
 
     private inner class MediaItemsAdapterListener : MediaItemsAdapter.Listener {
 
-        override fun onItemSettings(item: MediaBrowserCompat.MediaItem) {
+        override fun onItemSettings(item: MediaItem) {
             handleItemSettings(item)
         }
 
-        override fun onItemSelected(item: MediaBrowserCompat.MediaItem, position: Int) {
+        @UnstableApi
+        override fun onItemSelected(item: MediaItem, position: Int) {
             setActiveItem(position)
             handleItemSelected(item, position)
         }

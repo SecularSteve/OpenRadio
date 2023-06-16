@@ -15,9 +15,8 @@
  */
 package com.yuriy.openradio.shared.model.media
 
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
+import android.media.session.PlaybackState
+import androidx.media3.common.MediaMetadata
 
 /**
  * Created by Chernyshov Yurii
@@ -30,7 +29,6 @@ import android.support.v4.media.session.PlaybackStateCompat
  */
 interface MediaResourceManagerListener {
     fun onConnected()
-    fun onPlaybackStateChanged(state: PlaybackStateCompat)
-    fun onQueueChanged(queue: List<MediaSessionCompat.QueueItem>)
-    fun onMetadataChanged(metadata: MediaMetadataCompat)
+    fun onPlaybackStateChanged(state: PlaybackState)
+    fun onMetadataChanged(metadata: MediaMetadata)
 }

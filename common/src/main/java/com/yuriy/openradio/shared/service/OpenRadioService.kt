@@ -29,7 +29,6 @@ import android.os.HandlerThread
 import android.os.Looper
 import android.os.Message
 import androidx.core.content.ContextCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media.utils.MediaConstants
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -46,7 +45,6 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.yuriy.openradio.R
-import com.yuriy.openradio.shared.broadcast.AppLocalBroadcast
 import com.yuriy.openradio.shared.broadcast.BTConnectionReceiver
 import com.yuriy.openradio.shared.broadcast.BecomingNoisyReceiver
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
@@ -113,8 +111,6 @@ class OpenRadioService : MediaLibraryService() {
 
     private var mIsPackageValid = false
 
-    private val mDelayedStopHandler: Handler
-
     /**
      * Track selected Radio Station.
      */
@@ -152,10 +148,6 @@ class OpenRadioService : MediaLibraryService() {
     @Volatile
     private lateinit var mServiceHandler: ServiceHandler
 
-    /**
-     * Storage of Radio Stations to browse.
-     */
-    private val mBrowseStorage: RadioStationsStorage
     private val mLatestPlaylist = TreeSet<RadioStation>()
 
     /**
@@ -165,14 +157,7 @@ class OpenRadioService : MediaLibraryService() {
     private val mStorageListener: RadioStationsStorage.Listener
     private val mStartIds: ConcurrentLinkedQueue<Int>
     private var mCurrentParentId = AppUtils.EMPTY_STRING
-
-    /**
-     * Current media player state.
-     */
-    @Volatile
-    private var mPlayerState = Player.STATE_IDLE
     private var mIsRestoreState = false
-
     private lateinit var mPresenter: OpenRadioServicePresenter
     private val mSleepTimerListener = SleepTimerListenerImpl()
     private val mRemoteControlListener = RemoteControlListenerImpl()
@@ -193,9 +178,7 @@ class OpenRadioService : MediaLibraryService() {
         DependencyRegistryCommon.inject(this)
         mStartIds = ConcurrentLinkedQueue()
         mStorageListener = StorageListener()
-        mBrowseStorage = RadioStationsStorage()
         mSearchStorage = RadioStationsStorage()
-        mDelayedStopHandler = DelayedStopHandler()
         mUiScope = CoroutineScope(Dispatchers.Main)
         mScope = CoroutineScope(Dispatchers.IO)
         mCommandScope = CoroutineScope(Dispatchers.IO)
@@ -203,7 +186,11 @@ class OpenRadioService : MediaLibraryService() {
 
     interface ResultListener {
 
-        fun onResult(items: List<MediaItem> = ArrayList(), pageNumber: Int = 1)
+        fun onResult(
+            items: List<MediaItem> = ArrayList(),
+            radioStations: Set<RadioStation> = TreeSet(),
+            pageNumber: Int = 1
+        )
     }
 
     private inner class StorageListener : RadioStationsStorage.Listener {
@@ -351,18 +338,13 @@ class OpenRadioService : MediaLibraryService() {
         if (this::mServiceHandler.isInitialized) {
             mServiceHandler.looper.quit()
         }
-        mDelayedStopHandler.removeCallbacksAndMessages(null)
         mPresenter.close()
         mSession.run {
             release()
             if (player.playbackState != Player.STATE_IDLE) {
-                //player.removeListener(playerListener)
                 player.release()
             }
         }
-        // Service is being killed, so make sure we release our resources
-        handleStopRequestUiThread()
-        mPlayer.release()
     }
 
 //    override fun onSearch(query: String, extras: Bundle?, result: Result<List<MediaBrowserCompat.MediaItem>>) {
@@ -501,7 +483,8 @@ class OpenRadioService : MediaLibraryService() {
             return
         }
         mActiveRS.setVariantFixed(MediaStream.BIT_RATE_DEFAULT, urls[0])
-        getStorage(mActiveRS.id).getById(mActiveRS.id).setVariantFixed(MediaStream.BIT_RATE_DEFAULT, urls[0])
+        // TODO:
+        //getStorage(mActiveRS.id).getById(mActiveRS.id).setVariantFixed(MediaStream.BIT_RATE_DEFAULT, urls[0])
         mStorageListener.onUpdate(mActiveRS)
         handlePlayRequest()
     }
@@ -518,39 +501,8 @@ class OpenRadioService : MediaLibraryService() {
             AppLogger.e("$TAG get rs by invalid id")
             return RadioStation.INVALID_INSTANCE
         }
-        var radioStation = getStorage(mediaId).getById(mediaId)
-        if (radioStation.isInvalid()) {
-            radioStation = mActiveRS
-        }
-        // TODO: Why it can be invalid ??
-        return radioStation
-    }
-
-    /**
-     * Return specific storage of Radio Stations based on the current browse case: normal Browse or Search.
-     *
-     * @param mediaId Media Id to use to detect correct storage type.
-     *
-     * @return Storage of Radio Stations.
-     */
-    private fun getStorage(mediaId: String): RadioStationsStorage {
-        return if (MediaId.isFromSearch(mediaId)) {
-            mSearchStorage
-        } else {
-            mBrowseStorage
-        }
-    }
-
-    /**
-     * Releases resources used by the service for playback. This includes the
-     * "foreground service" status.
-     */
-    private fun relaxResources() {
-        // stop being a foreground service
-        stopForeground(true)
-        // reset the delayed stop handler.
-        mDelayedStopHandler.removeCallbacksAndMessages(null)
-        mDelayedStopHandler.sendEmptyMessageDelayed(0, STOP_DELAY.toLong())
+        // TODO: got to browse tree
+        return RadioStation.INVALID_INSTANCE
     }
 
     /**
@@ -576,18 +528,6 @@ class OpenRadioService : MediaLibraryService() {
             )
             return
         }
-        mDelayedStopHandler.removeCallbacksAndMessages(null)
-
-//        if (mSession.isActive.not()) {
-//            mSession.isActive = true
-//        }
-
-        // Release everything.
-        relaxResources()
-
-        // TODO:
-        //mPlayer.reset()
-        //mPlayer.prepare(mActiveRS.id)
     }
 
     private fun handleClearCache(context: Context) {
@@ -600,7 +540,7 @@ class OpenRadioService : MediaLibraryService() {
     private fun handleMasterVolumeChanged(context: Context, masterVolume: Int) {
         AppPreferencesManager.setMasterVolume(context, masterVolume)
         mUiScope.launch {
-            mPlayer.setVolume(masterVolume / 100.0f)
+            mPlayer.volume = masterVolume / 100.0f
         }
     }
 
@@ -608,30 +548,7 @@ class OpenRadioService : MediaLibraryService() {
      * Handle a request to pause radio stream with reason provided.
      */
     private fun handlePauseRequest() {
-        mUiScope.launch { handlePauseRequestUiThread() }
-    }
-
-    /**
-     * Handle a request to pause radio stream with reason provided in UI thread.
-     */
-    private fun handlePauseRequestUiThread() {
-        if (mPlayerState == Player.STATE_READY) {
-            // Pause media player and cancel the 'foreground service' state.
-            mPlayer.pause()
-            // While paused, give up audio focus.
-            relaxResources()
-        }
-    }
-
-    /**
-     * Handle a request to stop music in UI thread.
-     */
-    private fun handleStopRequestUiThread() {
-        if (mPlayerState == Player.STATE_IDLE || mPlayerState == Player.STATE_ENDED) {
-            return
-        }
-        // Let go of all resources...
-        relaxResources()
+        mUiScope.launch { mPlayer.pause() }
     }
 
     private fun closeService() {
@@ -643,7 +560,7 @@ class OpenRadioService : MediaLibraryService() {
      * Handle a request to stop music.
      */
     private fun handleStopRequest() {
-        mUiScope.launch { handleStopRequestUiThread() }
+        mUiScope.launch { mPlayer.stop() }
     }
 
     private fun onResult(set: Set<RadioStation>, pageNumber: Int) {
@@ -654,9 +571,9 @@ class OpenRadioService : MediaLibraryService() {
         AppLogger.d("${set.size} children loaded, restore compete for $mCurrentParentId")
         if (set.isEmpty().not()) {
             if (pageNumber == 0) {
-                mBrowseStorage.clear()
+                //mBrowseStorage.clear()
             }
-            mBrowseStorage.addAll(set)
+            //mBrowseStorage.addAll(set)
         }
         mUiScope.launch {
             val count = mPlayer.mediaItemCount
@@ -676,7 +593,7 @@ class OpenRadioService : MediaLibraryService() {
                         AppLogger.d("-- load more recent")
                     }
                 }
-                mBrowseStorage.addAll(mLatestPlaylist)
+                //mBrowseStorage.addAll(mLatestPlaylist)
                 mStorageListener.onAddAll(mLatestPlaylist)
                 handlePlayRequest()
             }
@@ -693,7 +610,7 @@ class OpenRadioService : MediaLibraryService() {
         //    AppLogger.e("$TAG media id is invalid")
         //    return
         //}
-        setActiveRS(getStorage(mediaId).getById(mediaId))
+        //setActiveRS(getStorage(mediaId).getById(mediaId))
         AppLogger.i("$TAG handle play $mActiveRS")
         // Play Radio Station
         handlePlayRequest()
@@ -726,7 +643,7 @@ class OpenRadioService : MediaLibraryService() {
             return
         }
         mUiScope.launch {
-            getStorage(mActiveRS.id).clearAndCopy(list)
+            //getStorage(mActiveRS.id).clearAndCopy(list)
             handlePlayRequest()
         }
     }
@@ -792,10 +709,11 @@ class OpenRadioService : MediaLibraryService() {
 
             OpenRadioStore.VALUE_NAME_REMOVE_BY_ID -> {
                 mStorageListener.onClear()
-                getStorage(mActiveRS.id).removeById(
-                    intent.getStringExtra(OpenRadioStore.EXTRA_KEY_MEDIA_ID) ?: AppUtils.EMPTY_STRING
-                )
-                mStorageListener.onAddAll(getStorage(mActiveRS.id).all)
+                // TODO:
+                //getStorage(mActiveRS.id).removeById(
+                //    intent.getStringExtra(OpenRadioStore.EXTRA_KEY_MEDIA_ID) ?: AppUtils.EMPTY_STRING
+                //)
+                //mStorageListener.onAddAll(getStorage(mActiveRS.id).all)
             }
 
             OpenRadioStore.VALUE_NAME_NOTIFY_CHILDREN_CHANGED -> {
@@ -833,7 +751,7 @@ class OpenRadioService : MediaLibraryService() {
     }
 
     private fun togglePlayableItem() {
-        when (mPlayerState) {
+        when (val state = mPlayer.playbackState) {
             Player.STATE_BUFFERING,
             Player.STATE_READY -> {
                 handlePauseRequest()
@@ -846,7 +764,7 @@ class OpenRadioService : MediaLibraryService() {
 
             else -> {
                 AppLogger.w(
-                    "$TAG unhandled playback state:${PlayerUtils.playerStateToString(mPlayerState)}"
+                    "$TAG unhandled playback state:${PlayerUtils.playerStateToString(state)}"
                 )
             }
         }
@@ -905,23 +823,21 @@ class OpenRadioService : MediaLibraryService() {
             this@OpenRadioService.onHandledError(error)
         }
 
-        override fun onReady() {
-            if (mActiveRS.isInvalid()) {
-                AppLogger.w("$TAG prepare with invalid rs")
-                return
+        override fun onReady(mediaItem: MediaItem) {
+            mScope.launch {
+                mBrowseTree.getRadioStationByMediaId(mediaItem.mediaId)?.let {
+                    setActiveRS(it)
+                    mPresenter.setLastRadioStation(it)
+                }
             }
-            mPresenter.setLastRadioStation(mActiveRS)
         }
 
         override fun onIndexOnQueueChanges(value: Int) {
-            setActiveRS(getStorage(mActiveRS.id).getAt(value))
-            LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(
-                AppLocalBroadcast.createIntentCurrentIndexOnQueue(value)
-            )
-        }
-
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            mPlayerState = playbackState
+            // TODO:
+            //setActiveRS(getStorage(mActiveRS.id).getAt(value))
+            //LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(
+            //    AppLocalBroadcast.createIntentCurrentIndexOnQueue(value)
+            //)
         }
 
         override fun onStartForeground(notificationId: Int, notification: Notification) {
@@ -1217,9 +1133,9 @@ class OpenRadioService : MediaLibraryService() {
                 false, mIsRestoreState, Bundle(), mCommandScope,
                 object : ResultListener {
 
-                    override fun onResult(items: List<MediaItem>, pageNumber: Int) {
-                        AppLogger.d("$TAG loaded ${items.size} items for $parentId")
-                        mBrowseTree[parentId] = ArrayList(items)
+                    override fun onResult(items: List<MediaItem>, radioStations: Set<RadioStation>, pageNumber: Int) {
+                        AppLogger.d("$TAG loaded [$pageNumber:${items.size}] for $parentId")
+                        mBrowseTree[parentId] = BrowseTree.BrowseData(ArrayList(items), radioStations)
                         conditionVariable.open()
                     }
                 }
@@ -1251,11 +1167,6 @@ class OpenRadioService : MediaLibraryService() {
          * Action to thumbs up a media item
          */
         private const val CUSTOM_ACTION_THUMBS_UP = "com.yuriy.openradio.share.service.THUMBS_UP"
-
-        /**
-         * Delay stop service by using a handler.
-         */
-        private const val STOP_DELAY = 30_000
 
         private const val API_CALL_TIMEOUT_MS = 3_000L
 

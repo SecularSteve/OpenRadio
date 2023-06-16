@@ -241,17 +241,14 @@ object MediaItemBuilder {
 
     fun buildPlayable(
         radioStation: RadioStation,
-        sortId: Int,
         isFavorite: Boolean = false,
-        isLocal: Boolean = false,
-        isUpdateLastPlayedField: Boolean = false
+        isLocal: Boolean = false
     ): MediaItem {
         val bundle = Bundle()
         MediaItemHelper.updateBitrateField(bundle, radioStation.getStreamBitrate())
         MediaItemHelper.updateFavoriteField(bundle, isFavorite)
-        MediaItemHelper.updateSortIdField(bundle, sortId)
+        MediaItemHelper.updateSortIdField(bundle, radioStation.sortId)
         MediaItemHelper.updateLocalRadioStationField(bundle, isLocal)
-        MediaItemHelper.updateLastPlayedField(bundle, isUpdateLastPlayedField)
         MediaItemHelper.setDrawableId(bundle, R.drawable.ic_radio_station_empty)
         val uri = Uri.parse(radioStation.getStreamUrlFixed())
         return MediaItem.Builder()

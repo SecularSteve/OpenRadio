@@ -20,10 +20,10 @@ import android.app.Dialog
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.Parcelable
-import android.support.v4.media.MediaBrowserCompat
 import android.view.View
 import android.widget.NumberPicker
+import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
@@ -44,6 +44,7 @@ import com.yuriy.openradio.shared.view.BaseDialogFragment
  * On 12/20/14
  * E-Mail: chernyshov.yuriy@gmail.com
  */
+@UnstableApi
 class RSSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
 
     private var mParentCategoryId = AppUtils.EMPTY_STRING
@@ -90,9 +91,9 @@ class RSSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
         super.onPause()
     }
 
-    private fun handleUi(view: View, item: MediaBrowserCompat.MediaItem, args: Bundle?) {
+    private fun handleUi(view: View, item: MediaItem, args: Bundle?) {
         mParentCategoryId = extractParentId(args)
-        mSortMediaId = item.mediaId.toString()
+        mSortMediaId = item.mediaId
         val isLocal = MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST == mParentCategoryId
         val isSortable = MediaId.isSortable(mParentCategoryId)
         view.findView(R.id.dialog_rs_settings_edit_remove).visibility =
@@ -103,18 +104,18 @@ class RSSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
         view.findView(R.id.dialog_rs_settings_edit_btn).tag = item
         view.findView(R.id.dialog_rs_settings_remove_btn).tag = item
         val name = view.findTextView(R.id.dialog_rs_settings_rs_name)
-        name.text = item.description.title
+        name.text = item.mediaMetadata.title
 
         val imageView = view.findImageView(R.id.dialog_rs_settings_logo_view)
         // At this point Image should be fetched from the internet or local file system.
-        imageView.setImageURI(item.description.iconUri)
+        imageView.setImageURI(item.mediaMetadata.artworkUri)
 
         if (isSortable) {
             handleSortUi(view, item, args)
         }
     }
 
-    private fun handleSortUi(view: View, item: MediaBrowserCompat.MediaItem, args: Bundle?) {
+    private fun handleSortUi(view: View, item: MediaItem, args: Bundle?) {
         val maxId = extractMaxId(args)
         val numPicker = view.findViewById<NumberPicker>(R.id.sort_id_picker)
         numPicker.minValue = 0
@@ -141,12 +142,13 @@ class RSSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
         private val KEY_PARENT_ID = CLASS_NAME + "_KEY_PARENT_ID"
         private val KEY_MAX_SORT_ID = CLASS_NAME + "_KEY_MAX_SORT_ID"
 
+        @UnstableApi
         fun provideMediaItem(
             bundle: Bundle,
-            mediaItem: MediaBrowserCompat.MediaItem,
+            mediaItem: MediaItem,
             parentId: String, maxSortId: Int
         ) {
-            bundle.putParcelable(KEY_MEDIA_ITEM, mediaItem)
+            bundle.putBundle(KEY_MEDIA_ITEM, mediaItem.toBundle())
             bundle.putString(KEY_PARENT_ID, parentId)
             bundle.putInt(KEY_MAX_SORT_ID, maxSortId)
         }
@@ -169,13 +171,14 @@ class RSSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
             } else bundle.getInt(KEY_MAX_SORT_ID, 1000)
         }
 
-        private fun extractMediaItem(bundle: Bundle?): MediaBrowserCompat.MediaItem? {
+        @UnstableApi
+        private fun extractMediaItem(bundle: Bundle?): MediaItem? {
             if (bundle == null) {
                 return null
             }
             return if (!bundle.containsKey(KEY_MEDIA_ITEM)) {
                 null
-            } else bundle.getParcelable<Parcelable>(KEY_MEDIA_ITEM) as MediaBrowserCompat.MediaItem?
+            } else MediaItem.CREATOR.fromBundle(bundle.getBundle(KEY_MEDIA_ITEM) ?: Bundle())
         }
     }
 }

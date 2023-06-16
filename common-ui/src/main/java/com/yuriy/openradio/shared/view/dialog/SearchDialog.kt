@@ -22,7 +22,6 @@ import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.presenter.MediaPresenter
-import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.findEditText
 import com.yuriy.openradio.shared.view.BaseDialogFragment
@@ -47,9 +46,10 @@ class SearchDialog : BaseDialogFragment(), MediaPresenterDependency {
         val searchEditView = view.findEditText(R.id.search_dialog_edit_txt_view)
         val searchBtn = view.findButton(R.id.search_dialog_btn_view)
         searchBtn.setOnClickListener {
-            val queryBundle = AppUtils.makeSearchQueryBundle(searchEditView.text.toString().trim())
+            // TODO: Bundles!
+            //val queryBundle = AppUtils.makeSearchQueryBundle(searchEditView.text.toString().trim())
             mMediaPresenter.unsubscribeFromItem(MediaId.MEDIA_ID_SEARCH_FROM_APP)
-            mMediaPresenter.addMediaItemToStack(MediaId.MEDIA_ID_SEARCH_FROM_APP, queryBundle)
+            mMediaPresenter.addMediaItemToStack(MediaId.MEDIA_ID_SEARCH_FROM_APP)
             dialog?.dismiss()
         }
         return createAlertDialog(view)

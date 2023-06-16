@@ -17,20 +17,19 @@
 package com.yuriy.openradio.shared.presenter
 
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
 import android.view.View
 import android.widget.TextView
 import androidx.fragment.app.FragmentActivity
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.recyclerview.widget.RecyclerView
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiverCallback
+import com.yuriy.openradio.shared.model.media.MediaItemsSubscription
 import com.yuriy.openradio.shared.view.list.MediaItemsAdapter
 
 interface MediaPresenter {
 
-    fun addMediaItemToStack(mediaId: String, options: Bundle = Bundle())
-
-    fun connect()
+    fun addMediaItemToStack(mediaId: String)
 
     fun destroy()
 
@@ -40,7 +39,7 @@ interface MediaPresenter {
 
     fun handleChildrenLoaded(
         parentId: String,
-        children: List<MediaBrowserCompat.MediaItem>
+        children: List<MediaItem>
     )
 
     fun handleClosePresenter()
@@ -49,9 +48,9 @@ interface MediaPresenter {
 
     fun handleEditRadioStationMenu(view: View)
 
-    fun handleItemSelected(item: MediaBrowserCompat.MediaItem, clickPosition: Int)
+    fun handleItemSelected(item: MediaItem, clickPosition: Int)
 
-    fun handleItemSettings(item: MediaBrowserCompat.MediaItem)
+    fun handleItemSettings(item: MediaItem)
 
     fun handlePermissionsResult(permissions: Array<String>, grantResults: IntArray)
 
@@ -65,7 +64,7 @@ interface MediaPresenter {
         activity: FragmentActivity, mainLayout: View,
         bundle: Bundle, listView: RecyclerView, currentRadioStationView: View,
         adapter: MediaItemsAdapter,
-        mediaSubscriptionCallback: MediaBrowserCompat.SubscriptionCallback,
+        mediaSubscriptionCallback: MediaItemsSubscription,
         listener: MediaPresenterListener,
         localReceiverCallback: AppLocalReceiverCallback
     )
@@ -78,7 +77,7 @@ interface MediaPresenter {
 
     fun unsubscribeFromItem(mediaId: String?)
 
-    fun updateDescription(descriptionView: TextView?, description: MediaDescriptionCompat)
+    fun updateDescription(descriptionView: TextView?, mediaMetadata: MediaMetadata)
 
     fun updateListPositions(clickPosition: Int)
 

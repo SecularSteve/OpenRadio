@@ -22,6 +22,8 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.getStreamUrlFixed
@@ -36,7 +38,6 @@ object MediaItemHelper {
 
     private const val DRAWABLE_ID_UNDEFINED = MediaSessionCompat.QueueItem.UNKNOWN_ID
     private const val KEY_IS_FAVORITE = "KEY_IS_FAVORITE"
-    private const val KEY_IS_LAST_PLAYED = "KEY_IS_LAST_PLAYED"
     private const val KEY_IS_LOCAL = "KEY_IS_LOCAL"
     private const val KEY_SORT_ID = "KEY_SORT_ID"
     private const val KEY_BITRATE = "KEY_BITRATE"
@@ -62,23 +63,13 @@ object MediaItemHelper {
         bundle.putInt(KEY_BITRATE, bitrate)
     }
 
-    fun getBitrateField(mediaItem: MediaBrowserCompat.MediaItem?): Int {
+    fun getBitrateField(mediaItem: MediaItem?): Int {
         if (mediaItem == null) {
             return 0
         }
-        val mediaDescription = mediaItem.description
+        val mediaDescription = mediaItem.mediaMetadata
         val bundle = mediaDescription.extras
         return bundle?.getInt(KEY_BITRATE, 0) ?: 0
-    }
-
-    /**
-     * Sets key that indicates Radio Station is in favorites.
-     *
-     * @param bundle
-     * @param isLastPlayed Whether Media Item is known last played.
-     */
-    fun updateLastPlayedField(bundle: Bundle, isLastPlayed: Boolean) {
-        bundle.putBoolean(KEY_IS_LAST_PLAYED, isLastPlayed)
     }
 
     /**
@@ -87,14 +78,11 @@ object MediaItemHelper {
      * @param mediaItem  [MediaBrowserCompat.MediaItem].
      * @param isFavorite Whether Item is in Favorites.
      */
-    fun updateFavoriteField(
-        mediaItem: MediaBrowserCompat.MediaItem?,
-        isFavorite: Boolean
-    ) {
+    fun updateFavoriteField(mediaItem: MediaItem?, isFavorite: Boolean) {
         if (mediaItem == null) {
             return
         }
-        val mediaDescription = mediaItem.description
+        val mediaDescription = mediaItem.mediaMetadata
         val bundle = mediaDescription.extras ?: return
         updateFavoriteField(bundle, isFavorite)
     }
@@ -123,11 +111,11 @@ object MediaItemHelper {
      * @param mediaItem [MediaBrowserCompat.MediaItem].
      * @return `true` if Item is Favorite, `false` - otherwise.
      */
-    fun isFavoriteField(mediaItem: MediaBrowserCompat.MediaItem?): Boolean {
+    fun isFavoriteField(mediaItem: MediaItem?): Boolean {
         if (mediaItem == null) {
             return false
         }
-        val mediaDescription = mediaItem.description
+        val mediaDescription = mediaItem.mediaMetadata
         val bundle = mediaDescription.extras
         return bundle != null && bundle.getBoolean(KEY_IS_FAVORITE, false)
     }
@@ -139,25 +127,24 @@ object MediaItemHelper {
      * Sort Id from.
      * @return Extracted Sort Id or -1.
      */
-    fun getSortIdField(mediaItem: MediaBrowserCompat.MediaItem?): Int {
+    fun getSortIdField(mediaItem: MediaItem?): Int {
         return if (mediaItem == null) {
             MediaSessionCompat.QueueItem.UNKNOWN_ID
-        } else getSortIdField(mediaItem.description)
+        } else getSortIdField(mediaItem.mediaMetadata.extras)
     }
 
     /**
      * Extracts Sort Id field from the [MediaDescriptionCompat].
      *
-     * @param mediaDescription [MediaDescriptionCompat] to extract Media Id from.
+     * @param extras [Bundle] to extract Sort Id from.
      * @return Extracted Sort Id or -1.
      */
-    private fun getSortIdField(mediaDescription: MediaDescriptionCompat?): Int {
-        if (mediaDescription == null) {
+    private fun getSortIdField(extras: Bundle?): Int {
+        if (extras == null) {
             return MediaSessionCompat.QueueItem.UNKNOWN_ID
         }
-        val bundle = mediaDescription.extras
-        return bundle?.getInt(KEY_SORT_ID, MediaSessionCompat.QueueItem.UNKNOWN_ID)
-            ?: MediaSessionCompat.QueueItem.UNKNOWN_ID
+        // TODO:
+        return extras.getInt(KEY_SORT_ID, MediaSessionCompat.QueueItem.UNKNOWN_ID)
     }
 
     /**
@@ -231,7 +218,7 @@ object MediaItemHelper {
      *
      * @return Display description.
      */
-    fun getDisplayDescription(value: MediaDescriptionCompat, defaultValue: String): String {
+    fun getDisplayDescription(value: MediaMetadata, defaultValue: String): String {
         val descChars = value.subtitle ?: return defaultValue
         var result = descChars.toString()
         if (result.isNotEmpty()) {

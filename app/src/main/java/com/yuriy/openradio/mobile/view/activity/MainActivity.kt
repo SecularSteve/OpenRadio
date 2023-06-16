@@ -19,9 +19,8 @@ package com.yuriy.openradio.mobile.view.activity
 import android.annotation.SuppressLint
 import android.app.assist.AssistContent
 import android.content.Context
+import android.media.session.PlaybackState
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.view.Menu
 import android.view.MenuItem
@@ -34,6 +33,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.material.navigation.NavigationView
@@ -44,11 +45,11 @@ import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
 import com.yuriy.openradio.shared.model.media.MediaId
+import com.yuriy.openradio.shared.model.media.MediaItemsSubscription
 import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.presenter.MediaPresenterListener
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
-import com.yuriy.openradio.shared.utils.IntentUtils
 import com.yuriy.openradio.shared.utils.PlayerUtils
 import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.utils.UiUtils
@@ -121,14 +122,13 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
     override fun configureWith(mediaPresenter: MediaPresenter) {
         mMediaPresenter = mediaPresenter
         val mediaItemsAdapter = MobileMediaItemsAdapter(applicationContext)
-        val mediaSubscriptionCb = MediaBrowserSubscriptionCallback(WeakReference(this))
+        val mediaSubscriptionCb = MediaItemsSubscriptionCallback(WeakReference(this))
         val mediaPresenterImpl = MediaPresenterListenerImpl()
         mMediaPresenter.init(
             this, findView(R.id.main_layout), mSavedInstanceState, findViewById(R.id.list_view),
             findViewById(R.id.current_radio_station_view), mediaItemsAdapter,
             mediaSubscriptionCb, mediaPresenterImpl, mLocalBroadcastReceiverCb
         )
-        mMediaPresenter.connect()
     }
 
     override fun onProvideAssistContent(outContent: AssistContent?) {
@@ -202,12 +202,14 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
                 dialog.show(transaction, SearchDialog.DIALOG_TAG)
                 true
             }
+
             R.id.action_eq -> {
                 // Show Equalizer Dialog
                 val dialog = BaseDialogFragment.newInstance(EqualizerDialog::class.java.name)
                 dialog.show(transaction, EqualizerDialog.DIALOG_TAG)
                 true
             }
+
             else -> {
                 super.onOptionsItemSelected(item)
             }
@@ -267,36 +269,43 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
                     val dialog = BaseDialogFragment.newInstance(GeneralSettingsDialog::class.java.name)
                     dialog.show(transaction, GeneralSettingsDialog.DIALOG_TAG)
                 }
+
                 R.id.nav_buffering -> {
                     // Show Stream Buffering Dialog
                     val dialog = BaseDialogFragment.newInstance(StreamBufferingDialog::class.java.name)
                     dialog.show(transaction, StreamBufferingDialog.DIALOG_TAG)
                 }
+
                 R.id.nav_sleep_timer -> {
                     // Show Sleep Timer Dialog
                     val dialog = BaseDialogFragment.newInstance(SleepTimerDialog::class.java.name)
                     dialog.show(transaction, SleepTimerDialog.DIALOG_TAG)
                 }
+
                 R.id.nav_google_drive -> {
                     // Show Google Drive Dialog
                     val dialog = BaseDialogFragment.newInstance(GoogleDriveDialog::class.java.name)
                     dialog.show(transaction, GoogleDriveDialog.DIALOG_TAG)
                 }
+
                 R.id.nav_about -> {
                     // Show About Dialog
                     val dialog = BaseDialogFragment.newInstance(AboutDialog::class.java.name)
                     dialog.show(transaction, AboutDialog.DIALOG_TAG)
                 }
+
                 R.id.nav_network -> {
                     // Show Network Dialog
                     val dialog = BaseDialogFragment.newInstance(NetworkDialog::class.java.name)
                     dialog.show(transaction, NetworkDialog.DIALOG_TAG)
                 }
+
                 R.id.nav_source -> {
                     // Show Source Dialog
                     val dialog = BaseDialogFragment.newInstance(SourceDialog::class.java.name)
                     dialog.show(transaction, SourceDialog.DIALOG_TAG)
                 }
+
                 else -> {
                     // No dialog found.
                 }
@@ -371,17 +380,19 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
     }
 
     @MainThread
-    private fun handlePlaybackStateChanged(state: PlaybackStateCompat) {
+    private fun handlePlaybackStateChanged(state: PlaybackState) {
         when (state.state) {
             PlaybackStateCompat.STATE_BUFFERING, PlaybackStateCompat.STATE_PLAYING -> {
                 mPlayBtn.gone()
                 mPauseBtn.visible()
             }
+
             PlaybackStateCompat.STATE_NONE, PlaybackStateCompat.STATE_ERROR,
             PlaybackStateCompat.STATE_STOPPED, PlaybackStateCompat.STATE_PAUSED -> {
                 mPlayBtn.visible()
                 mPauseBtn.gone()
             }
+
             PlaybackStateCompat.STATE_CONNECTING, PlaybackStateCompat.STATE_FAST_FORWARDING,
             PlaybackStateCompat.STATE_REWINDING, PlaybackStateCompat.STATE_SKIPPING_TO_NEXT,
             PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS, PlaybackStateCompat.STATE_SKIPPING_TO_QUEUE_ITEM -> {
@@ -398,18 +409,15 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
      *
      * @param metadata Metadata related to currently playing Radio Station.
      */
-    private fun handleMetadataChanged(metadata: MediaMetadataCompat) {
-        val description = metadata.description
-        //AppLogger.d("TRACE::M::${IntentUtils.bundleToString(metadata.bundle)}")
-        //AppLogger.d("TRACE::D::${IntentUtils.bundleToString(description.extras)}")
+    private fun handleMetadataChanged(metadata: MediaMetadata) {
         val nameView = findTextView(R.id.crs_name_view)
-        nameView.text = description.title
+        nameView.text = metadata.title
         mMediaPresenter.updateDescription(
-            findTextView(R.id.crs_description_view), description
+            findTextView(R.id.crs_description_view), metadata
         )
         findProgressBar(R.id.crs_img_progress_view).gone()
         val imgView = findImageView(R.id.crs_img_view)
-        MediaItemsAdapter.updateImage(applicationContext, description, imgView)
+        MediaItemsAdapter.updateImage(applicationContext, metadata, imgView)
         //MediaItemsAdapter.updateBitrateView(
         //    radioStation.getStreamBitrate(), findTextView(R.id.crs_bitrate_view), true
         //)
@@ -435,15 +443,14 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
         }
     }
 
-    private class MediaBrowserSubscriptionCallback(private val mReference: WeakReference<MainActivity>) : MediaBrowserCompat.SubscriptionCallback() {
+    private class MediaItemsSubscriptionCallback(private val mReference: WeakReference<MainActivity>) :
+        MediaItemsSubscription {
 
         override fun onChildrenLoaded(
-            parentId: String, children: List<MediaBrowserCompat.MediaItem>,
-            options: Bundle
+            parentId: String, children: List<MediaItem>
         ) {
             AppLogger.i(
-                "$CLASS_NAME children loaded:$parentId, children:${children.size}," +
-                        " options:${IntentUtils.bundleToString(options)}"
+                "$CLASS_NAME children loaded:$parentId, children:${children.size}"
             )
             val reference = mReference.get()
             if (reference == null) {
@@ -492,11 +499,11 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
             this@MainActivity.showProgressBar()
         }
 
-        override fun handleMetadataChanged(metadata: MediaMetadataCompat) {
+        override fun handleMetadataChanged(metadata: MediaMetadata) {
             this@MainActivity.handleMetadataChanged(metadata)
         }
 
-        override fun handlePlaybackStateChanged(state: PlaybackStateCompat) {
+        override fun handlePlaybackStateChanged(state: PlaybackState) {
             this@MainActivity.handlePlaybackStateChanged(state)
         }
     }

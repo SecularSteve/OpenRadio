@@ -67,6 +67,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 object DependencyRegistryCommon {
 
+    const val PAGE_SIZE = 50
+
     private lateinit var sFavoritesStorage: FavoritesStorage
     private lateinit var sDeviceLocalsStorage: DeviceLocalsStorage
     private lateinit var sLatestRadioStationStorage: LatestRadioStationStorage
