@@ -18,7 +18,6 @@ package com.yuriy.openradio.shared.utils
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
@@ -44,10 +43,7 @@ object MediaItemHelper {
     private const val KEY_DRAWABLE_ID = "DRAWABLE_ID"
 
     fun setDrawableId(bundle: Bundle?, drawableId: Int) {
-        if (bundle == null) {
-            return
-        }
-        bundle.putInt(KEY_DRAWABLE_ID, drawableId)
+        bundle?.putInt(KEY_DRAWABLE_ID, drawableId)
     }
 
     fun getDrawableId(bundle: Bundle?): Int {
@@ -64,26 +60,17 @@ object MediaItemHelper {
     }
 
     fun getBitrateField(mediaItem: MediaItem?): Int {
-        if (mediaItem == null) {
-            return 0
-        }
-        val mediaDescription = mediaItem.mediaMetadata
-        val bundle = mediaDescription.extras
-        return bundle?.getInt(KEY_BITRATE, 0) ?: 0
+        return mediaItem?.mediaMetadata?.extras?.getInt(KEY_BITRATE, 0) ?: 0
     }
 
     /**
      * Sets key that indicates Radio Station is in favorites.
      *
-     * @param mediaItem  [MediaBrowserCompat.MediaItem].
+     * @param mediaItem  [MediaItem].
      * @param isFavorite Whether Item is in Favorites.
      */
     fun updateFavoriteField(mediaItem: MediaItem?, isFavorite: Boolean) {
-        if (mediaItem == null) {
-            return
-        }
-        val mediaDescription = mediaItem.mediaMetadata
-        val bundle = mediaDescription.extras ?: return
+        val bundle = mediaItem?.mediaMetadata?.extras ?: return
         updateFavoriteField(bundle, isFavorite)
     }
 
@@ -108,22 +95,18 @@ object MediaItemHelper {
     /**
      * Gets `true` if Item is Favorite, `false` - otherwise.
      *
-     * @param mediaItem [MediaBrowserCompat.MediaItem].
+     * @param mediaItem [MediaItem].
      * @return `true` if Item is Favorite, `false` - otherwise.
      */
     fun isFavoriteField(mediaItem: MediaItem?): Boolean {
-        if (mediaItem == null) {
-            return false
-        }
-        val mediaDescription = mediaItem.mediaMetadata
-        val bundle = mediaDescription.extras
-        return bundle != null && bundle.getBoolean(KEY_IS_FAVORITE, false)
+        val mediaMetadata = mediaItem?.mediaMetadata ?: return false
+        return mediaMetadata.extras?.getBoolean(KEY_IS_FAVORITE, false) ?: false
     }
 
     /**
-     * Extracts Sort Id field from the [MediaBrowserCompat.MediaItem].
+     * Extracts Sort Id field from the [MediaItem].
      *
-     * @param mediaItem [MediaBrowserCompat.MediaItem] to extract
+     * @param mediaItem [MediaItem] to extract
      * Sort Id from.
      * @return Extracted Sort Id or -1.
      */

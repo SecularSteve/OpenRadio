@@ -69,6 +69,9 @@ import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
 import com.yuriy.openradio.shared.view.dialog.StreamBufferingDialog
 import com.yuriy.openradio.shared.view.list.CountriesArrayAdapter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency, SourcesLayerDependency {
 
@@ -156,7 +159,9 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
 
         val clearCache = findButton(R.id.automotive_settings_clear_cache_btn)
         clearCache.setOnClickListener {
-            startService(OpenRadioStore.makeClearCacheIntent(applicationContext))
+            CoroutineScope(Dispatchers.Main).launch {
+                mMediaPresenter.getServiceCommander().sendCommand(OpenRadioService.CMD_CLEAR_CACHE)
+            }
         }
 
         val array = LocationService.getCountries()
@@ -177,7 +182,9 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val code = array[position].code
                 mMediaPresenter.onLocationChanged(code)
-                startService(OpenRadioStore.makeUpdateTreeIntent(applicationContext))
+                CoroutineScope(Dispatchers.Main).launch {
+                    mMediaPresenter.getServiceCommander().sendCommand(OpenRadioService.CMD_UPDATE_TREE)
+                }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -191,7 +198,11 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
                 override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
                 override fun onStartTrackingTouch(seekBar: SeekBar) {}
                 override fun onStopTrackingTouch(seekBar: SeekBar) {
-                    startService(OpenRadioStore.makeMasterVolumeChangedIntent(applicationContext, seekBar.progress))
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val bundle = OpenRadioStore.makeMasterVolumeChangedBundle(seekBar.progress)
+                        mMediaPresenter.getServiceCommander()
+                            .sendCommand(OpenRadioService.CMD_MASTER_VOLUME_CHANGED, bundle)
+                    }
                 }
             }
         )

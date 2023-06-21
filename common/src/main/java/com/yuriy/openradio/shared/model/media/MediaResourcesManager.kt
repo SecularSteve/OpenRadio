@@ -18,22 +18,22 @@ package com.yuriy.openradio.shared.model.media
 
 import android.content.ComponentName
 import android.content.Context
-import androidx.lifecycle.MutableLiveData
+import android.os.Bundle
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.MediaLibraryService
+import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionToken
 import androidx.work.await
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.MoreExecutors
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
-import com.yuriy.openradio.shared.extentions.isEnded
-import com.yuriy.openradio.shared.extentions.isPlayEnabled
 import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.utils.AppLogger
 import kotlinx.coroutines.CoroutineScope
@@ -53,6 +53,7 @@ import kotlinx.coroutines.launch
  *
  * @param mListener Listener for the media resources events. Acts as proxy between this manager and callee Activity.
  */
+@UnstableApi
 class MediaResourcesManager(context: Context, className: String, private val mListener: MediaResourceManagerListener) {
     /**
      * Tag string to use in logging message.
@@ -69,13 +70,9 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
 
     private val mPlayerListener = PlayerListener()
 
-    val player: Player get() = mMediaBrowser
+    private val mPlayer: Player get() = mMediaBrowser
 
-    val nowPlaying = MutableLiveData<MediaItem>()
-        .apply { postValue(MediaItem.EMPTY) }
-
-    val rootMediaItem = MutableLiveData<MediaItem>()
-        .apply { postValue(MediaItem.EMPTY) }
+    private var mNowPlaying: MediaItem? = null
 
     /**
      * Constructor.
@@ -93,7 +90,6 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
                     .await()
             mMediaBrowser.addListener(mPlayerListener)
             val root = mMediaBrowser.getLibraryRoot(null).await().value
-            rootMediaItem.postValue(root)
             AppLogger.d("$mClassName root '${root?.mediaId}'")
             mListener.onConnected()
         }
@@ -104,9 +100,24 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
             ?: ImmutableList.of()
     }
 
+    suspend fun sendCommand(command: String, parameters: Bundle?): Boolean =
+        sendCommand(command, parameters) { _, _ -> }
+
+    suspend fun sendCommand(
+        command: String,
+        parameters: Bundle?,
+        resultCallback: ((Int, Bundle?) -> Unit)
+    ): Boolean = if (mMediaBrowser.isConnected) {
+        val args = parameters ?: Bundle()
+        mMediaBrowser.sendCustomCommand(SessionCommand(command, args), args).await().let {
+            resultCallback(it.resultCode, it.extras)
+        }
+        true
+    } else {
+        false
+    }
+
     fun clean() {
-        rootMediaItem.postValue(MediaItem.EMPTY)
-        nowPlaying.postValue(MediaItem.EMPTY)
         mMediaBrowser.let {
             it.removeListener(mPlayerListener)
             it.release()
@@ -146,7 +157,11 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
      * @return Metadata.
      */
     val mediaMetadata: MediaMetadata?
+        // TODO:
         get() = null
+
+    val currentMediaItem: MediaItem?
+        get() = mPlayer.currentMediaItem
 
     private fun updateNowPlaying(player: Player) {
         val mediaItem = player.currentMediaItem ?: MediaItem.EMPTY
@@ -156,55 +171,32 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
         // The current media item from the CastPlayer may have lost some information.
         val mediaItemFuture = mMediaBrowser.getItem(mediaItem.mediaId)
         mediaItemFuture.addListener(
-            Runnable {
-                val fullMediaItem = mediaItemFuture.get().value ?: return@Runnable
-                nowPlaying.postValue(
-                    mediaItem.buildUpon().setMediaMetadata(fullMediaItem.mediaMetadata).build()
-                )
-            },
+            { mNowPlaying = mediaItemFuture.get().value },
             MoreExecutors.directExecutor()
         )
     }
 
     /**
-     * @param mediaId media id of the item to play.
+     *
      */
-    fun playFromMediaId(mediaId: String, parentMediaId: String) {
-        val nowPlaying = nowPlaying.value
-        val player = player ?: return
-        val pauseThenPlaying = false
-
+    fun playFromMediaId(mediaItem: MediaItem, parentMediaId: String) {
+        val player = mPlayer
         val isPrepared = player.playbackState != Player.STATE_IDLE
-        if (isPrepared && mediaId == nowPlaying?.mediaId) {
-            when {
-                player.isPlaying ->
-                    if (pauseThenPlaying) player.pause() else Unit
-
-                player.isPlayEnabled -> player.play()
-                player.isEnded -> player.seekTo(C.TIME_UNSET)
-                else -> {
-                    AppLogger.w(
-                        "Playable item clicked but neither play nor pause are enabled!" +
-                                " (mediaId=${mediaId})"
-                    )
-                }
-            }
+        if (isPrepared && mediaItem.mediaId == mNowPlaying?.mediaId) {
+            AppLogger.w(
+                "Playable item ${mediaItem.mediaId} is active already"
+            )
         } else {
             mScope.launch {
-                var playlist: MutableList<MediaItem> = arrayListOf()
-                // load the children of the parent if requested
-                parentMediaId?.let {
-                    playlist = getChildren(parentMediaId).let { children ->
-                        children.filter {
-                            it.mediaMetadata.isPlayable ?: false
-                        }
-                    }.toMutableList()
-                }
+                val playlist = getChildren(parentMediaId).let { children ->
+                    children.filter {
+                        it.mediaMetadata.isPlayable ?: false
+                    }
+                }.toMutableList()
                 if (playlist.isEmpty()) {
-                    //playlist.add(mediaItem)
+                    playlist.add(mediaItem)
                 }
-                //val indexOf = playlist.indexOf(mediaItem)
-                val indexOf = 0
+                val indexOf = playlist.indexOf(mediaItem)
                 val startWindowIndex = if (indexOf >= 0) indexOf else 0
                 player.setMediaItems(
                     playlist, startWindowIndex, /* startPositionMs= */ C.TIME_UNSET
@@ -216,9 +208,9 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
     }
 
     private inner class BrowserListener : MediaBrowser.Listener {
+
         override fun onDisconnected(controller: MediaController) {
-            // TODO:
-            //release()
+            AppLogger.w("TODO: BrowserListener Disconnected")
         }
 
         override fun onChildrenChanged(
@@ -227,27 +219,34 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
             itemCount: Int,
             params: MediaLibraryService.LibraryParams?
         ) {
-            AppLogger.d("TODO: ChildrenChanged for $parentId")
+            AppLogger.w("TODO: BrowserListener ChildrenChanged for $parentId")
         }
     }
 
+    @UnstableApi
     private inner class PlayerListener : Player.Listener {
+
+        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+            mListener.onMetadataChanged(mediaMetadata)
+        }
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            when (playbackState) {
+                Player.STATE_READY -> {
+                    updateNowPlaying(mPlayer)
+                }
+            }
+        }
 
         override fun onEvents(player: Player, events: Player.Events) {
             if (events.contains(Player.EVENT_PLAY_WHEN_READY_CHANGED)
                 || events.contains(Player.EVENT_PLAYBACK_STATE_CHANGED)
                 || events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)
             ) {
-                //updatePlaybackState(player)
+                mListener.onPlaybackStateChanged(PlaybackState(player.playbackState, player.playWhenReady))
                 if (player.playbackState != Player.STATE_IDLE) {
                     //networkFailure.postValue(false)
                 }
-            }
-            if (events.contains(Player.EVENT_MEDIA_METADATA_CHANGED)
-                || events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)
-                || events.contains(Player.EVENT_PLAY_WHEN_READY_CHANGED)
-            ) {
-                updateNowPlaying(player)
             }
         }
 

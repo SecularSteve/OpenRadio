@@ -91,7 +91,8 @@ object DependencyRegistryCommonUi :
             sNetworkLayer,
             sLocationStorage,
             sSleepTimerModel,
-            sSourcesLayer
+            sSourcesLayer,
+            sFavoritesStorage
         )
         sEditStationPresenter = EditStationPresenterImpl(
             sFavoritesStorage,
@@ -176,5 +177,9 @@ object DependencyRegistryCommonUi :
 
     fun inject(dependency: NetworkDialog) {
         dependency.configureWith(sNetworkSettingsStorage)
+    }
+
+    fun injectServiceCommander(dependency: ServiceCommanderDependency) {
+        dependency.configureWith(sMediaPresenter.getServiceCommander())
     }
 }

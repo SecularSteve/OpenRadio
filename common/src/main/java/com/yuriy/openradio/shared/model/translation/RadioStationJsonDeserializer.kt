@@ -16,8 +16,8 @@
 
 package com.yuriy.openradio.shared.model.translation
 
-import android.support.v4.media.session.MediaSessionCompat
 import android.text.TextUtils
+import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.setVariant
 import com.yuriy.openradio.shared.utils.AppLogger
@@ -72,7 +72,7 @@ class RadioStationJsonDeserializer : RadioStationDeserializer {
         radioStation.codec = JsonUtils.getStringValue(jsonObject, RadioStationJsonHelper.KEY_CODEC)
         radioStation.isLocal = JsonUtils.getBooleanValue(jsonObject, RadioStationJsonHelper.KEY_IS_LOCAL)
         radioStation.sortId = JsonUtils.getIntValue(
-            jsonObject, RadioStationJsonHelper.KEY_SORT_ID, MediaSessionCompat.QueueItem.UNKNOWN_ID
+            jsonObject, RadioStationJsonHelper.KEY_SORT_ID, DependencyRegistryCommon.UNKNOWN_ID
         )
         radioStation.imageUrl = JsonUtils.getStringValue(
             jsonObject, RadioStationJsonHelper.KEY_IMG_URL, AppUtils.EMPTY_STRING

@@ -15,7 +15,6 @@
  */
 package com.yuriy.openradio.shared.model.media
 
-import android.media.session.PlaybackState
 import androidx.media3.common.MediaMetadata
 
 /**
@@ -24,7 +23,7 @@ import androidx.media3.common.MediaMetadata
  * On 29/06/17
  * E-Mail: chernyshov.yuriy@gmail.com
  *
- * Interface designed to composite actions performed on [android.support.v4.media.MediaBrowserCompat].
+ * Interface designed to composite actions performed on Media Browser Service.
  *
  */
 interface MediaResourceManagerListener {

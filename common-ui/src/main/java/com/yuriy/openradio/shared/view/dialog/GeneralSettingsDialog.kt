@@ -43,6 +43,9 @@ import com.yuriy.openradio.shared.utils.findSpinner
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.view.BaseDialogFragment
 import com.yuriy.openradio.shared.view.list.CountriesArrayAdapter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Created by Yuriy Chernyshov
@@ -104,7 +107,11 @@ class GeneralSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
 
                 override fun onStartTrackingTouch(seekBar: SeekBar) {}
                 override fun onStopTrackingTouch(seekBar: SeekBar) {
-                    context.startService(OpenRadioStore.makeMasterVolumeChangedIntent(context, seekBar.progress))
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val bundle = OpenRadioStore.makeMasterVolumeChangedBundle(seekBar.progress)
+                        mMediaPresenter.getServiceCommander()
+                            .sendCommand(OpenRadioService.CMD_MASTER_VOLUME_CHANGED, bundle)
+                    }
                 }
             }
         )
@@ -123,7 +130,9 @@ class GeneralSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
         }
         val clearCache = view.findButton(R.id.clear_cache_btn)
         clearCache.setOnClickListener {
-            context.startService(OpenRadioStore.makeClearCacheIntent(context))
+            CoroutineScope(Dispatchers.Main).launch {
+                mMediaPresenter.getServiceCommander().sendCommand(OpenRadioService.CMD_CLEAR_CACHE)
+            }
         }
         val array = LocationService.getCountriesWithLocation(context)
         val countryCode = mMediaPresenter.getCountryCode()

@@ -16,7 +16,6 @@
 
 package com.yuriy.openradio.shared.service.player
 
-import android.app.Notification
 import android.content.Context
 import android.os.Looper
 import android.view.Surface
@@ -28,7 +27,6 @@ import androidx.media3.cast.SessionAvailabilityListener
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.DeviceInfo
-import androidx.media3.common.IllegalSeekPositionException
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Metadata
@@ -42,7 +40,6 @@ import androidx.media3.common.VideoSize
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.Size
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.common.util.Util
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
@@ -63,6 +60,7 @@ import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.PlayerUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.net.HttpURLConnection
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicInteger
@@ -90,19 +88,9 @@ class OpenRadioPlayer(
      */
     interface Listener {
 
-        fun onError()
-
         fun onHandledError(error: PlaybackException)
 
         fun onReady(mediaItem: MediaItem)
-
-        fun onIndexOnQueueChanges(value: Int)
-
-        fun onStartForeground(notificationId: Int, notification: Notification)
-
-        fun onStopForeground(removeNotification: Boolean)
-
-        fun onCloseApp()
     }
 
     /**
@@ -124,24 +112,6 @@ class OpenRadioPlayer(
      * Listener of the ExoPlayer components events.
      */
     private val mComponentListener = ComponentListener()
-
-    /**
-     * Current index of the item in play list.
-     */
-    private var mIndex = 0
-
-    /**
-     * Number of currently detected playback exceptions.
-     */
-    private val mNumOfExceptions = AtomicInteger(0)
-
-    private var mIsForegroundService = false
-
-    private var mStreamMetadata = AppUtils.EMPTY_STRING
-
-    private val mBufferingLabel = mContext.getString(R.string.buffering_infinite)
-
-    private val mLiveStreamLabel = mContext.getString(R.string.media_description_default)
 
     @Volatile
     private var mStoppedByNetwork = false
@@ -223,7 +193,6 @@ class OpenRadioPlayer(
     }
 
     override fun release() {
-        //mUiScope.launch { releaseIntrnl() }
         mPlayer.release()
         mPlaylist.clear()
     }
@@ -760,23 +729,9 @@ class OpenRadioPlayer(
         }
     }
 
-    /**
-     * Prepare player to play URI.
-     */
-//    fun prepare(mediaId: String) {
-//        AppLogger.d("Prepare '$mediaId', cast[${mCastPlayer?.isCastSessionAvailable}]")
-//        mNumOfExceptions.set(0)
-//        mIndex = 0
-//        synchronized(mMediaItems) {
-//            for ((index, mediaItem) in mMediaItems.withIndex()) {
-//                if (mediaItem.mediaId == mediaId) {
-//                    mIndex = index
-//                    break
-//                }
-//            }
-//        }
-//        prepareWithList(mIndex)
-//    }
+    fun invalidateMetaData() {
+        mComponentListener.invalidateMetaData()
+    }
 
     /**
      * Resets the player to its uninitialized state.
@@ -788,16 +743,6 @@ class OpenRadioPlayer(
 
     fun isStoppedByNetwork(): Boolean {
         return mStoppedByNetwork
-    }
-
-    private fun prepareWithList(index: Int) {
-        try {
-            mPlayer.playWhenReady = true
-            mPlayer.setMediaItems(mPlaylist, index, 0)
-            mPlayer.prepare()
-        } catch (e: IllegalSeekPositionException) {
-            AnalyticsUtils.logIllegalSeekPosition(mPlaylist.size, e)
-        }
     }
 
     private fun stopCurrentPlayer() {
@@ -817,8 +762,8 @@ class OpenRadioPlayer(
             player.addListener(listener)
         }
         // Add/remove our listener we use to workaround the missing metadata support of CastPlayer.
-        //mCurrentPlayer.removeListener(playerListener)
-        //player.addListener(playerListener)
+        mPlayer.removeListener(mComponentListener)
+        player.addListener(mComponentListener)
 
         player.repeatMode = mPlayer.repeatMode
         player.shuffleModeEnabled = mPlayer.shuffleModeEnabled
@@ -849,14 +794,21 @@ class OpenRadioPlayer(
         mPlayer.release()
     }
 
-    private fun updateStreamMetadata(msg: String) {
-        mStreamMetadata = msg
-    }
-
     /**
      * Listener class for the players components events.
      */
     private inner class ComponentListener : Player.Listener {
+
+        private var mStreamMetadata = AppUtils.EMPTY_STRING
+
+        private val mBufferingLabel = mContext.getString(R.string.buffering_infinite)
+
+        private val mLiveStreamLabel = mContext.getString(R.string.media_description_default)
+
+        /**
+         * Number of currently detected playback exceptions.
+         */
+        private val mNumOfExceptions = AtomicInteger(0)
 
         override fun onMetadata(metadata: Metadata) {
             for (i in 0 until metadata.length()) {
@@ -903,22 +855,15 @@ class OpenRadioPlayer(
                 "$LOG_TAG playback ${PlayerUtils.playerStateToString(playerState)} for $mediaItem"
             )
             when (playerState) {
-                Player.STATE_BUFFERING,
                 Player.STATE_READY -> {
-                    if (playerState == Player.STATE_BUFFERING) {
-                        updateStreamMetadata(mBufferingLabel)
-                    }
-                    if (playerState == Player.STATE_READY && mPlayer.playWhenReady.not()) {
-                        // If playback is paused we remove the foreground state which allows the
-                        // notification to be dismissed. An alternative would be to provide a
-                        // "close" button in the notification which stops playback and clears
-                        // the notification.
-                        mListener.onStopForeground(false)
-                        mIsForegroundService = false
-                    }
+                    mNumOfExceptions.set(0)
                     mediaItem?.let {
                         mListener.onReady(it)
                     }
+                }
+
+                Player.STATE_BUFFERING -> {
+                    updateStreamMetadata(mBufferingLabel)
                 }
 
                 else -> {
@@ -944,49 +889,49 @@ class OpenRadioPlayer(
                     }
                 }
             }
-            if (events.contains(Player.EVENT_TIMELINE_CHANGED).not()
-                && (events.contains(Player.EVENT_POSITION_DISCONTINUITY)
-                        || events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)
-                        || events.contains(Player.EVENT_PLAY_WHEN_READY_CHANGED))
-            ) {
-                val index = if (mPlaylist.isNotEmpty()) {
-                    Util.constrainValue(
-                        player.currentMediaItemIndex,
-                        0,
-                        mPlaylist.size - 1
-                    )
-                } else -1
-                if (index != -1) {
-                    mIndex = index
-                    mListener.onIndexOnQueueChanges(mIndex)
-                }
-            }
         }
 
         override fun onPlayerError(exception: PlaybackException) {
             AppLogger.e("$LOG_TAG onPlayerError [${mNumOfExceptions.get()}]", exception)
             if (exception.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED) {
-                updateStreamMetadata(toDisplayString(mContext, exception))
-                mListener.onError()
                 mStoppedByNetwork = true
+                updateStreamMetadata(toDisplayString(mContext, exception))
                 return
             }
             val cause = exception.cause
             if (cause is HttpDataSource.InvalidResponseCodeException) {
                 updateStreamMetadata(toDisplayString(mContext, exception))
-                mListener.onError()
                 return
             }
             if (mNumOfExceptions.getAndIncrement() <= MAX_EXCEPTIONS_COUNT) {
                 if (cause is UnrecognizedInputFormatException) {
                     mListener.onHandledError(exception)
                 } else {
-                    prepareWithList(mIndex)
+                    // TODO:
+                    //prepareWithList(mIndex)
                 }
                 return
             }
             updateStreamMetadata(toDisplayString(mContext, exception))
-            mListener.onError()
+        }
+
+        fun invalidateMetaData() {
+            updateStreamMetadata(mStreamMetadata)
+        }
+
+        private fun updateStreamMetadata(msg: String) {
+            mStreamMetadata = msg
+            if (mPlaylist.isNotEmpty()) {
+                for (listener in mListeners) {
+                    mUiScope.launch {
+                        val metadata = mPlaylist[mPlayer.currentMediaItemIndex].mediaMetadata
+                            .buildUpon()
+                            .setSubtitle(msg)
+                            .build()
+                        listener.onMediaMetadataChanged(metadata)
+                    }
+                }
+            }
         }
 
         private fun toDisplayString(context: Context, exception: PlaybackException): String {

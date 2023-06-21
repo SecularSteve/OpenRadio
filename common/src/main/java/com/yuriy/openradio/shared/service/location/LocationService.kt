@@ -435,10 +435,8 @@ class LocationService : JobIntentService() {
     }
 
     /**
-     * Hook method called each time the Location Service is sent an
-     * Intent via startService() to retrieve the country code and
-     * reply to the client via the Messenger sent with the
-     * Intent.
+     * Hook method called each time the Location Service is called to retrieve the country code and
+     * reply to the client via the Messenger sent with the Intent.
      */
     override fun onHandleWork(intent: Intent) {
         AppLogger.d("$TAG intent:$intent")

@@ -30,6 +30,7 @@ import com.yuriy.openradio.shared.model.eq.EqualizerLayerImpl
 import com.yuriy.openradio.shared.model.filter.FilterImpl
 import com.yuriy.openradio.shared.model.media.RadioStationManagerLayer
 import com.yuriy.openradio.shared.model.media.RadioStationManagerLayerImpl
+import com.yuriy.openradio.shared.model.media.RadioStationManagerLayerListener
 import com.yuriy.openradio.shared.model.net.HTTPDownloaderImpl
 import com.yuriy.openradio.shared.model.net.NetworkLayer
 import com.yuriy.openradio.shared.model.net.NetworkLayerImpl
@@ -67,7 +68,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 object DependencyRegistryCommon {
 
-    const val PAGE_SIZE = 50
+    const val PAGE_SIZE = 250
+    const val UNKNOWN_ID = -1
 
     private lateinit var sFavoritesStorage: FavoritesStorage
     private lateinit var sDeviceLocalsStorage: DeviceLocalsStorage
@@ -158,8 +160,10 @@ object DependencyRegistryCommon {
         sEqualizerLayer = EqualizerLayerImpl(equalizerStorage)
         val imagesDatabase = ImagesDatabase.getInstance(context)
         sImagesPersistenceLayer = ImagesPersistenceLayerImpl(context, downloader, imagesDatabase)
+
+        val listenerProxy = RadioStationManagerLayerListenerImpl()
         sRadioStationManagerLayer = RadioStationManagerLayerImpl(
-            modelLayer, urlLayer, sDeviceLocalsStorage, sFavoritesStorage, sImagesPersistenceLayer
+            modelLayer, urlLayer, sDeviceLocalsStorage, sFavoritesStorage, sImagesPersistenceLayer, listenerProxy
         )
         sLocationStorage = LocationStorage(contextRef)
         sNetworkSettingsStorage = NetworkSettingsStorage(contextRef)
@@ -180,7 +184,8 @@ object DependencyRegistryCommon {
             apiCachePersistent,
             apiCacheInMemory,
             sSleepTimerModel,
-            countriesCache
+            countriesCache,
+            listenerProxy
         )
 
         sInit.set(true)
@@ -220,10 +225,6 @@ object DependencyRegistryCommon {
 
     fun injectSleepTimerModel(dependency: SleepTimerModelDependency) {
         dependency.configureWith(sSleepTimerModel)
-    }
-
-    fun inject(dependency: RemoteControlListenerDependency) {
-        dependency.configureWith(sOpenRadioServicePresenter.getRemoteControlListenerProxy())
     }
 
     fun injectSourcesLayer(dependency: SourcesLayerDependency) {
@@ -275,6 +276,17 @@ object DependencyRegistryCommon {
             ParserLayerRadioBrowserImpl(FilterImpl())
         } else {
             ParserLayerWebRadioImpl(set)
+        }
+    }
+
+    private class RadioStationManagerLayerListenerImpl : RadioStationManagerLayerListener {
+
+        override fun notifyChildrenChangedBundle(parentId: String) {
+
+        }
+
+        override fun removeByMediaIdBundle(mediaId: String) {
+
         }
     }
 }

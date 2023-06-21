@@ -16,15 +16,9 @@
 
 package com.yuriy.openradio.shared.service
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
-import android.support.v4.media.MediaDescriptionCompat
-import androidx.media3.common.MediaMetadata
-import androidx.media3.common.util.UnstableApi
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.utils.AppUtils
-import com.yuriy.openradio.shared.utils.IntentUtils
 
 /**
  * [OpenRadioStore] is the object that provides ability to perform one way communication with [OpenRadioService].
@@ -33,148 +27,64 @@ object OpenRadioStore {
 
     const val KEY_NAME_COMMAND_NAME = "KEY_NAME_COMMAND_NAME"
 
-    const val VALUE_NAME_GET_RADIO_STATION_COMMAND = "VALUE_NAME_GET_RADIO_STATION_COMMAND"
-    const val VALUE_NAME_UPDATE_SORT_IDS = "VALUE_NAME_UPDATE_SORT_IDS"
-    const val VALUE_NAME_STOP_SERVICE = "VALUE_NAME_STOP_SERVICE"
-    const val VALUE_NAME_TOGGLE_LAST_PLAYED_ITEM = "VALUE_NAME_TOGGLE_LAST_PLAYED_ITEM"
-    const val VALUE_NAME_NETWORK_SETTINGS_CHANGED = "VALUE_NAME_NETWORK_SETTINGS_CHANGED"
-    const val VALUE_NAME_CLEAR_CACHE = "VALUE_NAME_CLEAR_CACHE"
-    const val VALUE_NAME_MASTER_VOLUME_CHANGED = "VALUE_NAME_MASTER_VOLUME_CHANGED"
-    const val VALUE_NAME_NOTIFY_CHILDREN_CHANGED = "VALUE_NAME_NOTIFY_CHILDREN_CHANGED"
-    const val VALUE_NAME_REMOVE_BY_ID = "VALUE_NAME_REMOVE_BY_ID"
-    const val VALUE_NAME_UPDATE_TREE = "VALUE_NAME_UPDATE_TREE"
-
-    private const val EXTRA_KEY_MEDIA_DESCRIPTION = "EXTRA_KEY_MEDIA_DESCRIPTION"
     private const val EXTRA_KEY_IS_FAVORITE = "EXTRA_KEY_IS_FAVORITE"
     const val EXTRA_KEY_MEDIA_ID = "EXTRA_KEY_MEDIA_ID"
     const val EXTRA_KEY_MEDIA_IDS = "EXTRA_KEY_MEDIA_IDS"
     const val EXTRA_KEY_SORT_IDS = "EXTRA_KEY_SORT_IDS"
     const val EXTRA_KEY_MASTER_VOLUME = "EXTRA_KEY_MASTER_VOLUME"
-    const val EXTRA_KEY_PARENT_ID = "EXTRA_KEY_PARENT_ID"
 
     private const val BUNDLE_ARG_CATALOGUE_ID = "BUNDLE_ARG_CATALOGUE_ID"
-    private const val BUNDLE_ARG_CURRENT_PLAYBACK_STATE = "BUNDLE_ARG_CURRENT_PLAYBACK_STATE"
     private const val BUNDLE_ARG_IS_RESTORE_STATE = "BUNDLE_ARG_IS_RESTORE_STATE"
 
-    fun makeNetworkSettingsChangedIntent(context: Context): Intent {
-        val intent = makeStartServiceIntent(context)
-        intent.putExtra(KEY_NAME_COMMAND_NAME, VALUE_NAME_NETWORK_SETTINGS_CHANGED)
-        return intent
-    }
-
-    fun makeClearCacheIntent(context: Context): Intent {
-        val intent = makeStartServiceIntent(context)
-        intent.putExtra(KEY_NAME_COMMAND_NAME, VALUE_NAME_CLEAR_CACHE)
-        return intent
-    }
-
-    fun makeUpdateTreeIntent(context: Context): Intent {
-        val intent = makeStartServiceIntent(context)
-        intent.putExtra(KEY_NAME_COMMAND_NAME, VALUE_NAME_UPDATE_TREE)
-        return intent
-    }
-
-    fun makeMasterVolumeChangedIntent(context: Context, masterVolume: Int): Intent {
-        val intent = makeStartServiceIntent(context)
-        intent.putExtra(KEY_NAME_COMMAND_NAME, VALUE_NAME_MASTER_VOLUME_CHANGED)
-        intent.putExtra(EXTRA_KEY_MASTER_VOLUME, masterVolume)
-        return intent
-    }
-
-    fun makeNotifyChildrenChangedIntent(context: Context, parentId: String): Intent {
-        val intent = makeStartServiceIntent(context)
-        intent.putExtra(KEY_NAME_COMMAND_NAME, VALUE_NAME_NOTIFY_CHILDREN_CHANGED)
-        intent.putExtra(EXTRA_KEY_PARENT_ID, parentId)
-        return intent
-    }
-
-    fun makeRemoveByMediaIdIntent(context: Context, mediaId: String): Intent {
-        val intent = makeStartServiceIntent(context)
-        intent.putExtra(KEY_NAME_COMMAND_NAME, VALUE_NAME_REMOVE_BY_ID)
-        intent.putExtra(EXTRA_KEY_MEDIA_ID, mediaId)
+    fun makeMasterVolumeChangedBundle(masterVolume: Int): Bundle {
+        val intent = Bundle()
+        intent.putInt(EXTRA_KEY_MASTER_VOLUME, masterVolume)
         return intent
     }
 
     /**
-     * Factory method to make Intent to update Sort Ids of the Radio Stations.
+     * Factory method to make [Bundle] to update Sort Ids of the Radio Stations.
      *
-     * @param context               Application context.
      * @param mediaId               Array of the Media Ids (of the Radio Stations).
      * @param sortId                Array of the corresponded Sort Ids.
      * @param parentCategoryMediaId ID of the current category ([etc ...][MediaId.MEDIA_ID_FAVORITES_LIST]).
-     * @return [Intent].
+     * @return [Bundle].
      */
-    fun makeUpdateSortIdsIntent(
-        context: Context, mediaId: String, sortId: Int, parentCategoryMediaId: String
-    ): Intent {
-        val intent = makeStartServiceIntent(context)
-        intent.putExtra(KEY_NAME_COMMAND_NAME, VALUE_NAME_UPDATE_SORT_IDS)
-        intent.putExtra(EXTRA_KEY_MEDIA_IDS, mediaId)
-        intent.putExtra(EXTRA_KEY_SORT_IDS, sortId)
-        intent.putExtra(EXTRA_KEY_MEDIA_ID, parentCategoryMediaId)
-        return intent
+    fun makeUpdateSortIdsBundle(mediaId: String, sortId: Int, parentCategoryMediaId: String): Bundle {
+        val bundle = Bundle()
+        bundle.putString(EXTRA_KEY_MEDIA_IDS, mediaId)
+        bundle.putInt(EXTRA_KEY_SORT_IDS, sortId)
+        bundle.putString(EXTRA_KEY_MEDIA_ID, parentCategoryMediaId)
+        return bundle
     }
 
     /**
-     * Make intent to stop service.
-     *
-     * @param context Context of the callee.
-     * @return [Intent].
-     */
-    fun makeStopServiceIntent(context: Context): Intent {
-        val intent = makeStartServiceIntent(context)
-        intent.putExtra(KEY_NAME_COMMAND_NAME, VALUE_NAME_STOP_SERVICE)
-        return intent
-    }
-
-    /**
-     * Factory method to make [Intent] to update whether [com.yuriy.openradio.shared.model.media.RadioStation]
+     * Factory method to make [Bundle] to update whether [com.yuriy.openradio.shared.model.media.RadioStation]
      * is Favorite.
      *
-     * @param context          Context of the callee.
-     * @param mediaMetadata [MediaDescriptionCompat] of the [com.yuriy.openradio.shared.model.media.RadioStation].
-     * @param isFavorite       Whether Radio station is Favorite or not.
-     * @return [Intent].
+     * @param mediaId Media Id of the [com.yuriy.openradio.shared.model.media.RadioStation].
+     * @param isFavorite Whether Radio station is Favorite or not.
+     * @return [Bundle].
      */
-    @UnstableApi
-    fun makeUpdateIsFavoriteIntent(
-        context: Context, mediaMetadata: MediaMetadata, isFavorite: Boolean
-    ): Intent {
-        val intent = makeStartServiceIntent(context)
-        intent.putExtra(KEY_NAME_COMMAND_NAME, VALUE_NAME_GET_RADIO_STATION_COMMAND)
-        intent.putExtra(EXTRA_KEY_MEDIA_DESCRIPTION, mediaMetadata.toBundle())
-        intent.putExtra(EXTRA_KEY_IS_FAVORITE, isFavorite)
-        return intent
+    fun makeUpdateIsFavoriteBundle(mediaId: String, isFavorite: Boolean): Bundle {
+        val bundle = Bundle()
+        bundle.putString(EXTRA_KEY_MEDIA_ID, mediaId)
+        bundle.putBoolean(EXTRA_KEY_IS_FAVORITE, isFavorite)
+        return bundle
     }
 
     /**
-     * @param context
-     * @return
-     */
-    fun makeToggleLastPlayedItemIntent(context: Context): Intent {
-        val intent = makeStartServiceIntent(context)
-        intent.putExtra(KEY_NAME_COMMAND_NAME, VALUE_NAME_TOGGLE_LAST_PLAYED_ITEM)
-        return intent
-    }
-    
-    private fun makeStartServiceIntent(context: Context): Intent {
-        return Intent(context, OpenRadioService::class.java)
-    }
-
-    /**
-     * Extract [.EXTRA_KEY_IS_FAVORITE] value from the [Intent].
+     * Extract [.EXTRA_KEY_IS_FAVORITE] value from the [Bundle].
      *
-     * @param intent [Intent].
+     * @param bundle [Bundle].
      * @return True in case of the key exists and it's value is True, False otherwise.
      */
-    fun getIsFavoriteFromIntent(intent: Intent): Boolean {
-        return (intent.hasExtra(EXTRA_KEY_IS_FAVORITE)
-                && intent.getBooleanExtra(EXTRA_KEY_IS_FAVORITE, false))
+    fun extractIsFavorite(bundle: Bundle?): Boolean {
+        return bundle?.getBoolean(EXTRA_KEY_IS_FAVORITE) ?: false
     }
 
-    fun extractMediaDescription(intent: Intent): MediaDescriptionCompat? {
-        return IntentUtils.getParcelableExtra<MediaDescriptionCompat>(EXTRA_KEY_MEDIA_DESCRIPTION, intent)
-            ?: return MediaDescriptionCompat.Builder().build()
+    fun extractMediaId(bundle: Bundle?): String {
+        return bundle?.getString(EXTRA_KEY_MEDIA_ID) ?: AppUtils.EMPTY_STRING
     }
 
     fun putCurrentParentId(bundle: Bundle?, currentParentId: String?) {
@@ -188,13 +98,6 @@ object OpenRadioStore {
         return if (bundle == null) {
             AppUtils.EMPTY_STRING
         } else bundle.getString(BUNDLE_ARG_CATALOGUE_ID, AppUtils.EMPTY_STRING)
-    }
-
-    fun putCurrentPlaybackState(bundle: Bundle?, value: Int) {
-        if (bundle == null) {
-            return
-        }
-        bundle.putInt(BUNDLE_ARG_CURRENT_PLAYBACK_STATE, value)
     }
 
     fun putRestoreState(bundle: Bundle?, value: Boolean) {

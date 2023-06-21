@@ -153,4 +153,11 @@ object IntentUtils {
             intent.getParcelableExtra(key)
         }
     }
+
+    inline fun getStringExtra(key: String, intent: Intent): String {
+        if (intent.hasExtra(key).not()) {
+            return AppUtils.EMPTY_STRING
+        }
+        return intent.getStringExtra(key) ?: AppUtils.EMPTY_STRING
+    }
 }

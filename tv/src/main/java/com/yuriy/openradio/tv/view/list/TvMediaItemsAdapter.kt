@@ -19,6 +19,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.media3.common.util.UnstableApi
+import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.utils.MediaItemHelper
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
@@ -32,13 +33,14 @@ import com.yuriy.openradio.tv.R
  * On 12/18/14
  * E-Mail: chernyshov.yuriy@gmail.com
  */
-class TvMediaItemsAdapter (private var mContext: Context) : MediaItemsAdapter() {
+class TvMediaItemsAdapter(private var mContext: Context, private val mMediaPresenter: MediaPresenter) :
+    MediaItemsAdapter() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MediaItemViewHolder {
         return MediaItemViewHolder(
-                LayoutInflater.from(parent.context).inflate(R.layout.tv_category_list_item, parent, false),
-                R.id.tv_root_view, R.id.tv_name_view, R.id.tv_description_view, R.id.tv_img_view,
-                R.id.tv_favorite_btn_view, R.id.tv_bitrate_view, R.id.tv_settings_btn_view, -1
+            LayoutInflater.from(parent.context).inflate(R.layout.tv_category_list_item, parent, false),
+            R.id.tv_root_view, R.id.tv_name_view, R.id.tv_description_view, R.id.tv_img_view,
+            R.id.tv_favorite_btn_view, R.id.tv_bitrate_view, R.id.tv_settings_btn_view, -1
         )
     }
 
@@ -57,7 +59,7 @@ class TvMediaItemsAdapter (private var mContext: Context) : MediaItemsAdapter() 
         )
         if (isPlayable) {
             handleFavoriteAction(
-                    holder.mFavoriteCheckView, mediaItem, mContext
+                holder.mFavoriteCheckView, mediaItem, mMediaPresenter.getServiceCommander()
             )
             holder.mSettingsView?.setOnClickListener(OnSettingsListener(mediaItem))
             holder.mSettingsView?.visible()

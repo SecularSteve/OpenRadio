@@ -17,8 +17,6 @@
 package com.yuriy.openradio.shared.view.list
 
 import android.content.Context
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.session.MediaSessionCompat
 import android.view.View
 import android.widget.CheckBox
 import android.widget.ImageView
@@ -29,13 +27,19 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import com.yuriy.openradio.shared.R
+import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
+import com.yuriy.openradio.shared.model.ServiceCommander
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.storage.images.ImagesStore
+import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.service.OpenRadioStore
 import com.yuriy.openradio.shared.utils.MediaItemHelper
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.setImageBitmap
 import com.yuriy.openradio.shared.utils.visible
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Created by Yuriy Chernyshov
@@ -51,7 +55,7 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
     }
 
     private val mAdapterData = ListAdapterData<MediaItem>()
-    private var mActiveItemId = MediaSessionCompat.QueueItem.UNKNOWN_ID
+    private var mActiveItemId = DependencyRegistryCommon.UNKNOWN_ID
     var parentId = MediaId.MEDIA_ID_ROOT
     var listener: Listener? = null
 
@@ -84,7 +88,7 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
     }
 
     /**
-     * Add [MediaBrowserCompat.MediaItem]s into the collection.
+     * Add [MediaItem]s into the collection.
      *
      * @param value [MediaItem]s.
      */
@@ -197,27 +201,23 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
          *
          * @param checkBox    Favorite check box view.
          * @param mediaItem   Media Item.
-         * @param context     Current context.
          */
         @UnstableApi
         fun handleFavoriteAction(
-            checkBox: CheckBox, mediaItem: MediaItem, context: Context
+            checkBox: CheckBox, mediaItem: MediaItem, serviceCommander: ServiceCommander
         ) {
             checkBox.isChecked = MediaItemHelper.isFavoriteField(mediaItem)
             checkBox.visible()
             checkBox.setOnClickListener { view: View ->
                 val isChecked = (view as CheckBox).isChecked
                 MediaItemHelper.updateFavoriteField(mediaItem, isChecked)
-
-                // Make Intent to update Favorite RadioStation object associated with
-                // the Media Description
-                val intent = OpenRadioStore.makeUpdateIsFavoriteIntent(
-                    context,
-                    mediaItem.mediaMetadata,
+                val bundle = OpenRadioStore.makeUpdateIsFavoriteBundle(
+                    mediaItem.mediaId,
                     isChecked
                 )
-                // Send Intent to the OpenRadioService.
-                context.startService(intent)
+                CoroutineScope(Dispatchers.Main).launch {
+                    serviceCommander.sendCommand(OpenRadioService.CMD_FAVORITE_UPDATE, bundle)
+                }
             }
         }
     }

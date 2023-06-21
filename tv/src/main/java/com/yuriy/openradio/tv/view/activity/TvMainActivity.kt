@@ -17,9 +17,7 @@
 package com.yuriy.openradio.tv.view.activity
 
 import android.content.Intent
-import android.media.session.PlaybackState
 import android.os.Bundle
-import android.support.v4.media.session.PlaybackStateCompat
 import android.view.View
 import android.widget.ProgressBar
 import androidx.activity.result.ActivityResultLauncher
@@ -33,6 +31,7 @@ import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.MediaItemsSubscription
+import com.yuriy.openradio.shared.model.media.PlaybackState
 import com.yuriy.openradio.shared.model.media.getStreamBitrate
 import com.yuriy.openradio.shared.model.media.isInvalid
 import com.yuriy.openradio.shared.presenter.MediaPresenter
@@ -83,7 +82,7 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
 
     override fun configureWith(mediaPresenter: MediaPresenter) {
         mMediaPresenter = mediaPresenter
-        val mediaItemsAdapter = TvMediaItemsAdapter(applicationContext)
+        val mediaItemsAdapter = TvMediaItemsAdapter(applicationContext, mMediaPresenter)
         val mediaSubscriptionCb = MediaBrowserSubscriptionCallback()
         val mediaPresenterImpl = MediaPresenterListenerImpl()
         mMediaPresenter.init(
@@ -187,28 +186,15 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
 
     @MainThread
     private fun handlePlaybackStateChanged(state: PlaybackState) {
-        when (state.state) {
-            PlaybackStateCompat.STATE_BUFFERING, PlaybackStateCompat.STATE_PLAYING -> {
-                if (this::mPlayBtn.isInitialized) {
-                    mPlayBtn.gone()
-                }
-                if (this::mPauseBtn.isInitialized) {
-                    mPauseBtn.visible()
-                }
+        when (state.isPlaying) {
+            true -> {
+                mPlayBtn.gone()
+                mPauseBtn.visible()
             }
-            PlaybackStateCompat.STATE_NONE, PlaybackStateCompat.STATE_ERROR,
-            PlaybackStateCompat.STATE_STOPPED, PlaybackStateCompat.STATE_PAUSED -> {
-                if (this::mPlayBtn.isInitialized) {
-                    mPlayBtn.visible()
-                }
-                if (this::mPauseBtn.isInitialized) {
-                    mPauseBtn.gone()
-                }
-            }
-            PlaybackStateCompat.STATE_CONNECTING, PlaybackStateCompat.STATE_FAST_FORWARDING,
-            PlaybackStateCompat.STATE_REWINDING, PlaybackStateCompat.STATE_SKIPPING_TO_NEXT,
-            PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS, PlaybackStateCompat.STATE_SKIPPING_TO_QUEUE_ITEM -> {
-                //Empty
+
+            false -> {
+                mPlayBtn.visible()
+                mPauseBtn.gone()
             }
         }
         hideProgressBar()

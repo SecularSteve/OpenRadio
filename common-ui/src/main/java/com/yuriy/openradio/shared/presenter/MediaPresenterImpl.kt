@@ -22,16 +22,12 @@ import android.content.Context
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.database.ContentObserver
-import android.media.session.PlaybackState
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.os.Messenger
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -48,18 +44,23 @@ import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.broadcast.AppLocalBroadcast
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiver
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiverCallback
+import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
+import com.yuriy.openradio.shared.model.ServiceCommander
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.MediaItemsSubscription
 import com.yuriy.openradio.shared.model.media.MediaResourceManagerListener
 import com.yuriy.openradio.shared.model.media.MediaResourcesManager
+import com.yuriy.openradio.shared.model.media.PlaybackState
 import com.yuriy.openradio.shared.model.net.NetworkLayer
 import com.yuriy.openradio.shared.model.source.SourcesLayer
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
+import com.yuriy.openradio.shared.model.storage.FavoritesStorage
 import com.yuriy.openradio.shared.model.storage.LocationStorage
 import com.yuriy.openradio.shared.model.storage.images.ImagesStore
 import com.yuriy.openradio.shared.model.timer.SleepTimerListener
 import com.yuriy.openradio.shared.model.timer.SleepTimerModel
 import com.yuriy.openradio.shared.permission.PermissionChecker
+import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.service.OpenRadioStore
 import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.utils.AppLogger
@@ -74,6 +75,9 @@ import com.yuriy.openradio.shared.view.dialog.EditStationDialog
 import com.yuriy.openradio.shared.view.dialog.RSSettingsDialog
 import com.yuriy.openradio.shared.view.dialog.RemoveStationDialog
 import com.yuriy.openradio.shared.view.list.MediaItemsAdapter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.Hashtable
 import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -83,7 +87,8 @@ class MediaPresenterImpl(
     private val mNetworkLayer: NetworkLayer,
     private val mLocationStorage: LocationStorage,
     private val mSleepTimerModel: SleepTimerModel,
-    private val mSourcesLayer: SourcesLayer
+    private val mSourcesLayer: SourcesLayer,
+    private val mFavoritesStorage: FavoritesStorage
 ) : MediaPresenter {
     /**
      * Manager object that acts as interface between Media Resources and current Activity.
@@ -114,7 +119,6 @@ class MediaPresenterImpl(
     private var mListener: MediaPresenterListener? = null
     private var mListView: RecyclerView? = null
     private val mScrollListener = ScrollListener()
-    private var mCurrentPlaybackState = PlaybackStateCompat.STATE_NONE
 
     /**
      * Adapter for the representing media items in the list.
@@ -127,7 +131,6 @@ class MediaPresenterImpl(
     private val mAppLocalBroadcastRcvr = AppLocalReceiver.instance
 
     private var mCurrentRadioStationView: View? = null
-    private var mCurrentMediaId = AppUtils.EMPTY_STRING
 
     /**
      * Guardian field to prevent UI operation after addToLocals instance passed.
@@ -140,6 +143,8 @@ class MediaPresenterImpl(
 
     // Handle download callback from the images persistent layer.
     private val mContentObserver = ContentObserverExt()
+
+    private val mServiceCommander = ServiceCommanderImpl()
 
     override fun init(
         activity: FragmentActivity, mainLayout: View,
@@ -166,7 +171,9 @@ class MediaPresenterImpl(
         mListView?.addOnScrollListener(mScrollListener)
         mAdapter?.listener = MediaItemsAdapterListener()
         mCurrentRadioStationView?.setOnClickListener {
-            activity.startService(OpenRadioStore.makeToggleLastPlayedItemIntent(activity))
+            CoroutineScope(Dispatchers.Main).launch {
+                mServiceCommander.sendCommand(OpenRadioService.CMD_TOGGLE_LAST_PLAYED_ITEM)
+            }
         }
         if (mMediaItemsStack.isNotEmpty()) {
             val mediaId = mMediaItemsStack[mMediaItemsStack.size - 1]
@@ -200,6 +207,10 @@ class MediaPresenterImpl(
         mAdapter?.clear()
         mAdapter?.removeListener()
         mAdapter = null
+    }
+
+    override fun getServiceCommander(): ServiceCommander {
+        return mServiceCommander
     }
 
     override fun getOnSaveInstancePassed(): Boolean {
@@ -272,13 +283,23 @@ class MediaPresenterImpl(
     override fun handleBackPressed(): Boolean {
         // If there is root category - close activity
         if (mMediaItemsStack.size == 1) {
+            // Un-subscribe from item
+            mMediaItemsStack.removeAt(0)
             // Clear stack
             mMediaItemsStack.clear()
-            mContext.startService(OpenRadioStore.makeStopServiceIntent(mContext))
+            CoroutineScope(Dispatchers.Main).launch {
+                mServiceCommander.sendCommand(OpenRadioService.CMD_STOP_SERVICE)
+            }
             return true
         }
+        var index = mMediaItemsStack.size - 1
+        if (index >= 0) {
+            // Get current media item and un-subscribe.
+            mMediaItemsStack.removeAt(index)
+        }
+
         // Subscribe to the previous item.
-        val index = mMediaItemsStack.size - 1
+        index = mMediaItemsStack.size - 1
         if (index >= 0) {
             val previousMediaId = mMediaItemsStack[index]
             if (previousMediaId.isNotEmpty()) {
@@ -358,6 +379,10 @@ class MediaPresenterImpl(
         mAdapter?.notifyItemChanged(position)
     }
 
+    override fun isFavorite(mediaId: String): Boolean {
+        return false
+    }
+
     override fun updateListPositions(clickPosition: Int) {
         val layoutManager = mListView?.layoutManager as LinearLayoutManager? ?: return
         mListLastVisiblePosition = layoutManager.findLastCompletelyVisibleItemPosition()
@@ -410,14 +435,13 @@ class MediaPresenterImpl(
             }
         }
         updateListPositions(clickPosition)
-        mCurrentMediaId = item.mediaId
 
         // If it is browsable - then we navigate to the next category
         if (isBrowsable) {
-            addMediaItemToStack(mCurrentMediaId)
+            addMediaItemToStack(item.mediaId)
         } else if (isPlayable) {
             // Else - we play an item
-            mMediaRsrMgr.playFromMediaId(mCurrentMediaId, mCurrentParentId)
+            mMediaRsrMgr.playFromMediaId(item, mCurrentParentId)
         }
     }
 
@@ -446,7 +470,7 @@ class MediaPresenterImpl(
     }
 
     private fun createInitPositionEntry(): IntArray {
-        return intArrayOf(0, MediaSessionCompat.QueueItem.UNKNOWN_ID)
+        return intArrayOf(0, DependencyRegistryCommon.UNKNOWN_ID)
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -486,7 +510,6 @@ class MediaPresenterImpl(
         // Track OnSaveInstanceState passed
         mIsOnSaveInstancePassed.set(true)
         OpenRadioStore.putRestoreState(outState, true)
-        OpenRadioStore.putCurrentPlaybackState(outState, mCurrentPlaybackState)
         OpenRadioStore.putCurrentParentId(outState, mCurrentParentId)
     }
 
@@ -511,17 +534,16 @@ class MediaPresenterImpl(
         }
         UiUtils.clearDialogs(mActivity!!.supportFragmentManager, transaction)
 
-        val item = view.tag as MediaBrowserCompat.MediaItem
+        val item = view.tag as MediaItem
         val mediaId = item.mediaId
-        if (mediaId == null) {
-            AppLogger.e("$TAG can not edit with invalid media id")
-            return
-        }
-
         val bundle = EditStationDialog.makeBundle(mediaId)
         // Show Edit Station Dialog
         val dialog = BaseDialogFragment.newInstance(EditStationDialog::class.java.name, bundle)
         dialog.show(transaction, EditStationDialog.DIALOG_TAG)
+    }
+
+    override fun getCurrentMediaItem(): MediaItem? {
+        return mMediaRsrMgr.currentMediaItem
     }
 
     /**
@@ -541,10 +563,10 @@ class MediaPresenterImpl(
         }
         UiUtils.clearDialogs(mActivity!!.supportFragmentManager, transaction)
 
-        val item = view.tag as MediaBrowserCompat.MediaItem
+        val item = view.tag as MediaItem
         var name = AppUtils.EMPTY_STRING
-        if (item.description.title != null) {
-            name = item.description.title.toString()
+        if (item.mediaMetadata.title != null) {
+            name = item.mediaMetadata.title.toString()
         }
 
         // Show Remove Station Dialog
@@ -637,13 +659,10 @@ class MediaPresenterImpl(
     private inner class MediaResourceManagerListenerImpl : MediaResourceManagerListener {
 
         override fun onConnected() {
-            AppLogger.i("$TAG Connected")
             handleMediaResourceManagerConnected()
         }
 
         override fun onPlaybackStateChanged(state: PlaybackState) {
-            AppLogger.d("$TAG psc:${state}")
-            mCurrentPlaybackState = state.state
             this@MediaPresenterImpl.mListener?.handlePlaybackStateChanged(state)
         }
 
@@ -711,6 +730,21 @@ class MediaPresenterImpl(
             mContext.contentResolver.openInputStream(uri)?.use {
                 view.setImageBitmap(it.readBytes())
             }
+        }
+    }
+
+    private inner class ServiceCommanderImpl : ServiceCommander {
+
+        override suspend fun sendCommand(command: String, parameters: Bundle): Boolean {
+            return mMediaRsrMgr.sendCommand(command, parameters)
+        }
+
+        override suspend fun sendCommand(
+            command: String,
+            parameters: Bundle,
+            resultCallback: (Int, Bundle?) -> Unit
+        ): Boolean {
+            return mMediaRsrMgr.sendCommand(command, parameters, resultCallback)
         }
     }
 

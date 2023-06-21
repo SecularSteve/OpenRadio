@@ -29,6 +29,7 @@ import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.presenter.MediaPresenter
+import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.service.OpenRadioStore
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
@@ -37,6 +38,9 @@ import com.yuriy.openradio.shared.utils.findImageView
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.utils.findView
 import com.yuriy.openradio.shared.view.BaseDialogFragment
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Created by Yuriy Chernyshov
@@ -44,7 +48,6 @@ import com.yuriy.openradio.shared.view.BaseDialogFragment
  * On 12/20/14
  * E-Mail: chernyshov.yuriy@gmail.com
  */
-@UnstableApi
 class RSSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
 
     private var mParentCategoryId = AppUtils.EMPTY_STRING
@@ -78,12 +81,13 @@ class RSSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
 
     override fun onPause() {
         if (mSortNewPosition != mSortOriginalPosition) {
-            val context = requireContext().applicationContext
-            context.startService(
-                OpenRadioStore.makeUpdateSortIdsIntent(context, mSortMediaId, mSortNewPosition, mParentCategoryId)
-            )
+            CoroutineScope(Dispatchers.Main).launch {
+                val bundle = OpenRadioStore.makeUpdateSortIdsBundle(mSortMediaId, mSortNewPosition, mParentCategoryId)
+                mMediaPresenter.getServiceCommander().sendCommand(OpenRadioService.CMD_UPDATE_SORT_IDS, bundle)
+            }
             // TODO: Fix it properly - select item when it is updated in the service.
-            Handler(Looper.getMainLooper()).postDelayed({
+            Handler(Looper.getMainLooper()).postDelayed(
+                {
                     mMediaPresenter.handleCurrentIndexOnQueueChanged(mSortNewPosition)
                 }, 50
             )

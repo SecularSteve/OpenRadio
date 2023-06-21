@@ -26,6 +26,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import com.xenione.libs.swipemaker.SwipeLayout
 import com.yuriy.openradio.mobile.R
+import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.utils.MediaItemHelper
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.view.list.MediaItemViewHolder
@@ -37,7 +38,8 @@ import com.yuriy.openradio.shared.view.list.MediaItemsAdapter
  * On 12/18/14
  * E-Mail: chernyshov.yuriy@gmail.com
  */
-class MobileMediaItemsAdapter(private var mContext: Context) : MediaItemsAdapter() {
+class MobileMediaItemsAdapter(private var mContext: Context, private val mMediaPresenter: MediaPresenter) :
+    MediaItemsAdapter() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MediaItemViewHolder {
         return MediaItemViewHolder(
@@ -60,7 +62,7 @@ class MobileMediaItemsAdapter(private var mContext: Context) : MediaItemsAdapter
         holder.mFavoriteCheckView.buttonDrawable = AppCompatResources.getDrawable(mContext, R.drawable.src_favorite)
         if (isPlayable) {
             handleFavoriteAction(
-                holder.mFavoriteCheckView, mediaItem, mContext
+                holder.mFavoriteCheckView, mediaItem, mMediaPresenter.getServiceCommander()
             )
         } else {
             holder.mFavoriteCheckView.gone()

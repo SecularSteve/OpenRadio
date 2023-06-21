@@ -28,7 +28,7 @@ class BrowseTree {
 
     fun getMediaItemByMediaId(mediaId: String) = mMediaIdToMediaItem[mediaId]
 
-    fun getRadioStationByMediaId(mediaId: String) = mMediaIdToRadioStation[mediaId]
+    fun getRadioStationByMediaId(mediaId: String) = mMediaIdToRadioStation[mediaId] ?: RadioStation.INVALID_INSTANCE
 
     class BrowseData(val children: MutableList<MediaItem>, val radioStations: Set<RadioStation>)
 }

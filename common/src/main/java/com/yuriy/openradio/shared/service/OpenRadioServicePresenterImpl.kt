@@ -6,6 +6,7 @@ import com.yuriy.openradio.shared.model.eq.EqualizerLayer
 import com.yuriy.openradio.shared.model.media.Category
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.RadioStation
+import com.yuriy.openradio.shared.model.media.RadioStationManagerLayerListener
 import com.yuriy.openradio.shared.model.media.RemoteControlListener
 import com.yuriy.openradio.shared.model.media.item.MediaItemAllCategories
 import com.yuriy.openradio.shared.model.media.item.MediaItemBrowseCar
@@ -55,7 +56,8 @@ class OpenRadioServicePresenterImpl(
     private val mApiCachePersistent: ApiCache,
     private val mApiCacheInMemory: ApiCache,
     private val mSleepTimerModel: SleepTimerModel,
-    private val mCountriesCache:TreeSet<Country>
+    private val mCountriesCache:TreeSet<Country>,
+    private val mListener: RadioStationManagerLayerListener
 ) : OpenRadioServicePresenter {
 
     private var mRemoteControlListener: RemoteControlListener? = null

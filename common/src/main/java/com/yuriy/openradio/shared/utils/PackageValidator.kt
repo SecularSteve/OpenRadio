@@ -24,7 +24,6 @@ import android.content.pm.PackageInfo.REQUESTED_PERMISSION_GRANTED
 import android.content.pm.PackageManager
 import android.content.res.XmlResourceParser
 import android.os.Process
-import android.support.v4.media.session.MediaSessionCompat
 import android.util.Base64
 import androidx.annotation.XmlRes
 import androidx.core.app.NotificationManagerCompat

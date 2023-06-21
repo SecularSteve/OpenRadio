@@ -19,9 +19,7 @@ package com.yuriy.openradio.mobile.view.activity
 import android.annotation.SuppressLint
 import android.app.assist.AssistContent
 import android.content.Context
-import android.media.session.PlaybackState
 import android.os.Bundle
-import android.support.v4.media.session.PlaybackStateCompat
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -46,6 +44,7 @@ import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.MediaItemsSubscription
+import com.yuriy.openradio.shared.model.media.PlaybackState
 import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.presenter.MediaPresenterListener
 import com.yuriy.openradio.shared.utils.AppLogger
@@ -121,7 +120,7 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
 
     override fun configureWith(mediaPresenter: MediaPresenter) {
         mMediaPresenter = mediaPresenter
-        val mediaItemsAdapter = MobileMediaItemsAdapter(applicationContext)
+        val mediaItemsAdapter = MobileMediaItemsAdapter(applicationContext, mMediaPresenter)
         val mediaSubscriptionCb = MediaItemsSubscriptionCallback(WeakReference(this))
         val mediaPresenterImpl = MediaPresenterListenerImpl()
         mMediaPresenter.init(
@@ -381,22 +380,15 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
 
     @MainThread
     private fun handlePlaybackStateChanged(state: PlaybackState) {
-        when (state.state) {
-            PlaybackStateCompat.STATE_BUFFERING, PlaybackStateCompat.STATE_PLAYING -> {
+        when (state.isPlaying) {
+            true -> {
                 mPlayBtn.gone()
                 mPauseBtn.visible()
             }
 
-            PlaybackStateCompat.STATE_NONE, PlaybackStateCompat.STATE_ERROR,
-            PlaybackStateCompat.STATE_STOPPED, PlaybackStateCompat.STATE_PAUSED -> {
+            false -> {
                 mPlayBtn.visible()
                 mPauseBtn.gone()
-            }
-
-            PlaybackStateCompat.STATE_CONNECTING, PlaybackStateCompat.STATE_FAST_FORWARDING,
-            PlaybackStateCompat.STATE_REWINDING, PlaybackStateCompat.STATE_SKIPPING_TO_NEXT,
-            PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS, PlaybackStateCompat.STATE_SKIPPING_TO_QUEUE_ITEM -> {
-                //Empty
             }
         }
         mProgressBarCrs.gone()
@@ -424,8 +416,10 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
         val favoriteCheckView = findCheckBox(R.id.crs_favorite_check_view)
         favoriteCheckView.buttonDrawable = AppCompatResources.getDrawable(applicationContext, R.drawable.src_favorite)
         favoriteCheckView.isChecked = false
-        //val mediaItem = mMainActivityPresenter.getLastMediaItem()
-        //MediaItemsAdapter.handleFavoriteAction(favoriteCheckView, description, mediaItem, applicationContext)
+        val mediaItem = mMediaPresenter.getCurrentMediaItem()
+        mediaItem?.let {
+            MediaItemsAdapter.handleFavoriteAction(favoriteCheckView, it, mMediaPresenter.getServiceCommander())
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -479,7 +473,7 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
             reference.mMediaPresenter.handleChildrenLoaded(parentId, children)
         }
 
-        override fun onError(id: String) {
+        override fun onError(parentId: String) {
             val reference = mReference.get()
             if (reference == null) {
                 AppLogger.w("$CLASS_NAME MediaBrowserSubscriptionCallback onError reference is gone")

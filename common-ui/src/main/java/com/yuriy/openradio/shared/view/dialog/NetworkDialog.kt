@@ -20,10 +20,15 @@ import android.app.Dialog
 import android.os.Bundle
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
+import com.yuriy.openradio.shared.dependencies.ServiceCommanderDependency
+import com.yuriy.openradio.shared.model.ServiceCommander
 import com.yuriy.openradio.shared.model.storage.NetworkSettingsStorage
-import com.yuriy.openradio.shared.service.OpenRadioStore
+import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.utils.findCheckBox
 import com.yuriy.openradio.shared.view.BaseDialogFragment
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Created by Yuriy Chernyshov
@@ -31,9 +36,14 @@ import com.yuriy.openradio.shared.view.BaseDialogFragment
  * On 12/20/14
  * E-Mail: chernyshov.yuriy@gmail.com
  */
-class NetworkDialog : BaseDialogFragment() {
+class NetworkDialog : BaseDialogFragment(), ServiceCommanderDependency {
 
     private lateinit var mNetworkSettingsStorage: NetworkSettingsStorage
+    private lateinit var mServiceCommander: ServiceCommander
+
+    override fun configureWith(serviceCommander: ServiceCommander) {
+        mServiceCommander = serviceCommander
+    }
 
     fun configureWith(locationStorage: NetworkSettingsStorage) {
         mNetworkSettingsStorage = locationStorage
@@ -41,17 +51,19 @@ class NetworkDialog : BaseDialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         DependencyRegistryCommonUi.inject(this)
+        DependencyRegistryCommonUi.injectServiceCommander(this)
         val view = inflater.inflate(
             R.layout.dialog_network,
             requireActivity().findViewById(R.id.dialog_network_root)
         )
         setWindowDimensions(view, 0.8f, 0.3f)
-        val ctx = requireContext()
         val useMobileCheckBox = view.findCheckBox(R.id.use_mobile_network_check_box)
         useMobileCheckBox.isChecked = mNetworkSettingsStorage.getUseMobile()
         useMobileCheckBox.setOnCheckedChangeListener { _, isChecked ->
             mNetworkSettingsStorage.setUseMobile(isChecked)
-            ctx.startService(OpenRadioStore.makeNetworkSettingsChangedIntent(ctx))
+            CoroutineScope(Dispatchers.Main).launch {
+                mServiceCommander.sendCommand(OpenRadioService.CMD_NET_CHANGED)
+            }
         }
         return createAlertDialog(view)
     }

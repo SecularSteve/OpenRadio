@@ -17,7 +17,7 @@
 package com.yuriy.openradio.shared.model.storage
 
 import android.content.Context
-import android.support.v4.media.session.MediaSessionCompat
+import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.RadioStation
 import java.lang.ref.WeakReference
@@ -45,7 +45,7 @@ class FavoritesStorage(contextRef: WeakReference<Context>) : AbstractRadioStatio
         normalizeMediaId(radioStation)
         val key = createKeyForRadioStation(radioStation)
         mSet[key] = true
-        if (radioStation.sortId == MediaSessionCompat.QueueItem.UNKNOWN_ID) {
+        if (radioStation.sortId == DependencyRegistryCommon.UNKNOWN_ID) {
             radioStation.sortId = mSet.size
         }
         super.add(radioStation, createKeyForRadioStation(radioStation))

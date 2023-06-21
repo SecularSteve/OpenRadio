@@ -17,8 +17,6 @@
 package com.yuriy.openradio.shared.service.player
 
 import android.content.Context
-import android.support.v4.media.MediaMetadataCompat
-import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.DatabaseProvider
 import androidx.media3.database.StandaloneDatabaseProvider
@@ -32,12 +30,6 @@ import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.RenderersFactory
-import com.yuriy.openradio.shared.extentions.album
-import com.yuriy.openradio.shared.extentions.albumArtUri
-import com.yuriy.openradio.shared.extentions.artist
-import com.yuriy.openradio.shared.extentions.id
-import com.yuriy.openradio.shared.extentions.mediaUri
-import com.yuriy.openradio.shared.extentions.title
 import com.yuriy.openradio.shared.utils.AnalyticsUtils
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.AppUtils.getUserAgent
@@ -97,23 +89,6 @@ object ExoPlayerUtils {
                 DefaultHttpDataSource.Factory().setUserAgent(userAgent).setAllowCrossProtocolRedirects(true)
         }
         return sHttpDataSourceFactory
-    }
-
-    fun getMediaMetadataCompat(mediaItem: MediaItem?, streamMetadata: String): MediaMetadataCompat {
-        val item = MediaMetadataCompat.Builder()
-        if (mediaItem == null) {
-            item.id = AppUtils.EMPTY_STRING
-            return item.build()
-        }
-        val requestMetadata = mediaItem.requestMetadata
-        val mediaMetadata = mediaItem.mediaMetadata
-        item.id = mediaItem.mediaId
-        item.title = mediaMetadata.title.toString()
-        item.album = mediaMetadata.albumTitle.toString()
-        item.artist = streamMetadata
-        item.mediaUri = requestMetadata.mediaUri.toString()
-        item.albumArtUri = mediaMetadata.artworkUri.toString()
-        return item.build()
     }
 
     @UnstableApi

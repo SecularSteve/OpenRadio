@@ -24,6 +24,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.recyclerview.widget.RecyclerView
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiverCallback
+import com.yuriy.openradio.shared.model.ServiceCommander
 import com.yuriy.openradio.shared.model.media.MediaItemsSubscription
 import com.yuriy.openradio.shared.view.list.MediaItemsAdapter
 
@@ -73,7 +74,13 @@ interface MediaPresenter {
 
     fun getCountryCode(): String
 
+    fun getCurrentMediaItem(): MediaItem?
+
+    fun getServiceCommander(): ServiceCommander
+
     fun setActiveItem(position: Int)
+
+    fun isFavorite(mediaId: String): Boolean
 
     fun unsubscribeFromItem(mediaId: String?)
 

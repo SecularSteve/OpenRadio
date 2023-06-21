@@ -17,7 +17,6 @@
 package com.yuriy.openradio.shared.service
 
 import android.annotation.SuppressLint
-import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -28,8 +27,8 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import android.os.Message
-import androidx.core.content.ContextCompat
 import androidx.media.utils.MediaConstants
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -48,6 +47,8 @@ import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.broadcast.BTConnectionReceiver
 import com.yuriy.openradio.shared.broadcast.BecomingNoisyReceiver
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
+import com.yuriy.openradio.shared.extentions.isEnded
+import com.yuriy.openradio.shared.extentions.isPlayEnabled
 import com.yuriy.openradio.shared.model.media.BrowseTree
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.MediaStream
@@ -68,9 +69,9 @@ import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.IntentUtils
 import com.yuriy.openradio.shared.utils.MediaItemBuilder
+import com.yuriy.openradio.shared.utils.MediaItemHelper
 import com.yuriy.openradio.shared.utils.NetUtils
 import com.yuriy.openradio.shared.utils.PackageValidator
-import com.yuriy.openradio.shared.utils.PlayerUtils
 import com.yuriy.openradio.shared.utils.SafeToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -501,8 +502,7 @@ class OpenRadioService : MediaLibraryService() {
             AppLogger.e("$TAG get rs by invalid id")
             return RadioStation.INVALID_INSTANCE
         }
-        // TODO: got to browse tree
-        return RadioStation.INVALID_INSTANCE
+        return mBrowseTree.getRadioStationByMediaId(mediaId)
     }
 
     /**
@@ -600,22 +600,6 @@ class OpenRadioService : MediaLibraryService() {
         }
     }
 
-    /**
-     * Consume Radio Station by it's ID.
-     *
-     * @param mediaId ID of the Radio Station.
-     */
-    private fun handlePlayFromMediaId(mediaId: String) {
-        //if (mediaId == MediaSession.QueueItem.UNKNOWN_ID.toString()) {
-        //    AppLogger.e("$TAG media id is invalid")
-        //    return
-        //}
-        //setActiveRS(getStorage(mediaId).getById(mediaId))
-        AppLogger.i("$TAG handle play $mActiveRS")
-        // Play Radio Station
-        handlePlayRequest()
-    }
-
     private fun performSearch(query: String) {
         if (query.isEmpty()) {
             return
@@ -655,117 +639,16 @@ class OpenRadioService : MediaLibraryService() {
      * @param intent
      */
     private fun handleMessageInternal(command: String, intent: Intent) {
-        val context = applicationContext
         AppLogger.i("$TAG handle msg, cmd $command $intent, pkg valid $mIsPackageValid")
-        when (command) {
-            OpenRadioStore.VALUE_NAME_GET_RADIO_STATION_COMMAND -> {
-                val description = OpenRadioStore.extractMediaDescription(intent) ?: return
-                var rs = getRadioStationByMediaId(description.mediaId)
-                // This can the a case when last known Radio Station is playing.
-                // In this case it is not in a list of radio stations.
-                // If it exists, let's compare its id with the id provided by intent.
-                if (rs.isInvalid()) {
-                    if (mActiveRS.id == description.mediaId) {
-                        rs = RadioStation.makeCopyInstance(mActiveRS)
-                    }
-                    // We failed both cases, something went wrong ...
-                    if (rs.isInvalid()) {
-                        return
-                    }
-                }
-                // Update Favorites Radio station: whether add it or remove it from the storage
-                val isFavorite = OpenRadioStore.getIsFavoriteFromIntent(intent)
-                mPresenter.updateRadioStationFavorite(rs, isFavorite)
-                maybeNotifyRootCarChanged()
-            }
-
-            OpenRadioStore.VALUE_NAME_NETWORK_SETTINGS_CHANGED -> {
-                if (mPresenter.isMobileNetwork() &&
-                    mPresenter.getUseMobile().not()
-                ) {
-                    SafeToast.showAnyThread(
-                        context,
-                        context.getString(R.string.mobile_network_disabled)
-                    )
-                    handlePauseRequest()
-                    return
-                }
-            }
-
-            OpenRadioStore.VALUE_NAME_UPDATE_TREE -> {
-                //notifyChildrenChanged(mCurrentParentId)
-            }
-
-            OpenRadioStore.VALUE_NAME_CLEAR_CACHE -> {
-                handleClearCache(context)
-            }
-
-            OpenRadioStore.VALUE_NAME_MASTER_VOLUME_CHANGED -> {
-                handleMasterVolumeChanged(
-                    context,
-                    intent.getIntExtra(OpenRadioStore.EXTRA_KEY_MASTER_VOLUME, MASTER_VOLUME_DEFAULT)
-                )
-            }
-
-            OpenRadioStore.VALUE_NAME_REMOVE_BY_ID -> {
-                mStorageListener.onClear()
-                // TODO:
-                //getStorage(mActiveRS.id).removeById(
-                //    intent.getStringExtra(OpenRadioStore.EXTRA_KEY_MEDIA_ID) ?: AppUtils.EMPTY_STRING
-                //)
-                //mStorageListener.onAddAll(getStorage(mActiveRS.id).all)
-            }
-
-            OpenRadioStore.VALUE_NAME_NOTIFY_CHILDREN_CHANGED -> {
-//                notifyChildrenChanged(
-//                    intent.getStringExtra(OpenRadioStore.EXTRA_KEY_PARENT_ID) ?: MediaId.MEDIA_ID_ROOT
-//                )
-            }
-
-            OpenRadioStore.VALUE_NAME_UPDATE_SORT_IDS -> {
-                val mediaId = intent.getStringExtra(OpenRadioStore.EXTRA_KEY_MEDIA_IDS)
-                val sortId = intent.getIntExtra(OpenRadioStore.EXTRA_KEY_SORT_IDS, 0)
-                val categoryMediaId =
-                    intent.getStringExtra(OpenRadioStore.EXTRA_KEY_MEDIA_ID) ?: MediaId.MEDIA_ID_ROOT
-                if (mediaId.isNullOrEmpty()) {
-                    return
-                }
-                mPresenter.updateSortIds(
-                    mediaId, sortId, categoryMediaId,
-                )
-//                notifyChildrenChanged(categoryMediaId)
-            }
-
-            OpenRadioStore.VALUE_NAME_TOGGLE_LAST_PLAYED_ITEM -> {
-                togglePlayableItem()
-            }
-
-            OpenRadioStore.VALUE_NAME_STOP_SERVICE -> {
-                mUiScope.launch {
-                    closeService()
-                }
-            }
-
-            else -> AppLogger.w("$TAG unknown command:$command")
-        }
     }
 
     private fun togglePlayableItem() {
-        when (val state = mPlayer.playbackState) {
-            Player.STATE_BUFFERING,
-            Player.STATE_READY -> {
-                handlePauseRequest()
-            }
-
-            Player.STATE_IDLE,
-            Player.STATE_ENDED -> {
-                handlePlayRequest()
-            }
-
+        when {
+            mPlayer.isPlaying -> mPlayer.pause()
+            mPlayer.isPlayEnabled -> mPlayer.play()
+            mPlayer.isEnded -> mPlayer.seekTo(C.TIME_UNSET)
             else -> {
-                AppLogger.w(
-                    "$TAG unhandled playback state:${PlayerUtils.playerStateToString(state)}"
-                )
+                //
             }
         }
     }
@@ -815,51 +698,17 @@ class OpenRadioService : MediaLibraryService() {
      */
     private inner class PlayerListener : OpenRadioPlayer.Listener {
 
-        override fun onError() {
-            handleStopRequest()
-        }
-
         override fun onHandledError(error: PlaybackException) {
             this@OpenRadioService.onHandledError(error)
         }
 
         override fun onReady(mediaItem: MediaItem) {
             mScope.launch {
-                mBrowseTree.getRadioStationByMediaId(mediaItem.mediaId)?.let {
+                mBrowseTree.getRadioStationByMediaId(mediaItem.mediaId).let {
                     setActiveRS(it)
                     mPresenter.setLastRadioStation(it)
                 }
             }
-        }
-
-        override fun onIndexOnQueueChanges(value: Int) {
-            // TODO:
-            //setActiveRS(getStorage(mActiveRS.id).getAt(value))
-            //LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(
-            //    AppLocalBroadcast.createIntentCurrentIndexOnQueue(value)
-            //)
-        }
-
-        override fun onStartForeground(notificationId: Int, notification: Notification) {
-            val ibo = AppUtils.isIgnoringBatteryOptimizations(applicationContext)
-            AnalyticsUtils.logMessage("Going to strt frgrd srv w ibo:$ibo")
-            ContextCompat.startForegroundService(
-                applicationContext,
-                Intent(applicationContext, this@OpenRadioService.javaClass)
-            )
-            AnalyticsUtils.logMessage("Going to strt frgrd")
-            startForeground(notificationId, notification)
-            AnalyticsUtils.logMessage("Frgrd started")
-        }
-
-        override fun onStopForeground(removeNotification: Boolean) {
-            AppLogger.i("$TAG stop as foreground")
-            stopForeground(removeNotification)
-            stopSelf()
-        }
-
-        override fun onCloseApp() {
-            closeService()
         }
     }
 
@@ -913,66 +762,6 @@ class OpenRadioService : MediaLibraryService() {
         }
     }
 
-//    private inner class PlaybackPreparer : MediaSessionConnector.PlaybackPreparer {
-//
-//        private val mTag = "PlbckPreparer"
-//
-//        override fun onCommand(player: Player, command: String, extras: Bundle?, cb: ResultReceiver?): Boolean {
-//            AppLogger.d("$mTag command:$command ${IntentUtils.bundleToString(extras)}")
-//            return false
-//        }
-//
-//        /**
-//         * Open Radio supports preparing (and playing) from search, as well as media ID, so those
-//         * capabilities are declared here.
-//         *
-//         * TODO: Add support for ACTION_PREPARE and ACTION_PLAY, which mean "prepare/play something".
-//         */
-//        override fun getSupportedPrepareActions(): Long =
-//            PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID or
-//                    PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID or
-//                    PlaybackStateCompat.ACTION_PREPARE_FROM_SEARCH or
-//                    PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
-//
-//        override fun onPrepare(playWhenReady: Boolean) {
-//            AppLogger.d("$mTag prepare, play:$playWhenReady, cat:$mCurrentParentId")
-//            if (playWhenReady.not()) {
-//                return
-//            }
-//            if (mActiveRS.isInvalid()) {
-//                AppLogger.w("$mTag no active rs found after restore")
-//                return
-//            }
-//            handlePlayRequest()
-//        }
-//
-//        override fun onPrepareFromMediaId(mediaId: String, playWhenReady: Boolean, extras: Bundle?) {
-//            AppLogger.d(
-//                "$mTag prepare from media id:$mediaId, play:$playWhenReady, ${IntentUtils.bundleToString(extras)}"
-//            )
-//            mStorageListener.onClear()
-//            mStorageListener.onAddAll(getStorage(mediaId).all)
-//            handlePlayFromMediaId(mediaId)
-//        }
-//
-//        /**
-//         * This method is used by the Google Assistant to respond to requests such as:
-//         * - Play Geisha from Wake Up on Open Radio
-//         * - Play electronic music on Open Radio
-//         * - Play music on Open Radio
-//         */
-//        override fun onPrepareFromSearch(query: String, playWhenReady: Boolean, extras: Bundle?) {
-//            AppLogger.d("$mTag prepare from search '$query'")
-//            performSearch(query)
-//        }
-//
-//        override fun onPrepareFromUri(uri: Uri, playWhenReady: Boolean, extras: Bundle?) {
-//            AppLogger.d(
-//                "$mTag prepare from uri:$uri, play:$playWhenReady, ${IntentUtils.bundleToString(extras)}"
-//            )
-//        }
-//    }
-
     private inner class SleepTimerListenerImpl : SleepTimerListener {
 
         override fun onComplete() {
@@ -999,6 +788,10 @@ class OpenRadioService : MediaLibraryService() {
     }
 
     private inner class ServiceCallback : MediaLibrarySession.Callback {
+
+        private val mSessionCmdSuccess = Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+        private val mSessionCmdNotSupported =
+            Futures.immediateFuture(SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED))
 
         @UnstableApi
         override fun onGetLibraryRoot(
@@ -1108,6 +901,23 @@ class OpenRadioService : MediaLibraryService() {
             )
         }
 
+        override fun onConnect(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo
+        ): MediaSession.ConnectionResult {
+            val connectionResult = super.onConnect(session, controller)
+            val sessionCommands =
+                connectionResult.availableSessionCommands
+                    .buildUpon()
+                    // Add custom commands
+                    .add(SessionCommand("REWIND_30", Bundle()))
+                    .add(SessionCommand(CMD_FAVORITE_UPDATE, Bundle()))
+                    .build()
+            return MediaSession.ConnectionResult.accept(
+                sessionCommands, connectionResult.availablePlayerCommands
+            )
+        }
+
         override fun onCustomCommand(
             session: MediaSession,
             controller: MediaSession.ControllerInfo,
@@ -1115,7 +925,118 @@ class OpenRadioService : MediaLibraryService() {
             args: Bundle
         ): ListenableFuture<SessionResult> {
             AppLogger.d("$TAG CustomCommand $customCommand")
-            return Futures.immediateFuture(SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED))
+            return when (customCommand.customAction) {
+                CMD_NET_CHANGED -> {
+                    if (mPresenter.isMobileNetwork() &&
+                        mPresenter.getUseMobile().not()
+                    ) {
+                        SafeToast.showAnyThread(
+                            applicationContext,
+                            applicationContext.getString(R.string.mobile_network_disabled)
+                        )
+                        handlePauseRequest()
+                    }
+                    return mSessionCmdSuccess
+                }
+
+                CMD_FAVORITE_UPDATE -> {
+                    val mediaId = OpenRadioStore.extractMediaId(args)
+                    var rs = getRadioStationByMediaId(mediaId)
+                    // This can the a case when last known Radio Station is playing.
+                    // In this case it is not in a list of radio stations.
+                    // If it exists, let's compare its id with the id provided by intent.
+                    if (rs.isInvalid()) {
+                        if (mActiveRS.id == mediaId) {
+                            rs = RadioStation.makeCopyInstance(mActiveRS)
+                        }
+                        // We failed both cases, something went wrong ...
+                        if (rs.isInvalid()) {
+                            return mSessionCmdNotSupported
+                        }
+                    }
+                    val isFavorite = OpenRadioStore.extractIsFavorite(args)
+                    // Update Favorites Radio station: whether add it or remove it from the storage
+                    mPresenter.updateRadioStationFavorite(rs, isFavorite)
+                    val mediaItem = mBrowseTree.getMediaItemByMediaId(mediaId)
+                    MediaItemHelper.updateFavoriteField(mediaItem, isFavorite)
+                    val currentMediaItem = mPlayer.currentMediaItem
+                    if (currentMediaItem?.mediaId == mediaId) {
+                        MediaItemHelper.updateFavoriteField(currentMediaItem, isFavorite)
+                    }
+                    maybeNotifyRootCarChanged()
+                    mPlayer.invalidateMetaData()
+                    return mSessionCmdSuccess
+                }
+
+                CMD_STOP_SERVICE -> {
+                    closeService()
+                    return mSessionCmdSuccess
+                }
+
+                CMD_TOGGLE_LAST_PLAYED_ITEM -> {
+                    togglePlayableItem()
+                    return mSessionCmdSuccess
+                }
+
+                CMD_UPDATE_SORT_IDS -> {
+                    val mediaId = args.getString(OpenRadioStore.EXTRA_KEY_MEDIA_IDS)
+                    val sortId = args.getInt(OpenRadioStore.EXTRA_KEY_SORT_IDS, 0)
+                    val categoryMediaId =
+                        args.getString(OpenRadioStore.EXTRA_KEY_MEDIA_ID) ?: MediaId.MEDIA_ID_ROOT
+                    if (mediaId.isNullOrEmpty()) {
+                        return mSessionCmdNotSupported
+                    }
+                    mPresenter.updateSortIds(
+                        mediaId, sortId, categoryMediaId,
+                    )
+                    // notifyChildrenChanged(categoryMediaId)
+                    return mSessionCmdSuccess
+                }
+
+                CMD_CLEAR_CACHE -> {
+                    handleClearCache(applicationContext)
+                    return mSessionCmdSuccess
+                }
+
+                CMD_MASTER_VOLUME_CHANGED -> {
+                    handleMasterVolumeChanged(
+                        applicationContext,
+                        args.getInt(OpenRadioStore.EXTRA_KEY_MASTER_VOLUME, MASTER_VOLUME_DEFAULT)
+                    )
+                    return mSessionCmdSuccess
+                }
+
+                CMD_UPDATE_TREE -> {
+                    // notifyChildrenChanged(mCurrentParentId)
+                    return mSessionCmdSuccess
+                }
+
+                CMD_NOTIFY_CHILDREN_CHANGED -> {
+                    // notifyChildrenChanged(
+                    //  intent.getStringExtra(OpenRadioStore.EXTRA_KEY_PARENT_ID) ?: MediaId.MEDIA_ID_ROOT
+                    // )
+                    return mSessionCmdSuccess
+                }
+
+                CMD_REMOVE_BY_ID -> {
+                    mStorageListener.onClear()
+                    // TODO:
+                    // getStorage(mActiveRS.id).removeById(
+                    //    intent.getStringExtra(OpenRadioStore.EXTRA_KEY_MEDIA_ID) ?: AppUtils.EMPTY_STRING
+                    // )
+                    // mStorageListener.onAddAll(getStorage(mActiveRS.id).all)
+                    return mSessionCmdSuccess
+                }
+
+                "REWIND_30" -> {
+                    session.player.seekBack()
+                    return mSessionCmdSuccess
+                }
+
+                else -> {
+                    mSessionCmdNotSupported
+                }
+            }
         }
 
         private fun <T> callWhenSourceReady(parentId: String, action: () -> T): ListenableFuture<T> {
@@ -1161,6 +1082,18 @@ class OpenRadioService : MediaLibraryService() {
     }
 
     companion object {
+
+        const val CMD_FAVORITE_UPDATE = "com.yuriy.openradio.COMMAND.FAVORITE_UPDATE"
+        const val CMD_NET_CHANGED = "com.yuriy.openradio.COMMAND.NET_CHANGED"
+        const val CMD_STOP_SERVICE = "com.yuriy.openradio.COMMAND.STOP_SERVICE"
+        const val CMD_TOGGLE_LAST_PLAYED_ITEM = "com.yuriy.openradio.COMMAND.TOGGLE_LAST_PLAYED_ITEM"
+        const val CMD_UPDATE_SORT_IDS = "com.yuriy.openradio.COMMAND.UPDATE_SORT_IDS"
+        const val CMD_CLEAR_CACHE = "com.yuriy.openradio.COMMAND.CLEAR_CACHE"
+        const val CMD_MASTER_VOLUME_CHANGED = "com.yuriy.openradio.COMMAND.MASTER_VOLUME_CHANGED"
+        const val CMD_UPDATE_TREE = "com.yuriy.openradio.COMMAND.UPDATE_TREE"
+        const val CMD_NOTIFY_CHILDREN_CHANGED = "com.yuriy.openradio.COMMAND.NOTIFY_CHILDREN_CHANGED"
+        const val CMD_REMOVE_BY_ID = "com.yuriy.openradio.COMMAND.REMOVE_BY_ID"
+
         private lateinit var TAG: String
 
         /**

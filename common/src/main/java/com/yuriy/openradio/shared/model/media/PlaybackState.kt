@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.yuriy.openradio.shared.presenter
 
-import androidx.media3.common.MediaMetadata
-import com.yuriy.openradio.shared.model.media.PlaybackState
+package com.yuriy.openradio.shared.model.media
 
-interface MediaPresenterListener {
-    fun showProgressBar()
-    fun handleMetadataChanged(metadata: MediaMetadata)
-    fun handlePlaybackStateChanged(state: PlaybackState)
+import androidx.media3.common.Player
+
+class PlaybackState(
+    private val mPlaybackState: Int = Player.STATE_IDLE,
+    private val mPlayWhenReady: Boolean = false
+) {
+
+    val isPlaying: Boolean
+        get() {
+            return (mPlaybackState == Player.STATE_BUFFERING
+                    || mPlaybackState == Player.STATE_READY)
+                    && mPlayWhenReady
+        }
 }

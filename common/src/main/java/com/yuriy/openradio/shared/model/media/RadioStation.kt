@@ -16,8 +16,8 @@
 
 package com.yuriy.openradio.shared.model.media
 
-import android.support.v4.media.session.MediaSessionCompat
 import android.text.TextUtils
+import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.model.storage.images.ImagesStore
 import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.utils.AppUtils
@@ -74,7 +74,7 @@ class RadioStation : Serializable, Comparable<RadioStation> {
      * Flag indicate that Radio Station has been added locally to the phone storage.
      */
     var isLocal = false
-    var sortId = MediaSessionCompat.QueueItem.UNKNOWN_ID
+    var sortId = DependencyRegistryCommon.UNKNOWN_ID
     /**
      * Image Url. Used for internal logic only, for example fetch image from or determine image is not specified.
      */
@@ -208,7 +208,7 @@ class RadioStation : Serializable, Comparable<RadioStation> {
     }
 
     override fun compareTo(other: RadioStation): Int {
-        if (sortId != MediaSessionCompat.QueueItem.UNKNOWN_ID) {
+        if (sortId != DependencyRegistryCommon.UNKNOWN_ID) {
             return sortId.compareTo(other.sortId)
         }
         return name.compareTo(other.name)

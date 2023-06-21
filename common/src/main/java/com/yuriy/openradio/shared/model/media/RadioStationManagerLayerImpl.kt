@@ -23,7 +23,6 @@ import com.yuriy.openradio.shared.model.storage.DeviceLocalsStorage
 import com.yuriy.openradio.shared.model.storage.FavoritesStorage
 import com.yuriy.openradio.shared.model.storage.images.ImagesPersistenceLayer
 import com.yuriy.openradio.shared.model.storage.images.ImagesStore
-import com.yuriy.openradio.shared.service.OpenRadioStore
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.RadioStationValidator
 import kotlinx.coroutines.CoroutineScope
@@ -35,7 +34,8 @@ class RadioStationManagerLayerImpl(
     urlLayer: UrlLayer,
     private val mDeviceLocalsStorage: DeviceLocalsStorage,
     private val mFavoritesStorage: FavoritesStorage,
-    private val mImagesPersistenceLayer: ImagesPersistenceLayer
+    private val mImagesPersistenceLayer: ImagesPersistenceLayer,
+    private val mListener: RadioStationManagerLayerListener
 ) : RadioStationManagerLayer {
 
     private var mUiScope = CoroutineScope(Dispatchers.Main)
@@ -65,12 +65,7 @@ class RadioStationManagerLayerImpl(
                     if (rsToAdd.isAddToFav) {
                         mFavoritesStorage.add(radioStation)
                     }
-                    context.startService(
-                        OpenRadioStore.makeNotifyChildrenChangedIntent(
-                            context,
-                            MediaId.MEDIA_ID_ROOT
-                        )
-                    )
+                    mListener.notifyChildrenChangedBundle(MediaId.MEDIA_ID_ROOT)
                     onSuccess("Radio Station added successfully")
                 }
             },
@@ -92,13 +87,10 @@ class RadioStationManagerLayerImpl(
                 rsToAdd.isAddToFav
             )
             if (result) {
-                context.startService(
-                    OpenRadioStore.makeNotifyChildrenChangedIntent(
-                        context,
-                        MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST
-                    )
-                )
-                mUiScope.launch { onSuccess("Radio Station updated successfully") }
+                mUiScope.launch {
+                    mListener.notifyChildrenChangedBundle(MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST)
+                    onSuccess("Radio Station updated successfully")
+                }
             } else {
                 mUiScope.launch { onFailure("Can not update Radio Station") }
             }
@@ -118,16 +110,8 @@ class RadioStationManagerLayerImpl(
                 context.contentResolver.delete(ImagesStore.getDeleteUri(mediaId), AppUtils.EMPTY_STRING, emptyArray())
                 mDeviceLocalsStorage.remove(radioStation)
             }
-            context.startService(
-                OpenRadioStore.makeRemoveByMediaIdIntent(
-                    context, mediaId
-                )
-            )
-            context.startService(
-                OpenRadioStore.makeNotifyChildrenChangedIntent(
-                    context, MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST
-                )
-            )
+            mListener.removeByMediaIdBundle(mediaId)
+            mListener.notifyChildrenChangedBundle(MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST)
         }
     }
 }
