@@ -94,7 +94,9 @@ class MediaPresenterImpl(
      * Manager object that acts as interface between Media Resources and current Activity.
      * Provided to this reference is a listener of events provided by Media Resource Manager.
      */
-    private val mMediaRsrMgr = MediaResourcesManager(mContext, javaClass.simpleName, MediaResourceManagerListenerImpl())
+    private var mMediaRsrMgr: MediaResourcesManager? = null
+
+    private val mMdResMrgListener = MediaResourceManagerListenerImpl()
 
     /**
      * Stack of the media items.
@@ -154,6 +156,7 @@ class MediaPresenterImpl(
         listener: MediaPresenterListener,
         localReceiverCallback: AppLocalReceiverCallback
     ) {
+        mMediaRsrMgr = MediaResourcesManager(mContext, javaClass.simpleName, mMdResMrgListener)
         registerReceivers(localReceiverCallback)
         mIsOnSaveInstancePassed.set(false)
         mCallback = mediaSubscriptionCallback
@@ -196,7 +199,8 @@ class MediaPresenterImpl(
         mActivity?.applicationContext?.contentResolver?.unregisterContentObserver(
             mContentObserver
         )
-        mMediaRsrMgr.clean()
+        mMediaRsrMgr?.clean()
+        mMediaRsrMgr = null
         mSleepTimerModel.removeSleepTimerListener(mTimerListener)
         mCallback = null
         mActivity = null
@@ -304,7 +308,7 @@ class MediaPresenterImpl(
             val previousMediaId = mMediaItemsStack[index]
             if (previousMediaId.isNotEmpty()) {
                 mListener?.showProgressBar()
-                mMediaRsrMgr.subscribe(previousMediaId, mCallback)
+                mMediaRsrMgr?.subscribe(previousMediaId, mCallback)
             }
         } else {
             return true
@@ -337,7 +341,7 @@ class MediaPresenterImpl(
             mMediaItemsStack.add(mediaId)
         }
         mListener?.showProgressBar()
-        mMediaRsrMgr.subscribe(mediaId, mCallback)
+        mMediaRsrMgr?.subscribe(mediaId, mCallback)
     }
 
     override fun updateDescription(descriptionView: TextView?, mediaMetadata: MediaMetadata) {
@@ -441,7 +445,7 @@ class MediaPresenterImpl(
             addMediaItemToStack(item.mediaId)
         } else if (isPlayable) {
             // Else - we play an item
-            mMediaRsrMgr.playFromMediaId(item, mCurrentParentId)
+            mMediaRsrMgr?.playFromMediaId(item, mCurrentParentId)
         }
     }
 
@@ -543,7 +547,7 @@ class MediaPresenterImpl(
     }
 
     override fun getCurrentMediaItem(): MediaItem? {
-        return mMediaRsrMgr.currentMediaItem
+        return mMediaRsrMgr?.currentMediaItem
     }
 
     /**
@@ -578,7 +582,7 @@ class MediaPresenterImpl(
     private fun restoreState(savedInstanceState: Bundle) {
         mCurrentParentId = OpenRadioStore.getCurrentParentId(savedInstanceState)
         restoreSelectedPosition(mCurrentParentId)
-        handleMetadataChanged(mMediaRsrMgr.mediaMetadata)
+        handleMetadataChanged(mMediaRsrMgr?.mediaMetadata)
     }
 
     /**
@@ -619,11 +623,16 @@ class MediaPresenterImpl(
     }
 
     private fun handleMediaResourceManagerConnected() {
+        val mgr = mMediaRsrMgr
+        if (mgr == null) {
+            AppLogger.e("$TAG md  res mgr connected but reference is null")
+            return
+        }
         val size = mMediaItemsStack.size
-        val mediaId = if (size == 0) mMediaRsrMgr.root else mMediaItemsStack[size - 1]
+        val mediaId = if (size == 0) mgr.root else mMediaItemsStack[size - 1]
         addMediaItemToStack(mediaId)
         // Update metadata in case of UI started on and media service was already created and stream played.
-        handleMetadataChanged(mMediaRsrMgr.mediaMetadata)
+        handleMetadataChanged(mgr.mediaMetadata)
     }
 
     private fun handleMetadataChanged(metadata: MediaMetadata?) {
@@ -736,7 +745,7 @@ class MediaPresenterImpl(
     private inner class ServiceCommanderImpl : ServiceCommander {
 
         override suspend fun sendCommand(command: String, parameters: Bundle): Boolean {
-            return mMediaRsrMgr.sendCommand(command, parameters)
+            return mMediaRsrMgr?.sendCommand(command, parameters) ?: false
         }
 
         override suspend fun sendCommand(
@@ -744,7 +753,7 @@ class MediaPresenterImpl(
             parameters: Bundle,
             resultCallback: (Int, Bundle?) -> Unit
         ): Boolean {
-            return mMediaRsrMgr.sendCommand(command, parameters, resultCallback)
+            return mMediaRsrMgr?.sendCommand(command, parameters, resultCallback) ?: false
         }
     }
 

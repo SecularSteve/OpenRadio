@@ -22,17 +22,6 @@ import java.util.TreeSet
 
 class RadioStationsStorage {
 
-    interface Listener {
-
-        fun onClear()
-
-        fun onAdd(item: RadioStation, position: Int)
-
-        fun onAddAll(set: Set<RadioStation>)
-
-        fun onUpdate(item: RadioStation)
-    }
-
     /**
      * Collection of the Radio Stations.
      */
