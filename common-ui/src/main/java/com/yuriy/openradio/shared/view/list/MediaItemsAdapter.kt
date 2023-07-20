@@ -211,12 +211,12 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
             checkBox.setOnClickListener { view: View ->
                 val isChecked = (view as CheckBox).isChecked
                 MediaItemHelper.updateFavoriteField(mediaItem, isChecked)
-                val bundle = OpenRadioStore.makeUpdateIsFavoriteBundle(
-                    mediaItem.mediaId,
-                    isChecked
-                )
+                val bundle = OpenRadioStore.makeUpdateIsFavoriteBundle(mediaItem.mediaId)
                 CoroutineScope(Dispatchers.Main).launch {
-                    serviceCommander.sendCommand(OpenRadioService.CMD_FAVORITE_UPDATE, bundle)
+                    serviceCommander.sendCommand(
+                        if (isChecked) OpenRadioService.CMD_FAVORITE_ON else OpenRadioService.CMD_FAVORITE_OFF,
+                        bundle
+                    )
                 }
             }
         }

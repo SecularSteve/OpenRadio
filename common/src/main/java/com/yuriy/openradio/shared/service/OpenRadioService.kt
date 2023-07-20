@@ -169,6 +169,8 @@ class OpenRadioService : MediaLibraryService() {
         MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor())
     }
 
+    private lateinit var mFavoriteCommands: List<CommandButton>
+
     /**
      * Default constructor.
      */
@@ -240,35 +242,22 @@ class OpenRadioService : MediaLibraryService() {
             build()
         }
 
-//        mMediaSessionConnector.setCustomActionProviders(
-//            object : MediaSessionConnector.CustomActionProvider {
-//
-//                override fun onCustomAction(player: Player, action: String, extras: Bundle?) {
-//                    if (action != CUSTOM_ACTION_THUMBS_UP) {
-//                        return
-//                    }
-//                    mPresenter.updateRadioStationFavorite(mActiveRS)
-//                    maybeNotifyRootCarChanged()
-//                }
-//
-//                override fun getCustomAction(player: Player): PlaybackStateCompat.CustomAction? {
-//                    if (mActiveRS.isInvalid()) {
-//                        return null
-//                    }
-//                    var favoriteIcon = R.drawable.ic_favorite_off
-//                    if (mPresenter.isRadioStationFavorite(mActiveRS)) {
-//                        favoriteIcon = R.drawable.ic_favorite_on
-//                    }
-//                    return PlaybackStateCompat.CustomAction
-//                        .Builder(
-//                            CUSTOM_ACTION_THUMBS_UP,
-//                            this@OpenRadioService.getString(R.string.favorite),
-//                            favoriteIcon
-//                        )
-//                        .build()
-//                }
-//            }
-//        )
+        mFavoriteCommands = listOf(
+            CommandButton.Builder()
+                .setDisplayName(getString(R.string.favorite))
+                .setEnabled(true)
+                .setIconResId(R.drawable.ic_favorite_off)
+                .setSessionCommand(SessionCommand(CMD_FAVORITE_OFF, Bundle()))
+                .build(),
+            CommandButton.Builder()
+                .setDisplayName(getString(R.string.favorite))
+                .setEnabled(true)
+                .setIconResId(R.drawable.ic_favorite_on)
+                .setSessionCommand(SessionCommand(CMD_FAVORITE_ON, Bundle()))
+                .build()
+        )
+
+        updateFavoriteState()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -377,6 +366,14 @@ class OpenRadioService : MediaLibraryService() {
         mPresenter.stopNetworkMonitor(applicationContext)
         mPresenter.getSleepTimerModel().removeSleepTimerListener(mSleepTimerListener)
         mPresenter.removeRemoteControlListener()
+    }
+
+    private fun updateFavoriteState() {
+        if (mActiveRS != RadioStation.INVALID_INSTANCE) {
+            val command =
+                if (mPresenter.isRadioStationFavorite(mActiveRS)) mFavoriteCommands[1] else mFavoriteCommands[0]
+            mSession.setCustomLayout(listOf(command))
+        }
     }
 
     /**
@@ -621,7 +618,7 @@ class OpenRadioService : MediaLibraryService() {
         if (mediaItemCount != 0) {
             return
         }
-         // If this is very first start - give to player something to play:
+        // If this is very first start - give to player something to play:
         list.add(rsPlayable)
         // Create a NPL:
         // TODO: Add here Favorites or Newest.
@@ -663,6 +660,10 @@ class OpenRadioService : MediaLibraryService() {
                     }
                     setActiveRS(it)
                     mPresenter.setLastRadioStation(it)
+                    mUiScope.launch {
+                        // Update custom commands:
+                        updateFavoriteState()
+                    }
                 }
             }
         }
@@ -869,22 +870,14 @@ class OpenRadioService : MediaLibraryService() {
             session: MediaSession,
             controller: MediaSession.ControllerInfo
         ): MediaSession.ConnectionResult {
-            val list = ArrayList<CommandButton>()
-            list.add(
-                CommandButton.Builder()
-                    .setDisplayName(getString(R.string.favorite))
-                    .setEnabled(true)
-                    .setIconResId(R.drawable.ic_favorite_off)
-                    .setSessionCommand(SessionCommand(CMD_THUMBS_UP, Bundle()))
-                    .build()
-            )
-            session.setCustomLayout(list)
+            AppLogger.d("$TAG Connect $controller")
             val connectionResult = super.onConnect(session, controller)
             val sessionCommands =
                 connectionResult.availableSessionCommands
                     .buildUpon()
                     // Add custom commands
-                    .add(SessionCommand(CMD_FAVORITE_UPDATE, Bundle()))
+                    .add(SessionCommand(CMD_FAVORITE_ON, Bundle()))
+                    .add(SessionCommand(CMD_FAVORITE_OFF, Bundle()))
                     .add(SessionCommand(CMD_REMOVE_BY_ID, Bundle()))
                     .add(SessionCommand(CMD_NET_CHANGED, Bundle()))
                     .add(SessionCommand(CMD_CLEAR_CACHE, Bundle()))
@@ -932,7 +925,7 @@ class OpenRadioService : MediaLibraryService() {
             customCommand: SessionCommand,
             args: Bundle
         ): ListenableFuture<SessionResult> {
-            AppLogger.d("$TAG CustomCommand $customCommand")
+            AppLogger.d("$TAG CustomCommand ${customCommand.customAction}")
             return when (customCommand.customAction) {
                 CMD_NET_CHANGED -> {
                     if (mPresenter.isMobileNetwork() &&
@@ -947,32 +940,21 @@ class OpenRadioService : MediaLibraryService() {
                     return mSessionCmdSuccess
                 }
 
-                CMD_FAVORITE_UPDATE -> {
-                    val mediaId = OpenRadioStore.extractMediaId(args)
-                    var rs = getRadioStationByMediaId(mediaId)
-                    // This can the a case when last known Radio Station is playing.
-                    // In this case it is not in a list of radio stations.
-                    // If it exists, let's compare its id with the id provided by intent.
-                    if (rs.isInvalid()) {
-                        if (mActiveRS.id == mediaId) {
-                            rs = RadioStation.makeCopyInstance(mActiveRS)
-                        }
-                        // We failed both cases, something went wrong ...
-                        if (rs.isInvalid()) {
-                            return mSessionCmdNotSupported
-                        }
+                CMD_FAVORITE_OFF -> {
+                    // Transition station to Favorite ON
+                    session.setCustomLayout(listOf(mFavoriteCommands[1]))
+                    if (handleFavorite(args, true).not()) {
+                        return mSessionCmdNotSupported
                     }
-                    val isFavorite = OpenRadioStore.extractIsFavorite(args)
-                    // Update Favorites Radio station: whether add it or remove it from the storage
-                    mPresenter.updateRadioStationFavorite(rs, isFavorite)
-                    val mediaItem = mBrowseTree.getMediaItemByMediaId(mediaId)
-                    MediaItemHelper.updateFavoriteField(mediaItem, isFavorite)
-                    val currentMediaItem = mPlayer.currentMediaItem
-                    if (currentMediaItem?.mediaId == mediaId) {
-                        MediaItemHelper.updateFavoriteField(currentMediaItem, isFavorite)
+                    return mSessionCmdSuccess
+                }
+
+                CMD_FAVORITE_ON -> {
+                    // Transition station to Favorite OFF
+                    session.setCustomLayout(listOf(mFavoriteCommands[0]))
+                    if (handleFavorite(args, false).not()) {
+                        return mSessionCmdNotSupported
                     }
-                    maybeNotifyRootCarChanged()
-                    mPlayer.invalidateMetaData()
                     return mSessionCmdSuccess
                 }
 
@@ -1034,10 +1016,6 @@ class OpenRadioService : MediaLibraryService() {
                     return mSessionCmdSuccess
                 }
 
-                CMD_THUMBS_UP -> {
-                    return mSessionCmdSuccess
-                }
-
                 else -> {
                     mSessionCmdNotSupported
                 }
@@ -1088,11 +1066,44 @@ class OpenRadioService : MediaLibraryService() {
                 action()
             }
         }
+
+        private fun handleFavorite(args: Bundle, isFavorite: Boolean): Boolean {
+            val mediaId = OpenRadioStore.extractMediaId(args)
+            var rs = getRadioStationByMediaId(mediaId)
+            // This can the a case when last known Radio Station is playing.
+            // In this case it is not in a list of radio stations.
+            // If it exists, let's compare its id with the id provided by intent.
+            if (rs.isInvalid()) {
+                if (mActiveRS.id == mediaId) {
+                    rs = RadioStation.makeCopyInstance(mActiveRS)
+                }
+                // Lastly, get the current playing station.
+                if (rs.isInvalid()) {
+                    rs = RadioStation.makeCopyInstance(mActiveRS)
+                }
+                // We failed both cases, something went wrong ...
+                if (rs.isInvalid()) {
+                    return false
+                }
+            }
+            // Update Favorites Radio station: whether add it or remove it from the storage
+            mPresenter.updateRadioStationFavorite(rs, isFavorite)
+            val mediaItem = mBrowseTree.getMediaItemByMediaId(mediaId)
+            MediaItemHelper.updateFavoriteField(mediaItem, isFavorite)
+            val currentMediaItem = mPlayer.currentMediaItem
+            if (currentMediaItem?.mediaId == mediaId) {
+                MediaItemHelper.updateFavoriteField(currentMediaItem, isFavorite)
+            }
+            maybeNotifyRootCarChanged()
+            mPlayer.invalidateMetaData()
+            return true
+        }
     }
 
     companion object {
 
-        const val CMD_FAVORITE_UPDATE = "com.yuriy.openradio.COMMAND.FAVORITE_UPDATE"
+        const val CMD_FAVORITE_ON = "com.yuriy.openradio.COMMAND.FAVORITE_ON"
+        const val CMD_FAVORITE_OFF = "com.yuriy.openradio.COMMAND.FAVORITE_OFF"
         const val CMD_NET_CHANGED = "com.yuriy.openradio.COMMAND.NET_CHANGED"
         const val CMD_STOP_SERVICE = "com.yuriy.openradio.COMMAND.STOP_SERVICE"
         const val CMD_TOGGLE_LAST_PLAYED_ITEM = "com.yuriy.openradio.COMMAND.TOGGLE_LAST_PLAYED_ITEM"
@@ -1102,7 +1113,6 @@ class OpenRadioService : MediaLibraryService() {
         const val CMD_UPDATE_TREE = "com.yuriy.openradio.COMMAND.UPDATE_TREE"
         const val CMD_NOTIFY_CHILDREN_CHANGED = "com.yuriy.openradio.COMMAND.NOTIFY_CHILDREN_CHANGED"
         const val CMD_REMOVE_BY_ID = "com.yuriy.openradio.COMMAND.REMOVE_BY_ID"
-        private const val CMD_THUMBS_UP = "com.yuriy.openradio.COMMAND.THUMBS_UP"
 
         private lateinit var TAG: String
 

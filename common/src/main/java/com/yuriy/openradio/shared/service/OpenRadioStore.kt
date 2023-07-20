@@ -27,7 +27,6 @@ object OpenRadioStore {
 
     const val KEY_NAME_COMMAND_NAME = "KEY_NAME_COMMAND_NAME"
 
-    private const val EXTRA_KEY_IS_FAVORITE = "EXTRA_KEY_IS_FAVORITE"
     const val EXTRA_KEY_MEDIA_ID = "EXTRA_KEY_MEDIA_ID"
     const val EXTRA_KEY_MEDIA_IDS = "EXTRA_KEY_MEDIA_IDS"
     const val EXTRA_KEY_SORT_IDS = "EXTRA_KEY_SORT_IDS"
@@ -66,21 +65,10 @@ object OpenRadioStore {
      * @param isFavorite Whether Radio station is Favorite or not.
      * @return [Bundle].
      */
-    fun makeUpdateIsFavoriteBundle(mediaId: String, isFavorite: Boolean): Bundle {
+    fun makeUpdateIsFavoriteBundle(mediaId: String): Bundle {
         val bundle = Bundle()
         bundle.putString(EXTRA_KEY_MEDIA_ID, mediaId)
-        bundle.putBoolean(EXTRA_KEY_IS_FAVORITE, isFavorite)
         return bundle
-    }
-
-    /**
-     * Extract [.EXTRA_KEY_IS_FAVORITE] value from the [Bundle].
-     *
-     * @param bundle [Bundle].
-     * @return True in case of the key exists and it's value is True, False otherwise.
-     */
-    fun extractIsFavorite(bundle: Bundle?): Boolean {
-        return bundle?.getBoolean(EXTRA_KEY_IS_FAVORITE) ?: false
     }
 
     fun extractMediaId(bundle: Bundle?): String {
