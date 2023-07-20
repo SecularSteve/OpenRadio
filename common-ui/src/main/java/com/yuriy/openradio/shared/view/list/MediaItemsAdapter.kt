@@ -214,7 +214,7 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
                 val bundle = OpenRadioStore.makeUpdateIsFavoriteBundle(mediaItem.mediaId)
                 CoroutineScope(Dispatchers.Main).launch {
                     serviceCommander.sendCommand(
-                        if (isChecked) OpenRadioService.CMD_FAVORITE_ON else OpenRadioService.CMD_FAVORITE_OFF,
+                        if (isChecked) OpenRadioService.CMD_FAVORITE_OFF else OpenRadioService.CMD_FAVORITE_ON,
                         bundle
                     )
                 }
