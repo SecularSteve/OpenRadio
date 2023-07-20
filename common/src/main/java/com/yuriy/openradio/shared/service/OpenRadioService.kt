@@ -34,6 +34,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.source.UnrecognizedInputFormatException
+import androidx.media3.session.CommandButton
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
@@ -470,7 +471,7 @@ class OpenRadioService : MediaLibraryService() {
         ) {
             SafeToast.showAnyThread(
                 applicationContext,
-                applicationContext.getString(R.string.mobile_network_disabled)
+                getString(R.string.mobile_network_disabled)
             )
             return
         }
@@ -534,7 +535,7 @@ class OpenRadioService : MediaLibraryService() {
     private fun executePerformSearch(query: String) {
         val list = mPresenter.getSearchStations(query)
         if (list.isEmpty()) {
-            SafeToast.showAnyThread(applicationContext, applicationContext.getString(R.string.no_search_results))
+            SafeToast.showAnyThread(applicationContext, getString(R.string.no_search_results))
             return
         }
         mUiScope.launch {
@@ -609,23 +610,34 @@ class OpenRadioService : MediaLibraryService() {
     }
 
     @MainThread
-    private fun maybeCreateInitialPlaylist(radioStations: Set<RadioStation>) {
-        AppLogger.d("$TAG init list:\n$mActiveRS\n${radioStations.size}\n${mPlayer.mediaItemCount}")
+    private fun maybeCreateInitialPlaylist() {
         val rs = mActiveRS
         if (rs == RadioStation.INVALID_INSTANCE) {
             return
         }
-        if (mPlayer.mediaItemCount > 0) {
+        val rsPlayable = MediaItemBuilder.buildPlayable(rs)
+        val list = mutableListOf<MediaItem>()
+        val mediaItemCount = mPlayer.mediaItemCount
+        if (mediaItemCount != 0) {
             return
         }
-        val list = mutableListOf<MediaItem>()
-        list.add(MediaItemBuilder.buildPlayable(rs))
+         // If this is very first start - give to player something to play:
+        list.add(rsPlayable)
+        // Create a NPL:
+        // TODO: Add here Favorites or Newest.
+        val radioStations = TreeSet<RadioStation>()
         for (item in radioStations) {
             val playable = MediaItemBuilder.buildPlayable(item)
-            list.add(playable)
+            // Do not add active rs again:
+            if (item.id != rs.id) {
+                list.add(playable)
+            }
         }
-//        mBrowseTree[rs.id] = BrowseTree.BrowseData(list, radioStations)
-        mPlayer.setMediaItems(list, 0, C.TIME_UNSET)
+        // This is needed for Media Browser when framework will require media item by id and the view will contain
+        // Browsables only:
+        mBrowseTree[rs.id] = BrowseTree.BrowseData(list, radioStations)
+        val pos = list.indexOf(rsPlayable)
+        mPlayer.setMediaItems(list, pos, C.TIME_UNSET)
         handlePlayRequestUiThread()
     }
 
@@ -642,6 +654,11 @@ class OpenRadioService : MediaLibraryService() {
             mScope.launch {
                 mBrowseTree.getRadioStationByMediaId(mediaItem.mediaId).let {
                     if (mediaItem.mediaMetadata.isPlayable == false) {
+                        return@let
+                    }
+                    // TODO: Investigate why metadata with valid fields has empty media id.
+                    if (it == RadioStation.INVALID_INSTANCE) {
+                        AppLogger.w("$TAG playable has empty media id $it")
                         return@let
                     }
                     setActiveRS(it)
@@ -692,7 +709,7 @@ class OpenRadioService : MediaLibraryService() {
             ) {
                 SafeToast.showAnyThread(
                     applicationContext,
-                    applicationContext.getString(R.string.mobile_network_disabled)
+                    getString(R.string.mobile_network_disabled)
                 )
                 callPause()
                 return
@@ -834,9 +851,17 @@ class OpenRadioService : MediaLibraryService() {
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>
         ): ListenableFuture<MutableList<MediaItem>> {
-            AppLogger.d("$TAG AddMediaItems $mediaItems")
+            AppLogger.d("$TAG AddMediaItems ${mediaItems.size}")
+
+            // TODO: Do we need this? SerMediaItems invoked earlier.
+
+            if (mediaItems.size != 1) {
+                return Futures.immediateFuture(
+                    mediaItems.map { mBrowseTree.getMediaItemByMediaId(it.mediaId)!! }.toMutableList()
+                )
+            }
             return Futures.immediateFuture(
-                mediaItems.map { mBrowseTree.getMediaItemByMediaId(it.mediaId)!! }.toMutableList()
+                mBrowseTree.getMediaItemsByMediaId(mediaItems[0].mediaId)
             )
         }
 
@@ -844,12 +869,21 @@ class OpenRadioService : MediaLibraryService() {
             session: MediaSession,
             controller: MediaSession.ControllerInfo
         ): MediaSession.ConnectionResult {
+            val list = ArrayList<CommandButton>()
+            list.add(
+                CommandButton.Builder()
+                    .setDisplayName(getString(R.string.favorite))
+                    .setEnabled(true)
+                    .setIconResId(R.drawable.ic_favorite_off)
+                    .setSessionCommand(SessionCommand(CMD_THUMBS_UP, Bundle()))
+                    .build()
+            )
+            session.setCustomLayout(list)
             val connectionResult = super.onConnect(session, controller)
             val sessionCommands =
                 connectionResult.availableSessionCommands
                     .buildUpon()
                     // Add custom commands
-                    .add(SessionCommand("REWIND_30", Bundle()))
                     .add(SessionCommand(CMD_FAVORITE_UPDATE, Bundle()))
                     .add(SessionCommand(CMD_REMOVE_BY_ID, Bundle()))
                     .add(SessionCommand(CMD_NET_CHANGED, Bundle()))
@@ -866,6 +900,32 @@ class OpenRadioService : MediaLibraryService() {
             )
         }
 
+        override fun onSetMediaItems(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            mediaItems: MutableList<MediaItem>,
+            startIndex: Int,
+            startPositionMs: Long
+        ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
+            AppLogger.d("$TAG SetMediaItems ${mediaItems.size} $startIndex")
+
+            // TODO: It is weird that selection from the lost of playable result in items of size 1, unless
+            //       there is additional configuration somewhere to specify to load a whole playlist.
+
+            if (mediaItems.size != 1) {
+                return super.onSetMediaItems(mediaSession, controller, mediaItems, startIndex, startPositionMs)
+            }
+            val mItems = mBrowseTree.getMediaItemsByMediaId(mediaItems[0].mediaId)
+            var pos = 0
+            for ((idx, i) in mItems.withIndex()) {
+                if (i.mediaId == mediaItems[0].mediaId) {
+                    pos = idx
+                    break
+                }
+            }
+            return super.onSetMediaItems(mediaSession, controller, mItems, pos, C.TIME_UNSET)
+        }
+
         override fun onCustomCommand(
             session: MediaSession,
             controller: MediaSession.ControllerInfo,
@@ -880,7 +940,7 @@ class OpenRadioService : MediaLibraryService() {
                     ) {
                         SafeToast.showAnyThread(
                             applicationContext,
-                            applicationContext.getString(R.string.mobile_network_disabled)
+                            getString(R.string.mobile_network_disabled)
                         )
                         handlePauseRequest()
                     }
@@ -974,8 +1034,7 @@ class OpenRadioService : MediaLibraryService() {
                     return mSessionCmdSuccess
                 }
 
-                "REWIND_30" -> {
-                    session.player.seekBack()
+                CMD_THUMBS_UP -> {
                     return mSessionCmdSuccess
                 }
 
@@ -1007,7 +1066,7 @@ class OpenRadioService : MediaLibraryService() {
                         AppLogger.d("$TAG loaded [$pageNumber:${items.size}] for $parentId")
                         mBrowseTree[parentId] = BrowseTree.BrowseData(ArrayList(items), radioStations)
                         conditionVariable.open()
-                        mUiScope.launch { maybeCreateInitialPlaylist(radioStations) }
+                        mUiScope.launch { maybeCreateInitialPlaylist() }
                     }
                 }
             )
@@ -1043,13 +1102,9 @@ class OpenRadioService : MediaLibraryService() {
         const val CMD_UPDATE_TREE = "com.yuriy.openradio.COMMAND.UPDATE_TREE"
         const val CMD_NOTIFY_CHILDREN_CHANGED = "com.yuriy.openradio.COMMAND.NOTIFY_CHILDREN_CHANGED"
         const val CMD_REMOVE_BY_ID = "com.yuriy.openradio.COMMAND.REMOVE_BY_ID"
+        private const val CMD_THUMBS_UP = "com.yuriy.openradio.COMMAND.THUMBS_UP"
 
         private lateinit var TAG: String
-
-        /**
-         * Action to thumbs up a media item
-         */
-        private const val CUSTOM_ACTION_THUMBS_UP = "com.yuriy.openradio.share.service.THUMBS_UP"
 
         private const val API_CALL_TIMEOUT_MS = 3_000L
 

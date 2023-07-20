@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2017-2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,15 @@ object MediaId {
 
     fun makeSearchId(value: String): String {
         return "$MEDIA_ID_SEARCH_PREFIX$value"
+    }
+
+    fun containsId(value: String): Boolean {
+        for (id in IDS) {
+            if (value.contains(id)) {
+                return true
+            }
+        }
+        return false
     }
 
     /**

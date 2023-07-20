@@ -26,6 +26,20 @@ class BrowseTree {
         }
     }
 
+    fun getMediaItemsByMediaId(mediaId: String): MutableList<MediaItem> {
+        for (entry in mMediaIdToChildren.entries) {
+            if (MediaId.containsId(entry.key).not()) {
+                continue
+            }
+            for (item in entry.value) {
+                if (item.mediaId == mediaId) {
+                    return entry.value
+                }
+            }
+        }
+        return mutableListOf()
+    }
+
     fun getMediaItemByMediaId(mediaId: String) = mMediaIdToMediaItem[mediaId]
 
     fun getRadioStationByMediaId(mediaId: String) = mMediaIdToRadioStation[mediaId] ?: RadioStation.INVALID_INSTANCE

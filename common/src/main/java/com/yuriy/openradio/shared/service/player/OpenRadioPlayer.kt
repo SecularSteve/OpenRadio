@@ -62,7 +62,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.net.HttpURLConnection
-import java.util.Collections
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.min
 
@@ -101,7 +100,7 @@ class OpenRadioPlayer(
 
     private val mListeners = arrayListOf<Player.Listener>()
 
-    private var mPlaylist = Collections.synchronizedList<MediaItem>(ArrayList())
+    private val mPlaylist: MutableList<MediaItem> = arrayListOf()
 
     /**
      * Handler for the ExoPlayer to handle events.
@@ -177,6 +176,7 @@ class OpenRadioPlayer(
 
     init {
         mPlayer = if (DependencyRegistryCommon.isCastAvailable) mCastPlayer!! else mExoPlayer
+        switchToPlayer(mPlayer)
         mEqualizerLayer.init((mExoPlayer as ExoPlayer).audioSessionId)
     }
 
@@ -190,6 +190,14 @@ class OpenRadioPlayer(
 
     override fun pause() {
         mPlayer.pause()
+    }
+
+    override fun replaceMediaItem(index: Int, mediaItem: MediaItem) {
+        mPlayer.replaceMediaItem(index, mediaItem)
+    }
+
+    override fun replaceMediaItems(fromIndex: Int, toIndex: Int, mediaItems: MutableList<MediaItem>) {
+        mPlayer.replaceMediaItems(fromIndex, toIndex, mediaItems)
     }
 
     override fun release() {
@@ -220,57 +228,67 @@ class OpenRadioPlayer(
     }
 
     override fun setMediaItems(mediaItems: MutableList<MediaItem>) {
+        AppLogger.d("$TAG setMediaItems ${mediaItems.size}")
         mPlayer.setMediaItems(mediaItems)
         mPlaylist.clear()
         mPlaylist.addAll(mediaItems)
     }
 
     override fun setMediaItems(mediaItems: MutableList<MediaItem>, resetPosition: Boolean) {
+        AppLogger.d("$TAG setMediaItems ${mediaItems.size} $resetPosition")
         mPlayer.setMediaItems(mediaItems, resetPosition)
         mPlaylist.clear()
         mPlaylist.addAll(mediaItems)
     }
 
     override fun setMediaItems(mediaItems: MutableList<MediaItem>, startIndex: Int, startPositionMs: Long) {
+        AppLogger.d("$TAG setMediaItems ${mediaItems.size} $startIndex $startPositionMs")
         mPlayer.setMediaItems(mediaItems, startIndex, startPositionMs)
         mPlaylist.clear()
         mPlaylist.addAll(mediaItems)
     }
 
     override fun setMediaItem(mediaItem: MediaItem) {
+        AppLogger.d("$TAG setMediaItem $mediaItem")
         mPlayer.setMediaItem(mediaItem)
         mPlaylist.clear()
         mPlaylist.add(mediaItem)
     }
 
     override fun setMediaItem(mediaItem: MediaItem, startPositionMs: Long) {
+        AppLogger.d("$TAG setMediaItem $mediaItem $startPositionMs")
         mPlayer.setMediaItem(mediaItem, startPositionMs)
         mPlaylist.clear()
         mPlaylist.add(mediaItem)
     }
 
     override fun setMediaItem(mediaItem: MediaItem, resetPosition: Boolean) {
+        AppLogger.d("$TAG setMediaItem $mediaItem $resetPosition")
         mPlayer.setMediaItem(mediaItem, resetPosition)
         mPlaylist.clear()
         mPlaylist.add(mediaItem)
     }
 
     override fun addMediaItem(mediaItem: MediaItem) {
+        AppLogger.d("$TAG addMediaItem $mediaItem")
         mPlayer.addMediaItem(mediaItem)
         mPlaylist.add(mediaItem)
     }
 
     override fun addMediaItem(index: Int, mediaItem: MediaItem) {
+        AppLogger.d("$TAG addMediaItem $index $mediaItem")
         mPlayer.addMediaItem(index, mediaItem)
         mPlaylist.add(index, mediaItem)
     }
 
     override fun addMediaItems(mediaItems: MutableList<MediaItem>) {
+        AppLogger.d("$TAG addMediaItems ${mediaItems.size}")
         mPlayer.addMediaItems(mediaItems)
         mPlaylist.addAll(mediaItems)
     }
 
     override fun addMediaItems(index: Int, mediaItems: MutableList<MediaItem>) {
+        AppLogger.d("$TAG addMediaItems $index ${mediaItems.size}")
         mPlayer.addMediaItems(index, mediaItems)
         mPlaylist.addAll(index, mediaItems)
     }
@@ -477,14 +495,8 @@ class OpenRadioPlayer(
 
     override fun stop() {
         mPlayer.stop()
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun stop(reset: Boolean) {
-        mPlayer.stop(reset)
-        if (reset) {
-            mPlaylist.clear()
-        }
+        // TODO:
+        // mPlaylist.clear()
     }
 
     override fun getCurrentTracks(): Tracks {
@@ -705,18 +717,38 @@ class OpenRadioPlayer(
         return mPlayer.isDeviceMuted
     }
 
+    override fun setDeviceVolume(volume: Int, flags: Int) {
+        mPlayer.setDeviceVolume(volume, flags)
+    }
+
+    @Deprecated("Deprecated in Java")
     override fun setDeviceVolume(volume: Int) {
         mPlayer.deviceVolume = volume
     }
 
+    override fun increaseDeviceVolume(flags: Int) {
+        mPlayer.increaseDeviceVolume(flags)
+    }
+
+    @Deprecated("Deprecated in Java")
     override fun increaseDeviceVolume() {
         mPlayer.increaseDeviceVolume()
     }
 
+    override fun decreaseDeviceVolume(flags: Int) {
+        mPlayer.decreaseDeviceVolume(flags)
+    }
+
+    @Deprecated("Deprecated in Java")
     override fun decreaseDeviceVolume() {
         mPlayer.decreaseDeviceVolume()
     }
 
+    override fun setDeviceMuted(muted: Boolean, flags: Int) {
+        mPlayer.setDeviceMuted(muted, flags)
+    }
+
+    @Deprecated("Deprecated in Java")
     override fun setDeviceMuted(muted: Boolean) {
         mPlayer.isDeviceMuted = muted
     }
@@ -737,7 +769,7 @@ class OpenRadioPlayer(
      * Resets the player to its uninitialized state.
      */
     fun reset() {
-        AppLogger.d("$LOG_TAG reset")
+        AppLogger.d("$TAG reset")
         stopCurrentPlayer()
     }
 
@@ -751,8 +783,8 @@ class OpenRadioPlayer(
     }
 
     private fun switchToPlayer(player: Player) {
-        AppLogger.i("$LOG_TAG prev player: $mPlayer")
-        AppLogger.i("$LOG_TAG new  player: $player")
+        AppLogger.i("$TAG prev player: $mPlayer")
+        AppLogger.i("$TAG new  player: $player")
         if (mPlayer == player) {
             return
         }
@@ -788,7 +820,7 @@ class OpenRadioPlayer(
     }
 
     private fun releaseIntrnl() {
-        AppLogger.d("$LOG_TAG release intrl")
+        AppLogger.d("$TAG release intrl")
         mEqualizerLayer.deinit()
         reset()
         mPlayer.release()
@@ -852,7 +884,7 @@ class OpenRadioPlayer(
         override fun onPlaybackStateChanged(playerState: Int) {
             val mediaItem = mPlayer.currentMediaItem
             AppLogger.d(
-                "$LOG_TAG playback ${PlayerUtils.playerStateToString(playerState)} for $mediaItem"
+                "$TAG playback ${PlayerUtils.playerStateToString(playerState)} for $mediaItem"
             )
             when (playerState) {
                 Player.STATE_READY -> {
@@ -892,7 +924,7 @@ class OpenRadioPlayer(
         }
 
         override fun onPlayerError(exception: PlaybackException) {
-            AppLogger.e("$LOG_TAG onPlayerError [${mNumOfExceptions.get()}]", exception)
+            AppLogger.e("$TAG onPlayerError [${mNumOfExceptions.get()}]", exception)
             if (exception.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED) {
                 mStoppedByNetwork = true
                 updateStreamMetadata(toDisplayString(mContext, exception))
@@ -977,7 +1009,7 @@ class OpenRadioPlayer(
         /**
          * String tag to use in logs.
          */
-        private const val LOG_TAG = "ORP"
+        private const val TAG = "ORP"
 
         /**
          *
