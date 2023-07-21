@@ -66,11 +66,11 @@ object MediaItemHelper {
     /**
      * Sets key that indicates Radio Station is in favorites.
      *
-     * @param mediaItem  [MediaItem].
+     * @param mediaMetadata [MediaMetadata].
      * @param isFavorite Whether Item is in Favorites.
      */
-    fun updateFavoriteField(mediaItem: MediaItem?, isFavorite: Boolean) {
-        val bundle = mediaItem?.mediaMetadata?.extras ?: return
+    fun updateFavoriteField(mediaMetadata: MediaMetadata?, isFavorite: Boolean) {
+        val bundle = mediaMetadata?.extras ?: return
         updateFavoriteField(bundle, isFavorite)
     }
 
@@ -95,12 +95,11 @@ object MediaItemHelper {
     /**
      * Gets `true` if Item is Favorite, `false` - otherwise.
      *
-     * @param mediaItem [MediaItem].
+     * @param mediaMetadata [MediaMetadata].
      * @return `true` if Item is Favorite, `false` - otherwise.
      */
-    fun isFavoriteField(mediaItem: MediaItem?): Boolean {
-        val mediaMetadata = mediaItem?.mediaMetadata ?: return false
-        return mediaMetadata.extras?.getBoolean(KEY_IS_FAVORITE, false) ?: false
+    fun isFavoriteField(mediaMetadata: MediaMetadata?): Boolean {
+        return mediaMetadata?.extras?.getBoolean(KEY_IS_FAVORITE, false) ?: false
     }
 
     /**

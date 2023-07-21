@@ -842,6 +842,8 @@ class OpenRadioPlayer(
          */
         private val mNumOfExceptions = AtomicInteger(0)
 
+        private val mTrackNumber = AtomicInteger(0)
+
         override fun onMetadata(metadata: Metadata) {
             for (i in 0 until metadata.length()) {
                 val entry = metadata[i]
@@ -959,6 +961,9 @@ class OpenRadioPlayer(
                         val metadata = mPlaylist[mPlayer.currentMediaItemIndex].mediaMetadata
                             .buildUpon()
                             .setSubtitle(msg)
+                            .setExtras(mediaMetadata.extras)
+                            // Use this trick to send metadata updates
+                            .setTrackNumber(mTrackNumber.getAndIncrement())
                             .build()
                         listener.onMediaMetadataChanged(metadata)
                     }

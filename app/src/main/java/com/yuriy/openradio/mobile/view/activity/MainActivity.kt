@@ -416,9 +416,13 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
         val favoriteCheckView = findCheckBox(R.id.crs_favorite_check_view)
         favoriteCheckView.buttonDrawable = AppCompatResources.getDrawable(applicationContext, R.drawable.src_favorite)
         favoriteCheckView.isChecked = false
-        val mediaItem = mMediaPresenter.getCurrentMediaItem()
-        mediaItem?.let {
-            MediaItemsAdapter.handleFavoriteAction(favoriteCheckView, it, mMediaPresenter.getServiceCommander())
+        mMediaPresenter.getCurrentMediaItem()?.apply {
+            MediaItemsAdapter.handleFavoriteAction(
+                favoriteCheckView,
+                mediaId,
+                metadata,
+                mMediaPresenter.getServiceCommander()
+            )
         }
     }
 

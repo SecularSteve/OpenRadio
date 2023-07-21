@@ -199,19 +199,21 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
         /**
          * Handle "Add | Remove to | from Favorites".
          *
-         * @param checkBox    Favorite check box view.
-         * @param mediaItem   Media Item.
+         * @param checkBox Favorite check box view.
+         * @param mediaId Media Id.
+         * @param mediaMetadata
+         * @param serviceCommander
          */
         @UnstableApi
         fun handleFavoriteAction(
-            checkBox: CheckBox, mediaItem: MediaItem, serviceCommander: ServiceCommander
+            checkBox: CheckBox, mediaId: String, mediaMetadata: MediaMetadata, serviceCommander: ServiceCommander
         ) {
-            checkBox.isChecked = MediaItemHelper.isFavoriteField(mediaItem)
+            checkBox.isChecked = MediaItemHelper.isFavoriteField(mediaMetadata)
             checkBox.visible()
             checkBox.setOnClickListener { view: View ->
                 val isChecked = (view as CheckBox).isChecked
-                MediaItemHelper.updateFavoriteField(mediaItem, isChecked)
-                val bundle = OpenRadioStore.makeUpdateIsFavoriteBundle(mediaItem.mediaId)
+                MediaItemHelper.updateFavoriteField(mediaMetadata, isChecked)
+                val bundle = OpenRadioStore.makeUpdateIsFavoriteBundle(mediaId)
                 CoroutineScope(Dispatchers.Main).launch {
                     serviceCommander.sendCommand(
                         if (isChecked) OpenRadioService.CMD_FAVORITE_OFF else OpenRadioService.CMD_FAVORITE_ON,

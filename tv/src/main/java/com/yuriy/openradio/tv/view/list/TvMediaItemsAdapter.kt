@@ -59,7 +59,7 @@ class TvMediaItemsAdapter(private var mContext: Context, private val mMediaPrese
         )
         if (isPlayable) {
             handleFavoriteAction(
-                holder.mFavoriteCheckView, mediaItem, mMediaPresenter.getServiceCommander()
+                holder.mFavoriteCheckView, mediaItem.mediaId, mediaMetadata, mMediaPresenter.getServiceCommander()
             )
             holder.mSettingsView?.setOnClickListener(OnSettingsListener(mediaItem))
             holder.mSettingsView?.visible()

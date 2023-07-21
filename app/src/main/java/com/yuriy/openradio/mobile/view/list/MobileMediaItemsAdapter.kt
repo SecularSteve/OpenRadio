@@ -62,7 +62,7 @@ class MobileMediaItemsAdapter(private var mContext: Context, private val mMediaP
         holder.mFavoriteCheckView.buttonDrawable = AppCompatResources.getDrawable(mContext, R.drawable.src_favorite)
         if (isPlayable) {
             handleFavoriteAction(
-                holder.mFavoriteCheckView, mediaItem, mMediaPresenter.getServiceCommander()
+                holder.mFavoriteCheckView, mediaItem.mediaId, mediaMetadata, mMediaPresenter.getServiceCommander()
             )
         } else {
             holder.mFavoriteCheckView.gone()

@@ -1070,9 +1070,8 @@ class OpenRadioService : MediaLibraryService() {
         private fun handleFavorite(args: Bundle, isFavorite: Boolean): Boolean {
             val mediaId = OpenRadioStore.extractMediaId(args)
             var rs = getRadioStationByMediaId(mediaId)
-            // This can the a case when last known Radio Station is playing.
-            // In this case it is not in a list of radio stations.
-            // If it exists, let's compare its id with the id provided by intent.
+            // This can happen when Favorite changed from automotive UI. The assumption is this ecent can be delivered
+            // from the now playing item only.
             if (rs.isInvalid()) {
                 if (mActiveRS.id == mediaId) {
                     rs = RadioStation.makeCopyInstance(mActiveRS)
@@ -1089,10 +1088,10 @@ class OpenRadioService : MediaLibraryService() {
             // Update Favorites Radio station: whether add it or remove it from the storage
             mPresenter.updateRadioStationFavorite(rs, isFavorite)
             val mediaItem = mBrowseTree.getMediaItemByMediaId(mediaId)
-            MediaItemHelper.updateFavoriteField(mediaItem, isFavorite)
+            MediaItemHelper.updateFavoriteField(mediaItem!!.mediaMetadata, isFavorite)
             val currentMediaItem = mPlayer.currentMediaItem
             if (currentMediaItem?.mediaId == mediaId) {
-                MediaItemHelper.updateFavoriteField(currentMediaItem, isFavorite)
+                MediaItemHelper.updateFavoriteField(currentMediaItem.mediaMetadata, isFavorite)
             }
             maybeNotifyRootCarChanged()
             mPlayer.invalidateMetaData()
