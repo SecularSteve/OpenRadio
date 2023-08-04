@@ -40,7 +40,7 @@ class PersistentApiCache(context: Context, dbName: String) : ApiCache {
         if (System.currentTimeMillis() - record.timestamp <= SEC_IN_DAY) {
             data = record.data
         }
-        AppLogger.d("$CLASS_NAME cached response for $key is $data")
+        AppLogger.d("$CLASS_NAME cached response for '$key' is '$data'")
         return data
     }
 

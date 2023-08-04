@@ -70,7 +70,7 @@ import com.yuriy.openradio.shared.utils.PlayerUtils
 import com.yuriy.openradio.shared.utils.UiUtils
 import com.yuriy.openradio.shared.utils.setImageBitmap
 import com.yuriy.openradio.shared.utils.visible
-import com.yuriy.openradio.shared.view.BaseDialogFragment
+import com.yuriy.openradio.shared.view.dialog.BaseDialogFragment
 import com.yuriy.openradio.shared.view.dialog.EditStationDialog
 import com.yuriy.openradio.shared.view.dialog.RSSettingsDialog
 import com.yuriy.openradio.shared.view.dialog.RemoveStationDialog
@@ -81,6 +81,7 @@ import kotlinx.coroutines.launch
 import java.util.Hashtable
 import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 class MediaPresenterImpl(
     private val mContext: Context,
@@ -147,6 +148,8 @@ class MediaPresenterImpl(
     private val mContentObserver = ContentObserverExt()
 
     private val mServiceCommander = ServiceCommanderImpl()
+
+    private val mPageCounter = AtomicInteger(0)
 
     override fun init(
         activity: FragmentActivity, mainLayout: View,
@@ -328,7 +331,7 @@ class MediaPresenterImpl(
         }
     }
 
-    override fun addMediaItemToStack(mediaId: String) {
+    override fun addMediaItemToStack(mediaId: String, page: Int) {
         if (mCallback == null) {
             AppLogger.e("$TAG add media id to stack, callback null")
             return
@@ -341,7 +344,7 @@ class MediaPresenterImpl(
             mMediaItemsStack.add(mediaId)
         }
         mListener?.showProgressBar()
-        mMediaRsrMgr?.subscribe(mediaId, mCallback)
+        mMediaRsrMgr?.subscribe(mediaId, mCallback, page)
     }
 
     override fun updateDescription(descriptionView: TextView?, mediaMetadata: MediaMetadata) {
@@ -442,6 +445,7 @@ class MediaPresenterImpl(
 
         // If it is browsable - then we navigate to the next category
         if (isBrowsable) {
+            mPageCounter.set(0)
             addMediaItemToStack(item.mediaId)
         } else if (isPlayable) {
             // Else - we play an item
@@ -651,7 +655,7 @@ class MediaPresenterImpl(
     private fun onScrolledToEnd() {
         if (MediaId.isRefreshable(mCurrentParentId, mSourcesLayer)) {
             unsubscribeFromItem(mCurrentParentId)
-            addMediaItemToStack(mCurrentParentId)
+            addMediaItemToStack(mCurrentParentId, mPageCounter.incrementAndGet())
         } else {
             AppLogger.w("$TAG category $mCurrentParentId is not refreshable")
         }

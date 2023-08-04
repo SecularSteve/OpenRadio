@@ -35,7 +35,6 @@ import com.yuriy.openradio.shared.utils.findSpinner
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
-import com.yuriy.openradio.shared.view.BaseDialogFragment
 
 class EqualizerDialog : BaseDialogFragment() {
 

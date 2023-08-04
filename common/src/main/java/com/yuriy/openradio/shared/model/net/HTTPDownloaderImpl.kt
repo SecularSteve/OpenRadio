@@ -27,6 +27,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.HttpURLConnection
+import java.net.URL
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 
@@ -62,44 +63,65 @@ class HTTPDownloaderImpl(private val mUrlLayer: UrlLayer) : DownloaderLayer {
     ) : Callable<ByteArray> {
 
         override fun call(): ByteArray {
+
+            data class Response(
+                val url:URL? = null,
+                val responseCode: Int = -1,
+                val connection: HttpURLConnection? = null
+            )
+
+            fun getConnectionUrl(): Response {
+                val url = mUrlLayer.getConnectionUrl(mUri, mParameters) ?: return Response()
+                AppLogger.i("$CLASS_NAME Request URL:$url")
+                val connection = NetUtils.getHttpURLConnection(
+                    mContext,
+                    url,
+                    if (mParameters.isEmpty()) NetUtils.HTTP_METHOD_GET else NetUtils.HTTP_METHOD_POST,
+                    mParameters
+                ) ?: return Response()
+                var responseCode = 0
+                try {
+                    responseCode = connection.responseCode
+                } catch (exception: IOException) {
+                    AppLogger.e(
+                        "$CLASS_NAME getResponse ${
+                            NetUtils.createExceptionMessage(
+                                url.toString(),
+                                mParameters
+                            )
+                        }", exception
+                    )
+                }
+                AppLogger.d("$CLASS_NAME response code $responseCode for $url")
+                return Response(url, responseCode, connection)
+            }
+
             var response = ByteArray(0)
-            val url = mUrlLayer.getConnectionUrl(mUri, mParameters) ?: return response
-            AppLogger.i("$CLASS_NAME Request URL:$url")
-            val connection = NetUtils.getHttpURLConnection(
-                mContext,
-                url,
-                if (mParameters.isEmpty()) NetUtils.HTTP_METHOD_GET else NetUtils.HTTP_METHOD_POST,
-                mParameters
-            ) ?: return response
-            var responseCode = 0
-            try {
-                responseCode = connection.responseCode
-            } catch (exception: IOException) {
-                AppLogger.e(
-                    "$CLASS_NAME getResponse ${
-                        NetUtils.createExceptionMessage(
-                            url.toString(),
-                            mParameters
-                        )
-                    }", exception
-                )
+
+            var responseObj = getConnectionUrl()
+            var attempt = 5
+            while (true) {
+                if (attempt < 0) {
+                    AppLogger.e("$CLASS_NAME can not get connection for $responseObj")
+                    break
+                }
+                val responseCode = responseObj.responseCode
+                if (responseCode < HttpURLConnection.HTTP_OK || responseCode > HttpURLConnection.HTTP_MULT_CHOICE - 1) {
+                    NetUtils.closeHttpURLConnection(responseObj.connection)
+                    responseObj = getConnectionUrl()
+                    attempt--
+                    continue
+                }
+                break
             }
-            AppLogger.d("$CLASS_NAME response code:$responseCode for $url")
-            if (responseCode < HttpURLConnection.HTTP_OK || responseCode > HttpURLConnection.HTTP_MULT_CHOICE - 1) {
-                NetUtils.closeHttpURLConnection(connection)
-                AppLogger.e(
-                    "$CLASS_NAME ${NetUtils.createExceptionMessage(url.toString(), mParameters)}",
-                    Exception("Response code is $responseCode")
-                )
-                return response
-            }
+
+            val connection = responseObj.connection ?: return response
 
             val contentType = connection.getHeaderField("Content-Type")
-            AppLogger.d("$CLASS_NAME content type:$contentType for $url")
 
             if (mContentTypeFilter != AppUtils.EMPTY_STRING && !contentType.startsWith(mContentTypeFilter)) {
-                NetUtils.closeHttpURLConnection(connection)
-                AppLogger.w("$CLASS_NAME filtered out $contentType for $url")
+                NetUtils.closeHttpURLConnection(responseObj.connection)
+                AppLogger.w("$CLASS_NAME filtered out $contentType for ${responseObj.url}")
                 return response
             }
 
@@ -110,15 +132,15 @@ class HTTPDownloaderImpl(private val mUrlLayer: UrlLayer) : DownloaderLayer {
                 AppLogger.e(
                     "$CLASS_NAME getStream ${
                         NetUtils.createExceptionMessage(
-                            url.toString(),
+                            responseObj.url.toString(),
                             mParameters
                         )
                     }", exception
                 )
             } finally {
-                NetUtils.closeHttpURLConnection(connection)
+                NetUtils.closeHttpURLConnection(responseObj.connection)
             }
-            AppLogger.d("$CLASS_NAME return ${response.size} bytes for $url")
+            AppLogger.d("$CLASS_NAME return ${response.size} bytes for ${responseObj.url}")
             return response
         }
     }

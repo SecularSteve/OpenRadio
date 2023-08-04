@@ -30,7 +30,6 @@ import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.findLinearLayout
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.utils.findToggleButton
-import com.yuriy.openradio.shared.view.BaseDialogFragment
 import java.text.SimpleDateFormat
 import java.util.Locale
 

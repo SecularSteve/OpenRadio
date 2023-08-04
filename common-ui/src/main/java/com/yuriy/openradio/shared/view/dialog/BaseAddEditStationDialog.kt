@@ -51,7 +51,6 @@ import com.yuriy.openradio.shared.utils.findView
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.invisible
 import com.yuriy.openradio.shared.utils.visible
-import com.yuriy.openradio.shared.view.BaseDialogFragment
 
 /**
  * Created by Yuriy Chernyshov

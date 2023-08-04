@@ -95,9 +95,14 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
         }
     }
 
-    suspend fun getChildren(parentId: String): ImmutableList<MediaItem> {
-        return mMediaBrowser.getChildren(parentId, 0, DependencyRegistryCommon.PAGE_SIZE, null).await().value
-            ?: ImmutableList.of()
+    private suspend fun getChildren(parentId: String, page: Int = 0): ImmutableList<MediaItem> {
+        return mMediaBrowser.getChildren(
+            parentId,
+            page,
+            DependencyRegistryCommon.PAGE_SIZE,
+            null
+        )
+            .await().value ?: ImmutableList.of()
     }
 
     suspend fun sendCommand(command: String, parameters: Bundle?): Boolean =
@@ -133,12 +138,13 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
      */
     fun subscribe(
         parentId: String,
-        callback: MediaItemsSubscription?
+        callback: MediaItemsSubscription?,
+        page: Int = 0
     ) {
-        AppLogger.i("$mClassName subscribe:$parentId")
+        AppLogger.i("$mClassName subscribe:$parentId, page:$page")
         mScope.launch {
             callback?.onChildrenLoaded(
-                parentId, getChildren(parentId).toMutableList()
+                parentId, getChildren(parentId, page).toMutableList()
             )
         }
     }

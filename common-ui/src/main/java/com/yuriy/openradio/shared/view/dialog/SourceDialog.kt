@@ -34,7 +34,6 @@ import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.findImageButton
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
-import com.yuriy.openradio.shared.view.BaseDialogFragment
 
 /**
  *

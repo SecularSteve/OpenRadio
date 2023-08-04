@@ -25,7 +25,6 @@ import com.yuriy.openradio.shared.model.ServiceCommander
 import com.yuriy.openradio.shared.model.storage.NetworkSettingsStorage
 import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.utils.findCheckBox
-import com.yuriy.openradio.shared.view.BaseDialogFragment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

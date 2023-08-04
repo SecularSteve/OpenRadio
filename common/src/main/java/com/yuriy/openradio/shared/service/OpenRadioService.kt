@@ -61,6 +61,7 @@ import com.yuriy.openradio.shared.model.media.item.MediaItemCommand
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommandDependencies
 import com.yuriy.openradio.shared.model.media.setVariantFixed
 import com.yuriy.openradio.shared.model.net.NetworkMonitorListener
+import com.yuriy.openradio.shared.model.net.UrlLayer
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.model.storage.RadioStationsStorage
 import com.yuriy.openradio.shared.model.timer.SleepTimerListener
@@ -189,7 +190,7 @@ class OpenRadioService : MediaLibraryService() {
         fun onResult(
             items: List<MediaItem> = ArrayList(),
             radioStations: Set<RadioStation> = TreeSet(),
-            pageNumber: Int = 1
+            pageNumber: Int = UrlLayer.FIRST_PAGE_INDEX
         )
     }
 
@@ -348,8 +349,8 @@ class OpenRadioService : MediaLibraryService() {
             // To force update Favorites list.
             mediaId = MediaId.MEDIA_ID_FAVORITES_LIST
         }
-        //notifyChildrenChanged(mediaId)
         // TODO:
+        mSession.notifyChildrenChanged(mediaId, 10000, null)
     }
 
     private fun registerReceivers() {
@@ -788,9 +789,12 @@ class OpenRadioService : MediaLibraryService() {
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
             AppLogger.d("$TAG GetChildren for $parentId page $page pageSize $pageSize")
-            return callWhenSourceReady(parentId) {
+            return callWhenSourceReady(parentId, page, pageSize) {
+                val list = mBrowseTree[parentId] ?: ImmutableList.of()
+                val sublist = list.subList(it, list.size)
+                AppLogger.d("$TAG GetChildren for $parentId page $page return ${sublist.size}|${list.size} from pos:$it")
                 LibraryResult.ofItemList(
-                    mBrowseTree[parentId] ?: ImmutableList.of(),
+                    sublist,
                     LibraryParams.Builder().build()
                 )
             }
@@ -854,7 +858,7 @@ class OpenRadioService : MediaLibraryService() {
         ): ListenableFuture<MutableList<MediaItem>> {
             AppLogger.d("$TAG AddMediaItems ${mediaItems.size}")
 
-            // TODO: Do we need this? SerMediaItems invoked earlier.
+            // TODO: Do we need this? SetMediaItems invoked earlier.
 
             if (mediaItems.size != 1) {
                 return Futures.immediateFuture(
@@ -1022,12 +1026,18 @@ class OpenRadioService : MediaLibraryService() {
             }
         }
 
-        private fun <T> callWhenSourceReady(parentId: String, action: () -> T): ListenableFuture<T> {
+        private fun <T> callWhenSourceReady(
+            parentId: String,
+            page: Int,
+            pageSize: Int,
+            action: (position: Int) -> T
+        ): ListenableFuture<T> {
+            val isSameCatalogue = AppUtils.isSameCatalogue(parentId, mCurrentParentId)
             mCurrentParentId = parentId
-            if (mBrowseTree[parentId] != null) {
-                return Futures.immediateFuture(action())
+            var position = 0
+            if (page == 0 && mBrowseTree[parentId] != null) {
+                return Futures.immediateFuture(action(position))
             }
-
             val id = MediaId.getId(parentId, AppUtils.EMPTY_STRING)
             val command = mPresenter.getMediaItemCommand(id)
             AppLogger.d("$TAG get source for $id by $command")
@@ -1037,14 +1047,19 @@ class OpenRadioService : MediaLibraryService() {
             val conditionVariable = ConditionVariable()
             val dependencies = MediaItemCommandDependencies(
                 applicationContext, mPresenter, countryCode, parentId,
-                false, mIsRestoreState, Bundle(), mCommandScope,
+                isSameCatalogue, mIsRestoreState, Bundle(), mCommandScope,
                 object : ResultListener {
 
                     override fun onResult(items: List<MediaItem>, radioStations: Set<RadioStation>, pageNumber: Int) {
                         AppLogger.d("$TAG loaded [$pageNumber:${items.size}] for $parentId")
-                        mBrowseTree[parentId] = BrowseTree.BrowseData(ArrayList(items), radioStations)
+                        if (pageNumber == 0) {
+                            mBrowseTree[parentId] = BrowseTree.BrowseData(ArrayList(items), radioStations.toMutableSet())
+                            mUiScope.launch { maybeCreateInitialPlaylist() }
+                        } else {
+                            position = mBrowseTree[parentId]?.size ?: 0
+                            mBrowseTree.append(parentId, BrowseTree.BrowseData(ArrayList(items), radioStations.toMutableSet()))
+                        }
                         conditionVariable.open()
-                        mUiScope.launch { maybeCreateInitialPlaylist() }
                     }
                 }
             )
@@ -1063,7 +1078,7 @@ class OpenRadioService : MediaLibraryService() {
             }
             return mExecutorService.submit<T> {
                 conditionVariable.block()
-                action()
+                action(position)
             }
         }
 
@@ -1093,8 +1108,8 @@ class OpenRadioService : MediaLibraryService() {
             if (currentMediaItem?.mediaId == mediaId) {
                 MediaItemHelper.updateFavoriteField(currentMediaItem.mediaMetadata, isFavorite)
             }
-            maybeNotifyRootCarChanged()
             mPlayer.invalidateMetaData()
+            maybeNotifyRootCarChanged()
             return true
         }
     }

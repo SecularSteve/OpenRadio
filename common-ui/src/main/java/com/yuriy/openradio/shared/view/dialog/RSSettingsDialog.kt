@@ -37,7 +37,6 @@ import com.yuriy.openradio.shared.utils.MediaItemHelper
 import com.yuriy.openradio.shared.utils.findImageView
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.utils.findView
-import com.yuriy.openradio.shared.view.BaseDialogFragment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

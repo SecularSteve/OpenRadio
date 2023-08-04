@@ -30,7 +30,7 @@ import com.yuriy.openradio.shared.view.list.MediaItemsAdapter
 
 interface MediaPresenter {
 
-    fun addMediaItemToStack(mediaId: String)
+    fun addMediaItemToStack(mediaId: String, page: Int = 0)
 
     fun destroy()
 

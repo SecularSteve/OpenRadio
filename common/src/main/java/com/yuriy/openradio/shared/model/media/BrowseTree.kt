@@ -5,7 +5,7 @@ import androidx.media3.common.MediaItem
 class BrowseTree {
 
     private val mMediaIdToChildren = mutableMapOf<String, MutableList<MediaItem>>()
-    private val mMediaIdToChildrenRadioStations = mutableMapOf<String, Set<RadioStation>>()
+    private val mMediaIdToChildrenRadioStations = mutableMapOf<String, MutableSet<RadioStation>>()
     private val mMediaIdToMediaItem = mutableMapOf<String, MediaItem>()
     private val mMediaIdToRadioStation = mutableMapOf<String, RadioStation>()
 
@@ -14,6 +14,21 @@ class BrowseTree {
     operator fun set(mediaId: String, browseData: BrowseData) {
         mMediaIdToChildren[mediaId] = browseData.children
         mMediaIdToChildrenRadioStations[mediaId] = browseData.radioStations
+        browseData.children.forEach { mediaItem ->
+            run {
+                mMediaIdToMediaItem[mediaItem.mediaId] = mediaItem
+            }
+        }
+        browseData.radioStations.forEach { radioStation ->
+            run {
+                mMediaIdToRadioStation[radioStation.id] = radioStation
+            }
+        }
+    }
+
+    fun append(mediaId: String, browseData: BrowseData) {
+        mMediaIdToChildren[mediaId]?.plusAssign(browseData.children)
+        mMediaIdToChildrenRadioStations[mediaId]?.plusAssign(browseData.radioStations)
         browseData.children.forEach { mediaItem ->
             run {
                 mMediaIdToMediaItem[mediaItem.mediaId] = mediaItem
@@ -44,5 +59,5 @@ class BrowseTree {
 
     fun getRadioStationByMediaId(mediaId: String) = mMediaIdToRadioStation[mediaId] ?: RadioStation.INVALID_INSTANCE
 
-    class BrowseData(val children: MutableList<MediaItem>, val radioStations: Set<RadioStation>)
+    class BrowseData(val children: MutableList<MediaItem>, val radioStations: MutableSet<RadioStation>)
 }

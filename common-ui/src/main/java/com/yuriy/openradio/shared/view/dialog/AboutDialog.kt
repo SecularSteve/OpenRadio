@@ -26,7 +26,6 @@ import com.yuriy.openradio.shared.utils.AnalyticsUtils
 import com.yuriy.openradio.shared.utils.IntentUtils
 import com.yuriy.openradio.shared.utils.findImageView
 import com.yuriy.openradio.shared.utils.findTextView
-import com.yuriy.openradio.shared.view.BaseDialogFragment
 
 /**
  * Created by Yuriy Chernyshov

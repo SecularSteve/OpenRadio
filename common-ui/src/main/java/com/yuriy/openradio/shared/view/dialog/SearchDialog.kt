@@ -24,7 +24,6 @@ import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.findEditText
-import com.yuriy.openradio.shared.view.BaseDialogFragment
 
 /**
  * Created by Yuriy Chernyshov

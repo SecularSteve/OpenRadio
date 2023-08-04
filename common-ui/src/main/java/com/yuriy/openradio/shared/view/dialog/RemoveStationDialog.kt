@@ -22,7 +22,6 @@ import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.findTextView
-import com.yuriy.openradio.shared.view.BaseDialogFragment
 
 /**
  * Created by Yuriy Chernyshov
