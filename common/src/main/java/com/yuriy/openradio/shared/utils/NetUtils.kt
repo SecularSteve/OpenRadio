@@ -56,7 +56,7 @@ object NetUtils {
         return try {
             getHttpURLConnection(context, URL(urlString), requestMethod, null)
         } catch (exception: MalformedURLException) {
-            AppLogger.e("Can not get http connection from $urlString", exception)
+            AppLogger.e("Can not get http connection (1) from $urlString", exception)
             null
         }
     }
@@ -120,7 +120,7 @@ object NetUtils {
                     isRedirect = true
                 }
             } catch (exception: Exception) {
-                AppLogger.e("Can not get http connection from $url", exception)
+                AppLogger.e("Can not get http connection (2) from $url", exception)
             }
         } while (isRedirect)
 

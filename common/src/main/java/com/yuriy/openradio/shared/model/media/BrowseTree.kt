@@ -43,7 +43,8 @@ class BrowseTree {
 
     fun getMediaItemsByMediaId(mediaId: String): MutableList<MediaItem> {
         for (entry in mMediaIdToChildren.entries) {
-            if (MediaId.containsId(entry.key).not()) {
+            if (mediaId.startsWith(MediaId.MEDIA_ID_SEARCH_PREFIX).not() &&
+                MediaId.containsId(entry.key).not()) {
                 continue
             }
             for (item in entry.value) {

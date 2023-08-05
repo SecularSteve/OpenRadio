@@ -46,7 +46,7 @@ object MediaId {
     const val MEDIA_ID_RECENT_STATIONS = "__RECENT_STATIONS__"
     const val MEDIA_ID_LIST_ENDED = "MEDIA_ID_LIST_ENDED"
 
-    private const val MEDIA_ID_SEARCH_PREFIX = "search:"
+    const val MEDIA_ID_SEARCH_PREFIX = "search:"
 
     private val IDS = arrayOf(
         MEDIA_ID_BROWSE_CAR,

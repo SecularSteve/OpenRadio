@@ -63,8 +63,8 @@ import com.yuriy.openradio.shared.model.media.setVariantFixed
 import com.yuriy.openradio.shared.model.net.NetworkMonitorListener
 import com.yuriy.openradio.shared.model.net.UrlLayer
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
-import com.yuriy.openradio.shared.model.storage.RadioStationsStorage
 import com.yuriy.openradio.shared.model.timer.SleepTimerListener
+import com.yuriy.openradio.shared.service.location.Country
 import com.yuriy.openradio.shared.service.player.OpenRadioPlayer
 import com.yuriy.openradio.shared.utils.AnalyticsUtils
 import com.yuriy.openradio.shared.utils.AppLogger
@@ -149,12 +149,6 @@ class OpenRadioService : MediaLibraryService() {
     @Volatile
     private lateinit var mServiceHandler: ServiceHandler
 
-    private val mLatestPlaylist = TreeSet<RadioStation>()
-
-    /**
-     * Storage of Radio Stations queried from Search.
-     */
-    private val mSearchStorage: RadioStationsStorage
     private val mStartIds: ConcurrentLinkedQueue<Int>
     private var mCurrentParentId = AppUtils.EMPTY_STRING
     private var mIsRestoreState = false
@@ -179,7 +173,6 @@ class OpenRadioService : MediaLibraryService() {
         TAG = "ORS[" + hashCode() + "]"
         DependencyRegistryCommon.inject(this)
         mStartIds = ConcurrentLinkedQueue()
-        mSearchStorage = RadioStationsStorage()
         mUiScope = CoroutineScope(Dispatchers.Main)
         mScope = CoroutineScope(Dispatchers.IO)
         mCommandScope = CoroutineScope(Dispatchers.IO)
@@ -289,56 +282,6 @@ class OpenRadioService : MediaLibraryService() {
         }
     }
 
-//    override fun onSearch(query: String, extras: Bundle?, result: Result<List<MediaBrowserCompat.MediaItem>>) {
-//        val id = MediaId.MEDIA_ID_SEARCH_FROM_SERVICE
-//        val command = mPresenter.getMediaItemCommand(id)
-//        val dependencies = MediaItemCommandDependencies(
-//            applicationContext, result, mPresenter, Country.COUNTRY_CODE_DEFAULT, id,
-//            false, mIsRestoreState, AppUtils.makeSearchQueryBundle(query), mCommandScope,
-//            object : ResultListener {
-//                override fun onResult(set: Set<RadioStation>, pageNumber: Int) {
-//                    if (pageNumber == 0) {
-//                        mSearchStorage.clear()
-//                    }
-//                    mSearchStorage.addAll(set)
-//                }
-//            }
-//        )
-//        if (command != null) {
-//            command.execute(
-//                object : MediaItemCommand.IUpdatePlaybackState {
-//
-//                    override fun updatePlaybackState(error: String) {
-//                        AppLogger.e("$TAG update playback state error $error")
-//                    }
-//                },
-//                dependencies
-//            )
-//        } else {
-//            AppLogger.w("$TAG skipping unmatched parentId: $id")
-//            result.sendResult(null)
-//        }
-//    }
-
-    private fun restoreActivePlaylist() {
-        val pl = mPresenter.getAllFavorites()
-        val rs = mActiveRS
-        var found = false
-        if (rs.isInvalid().not()) {
-            for (item in pl) {
-                if (item.id == rs.id) {
-                    found = true
-                    break
-                }
-            }
-        }
-        mLatestPlaylist.clear()
-        if (found.not() && rs.isInvalid().not()) {
-            mLatestPlaylist.add(rs)
-        }
-        mLatestPlaylist.addAll(pl)
-    }
-
     private fun maybeNotifyRootCarChanged() {
         if (DependencyRegistryCommon.isCar.not()) {
             return
@@ -350,7 +293,7 @@ class OpenRadioService : MediaLibraryService() {
             mediaId = MediaId.MEDIA_ID_FAVORITES_LIST
         }
         // TODO:
-        mSession.notifyChildrenChanged(mediaId, 10000, null)
+        mSession.notifyChildrenChanged(mediaId, 250, null)
     }
 
     private fun registerReceivers() {
@@ -508,37 +451,6 @@ class OpenRadioService : MediaLibraryService() {
      */
     private fun handleStopRequest() {
         mUiScope.launch { mPlayer.stop() }
-    }
-
-    private fun performSearch(query: String) {
-        if (query.isEmpty()) {
-            return
-        }
-        mScope.launch(Dispatchers.IO) {
-            withTimeout(API_CALL_TIMEOUT_MS) {
-                try {
-                    executePerformSearch(query)
-                } catch (e: Exception) {
-                    AppLogger.e("$TAG can not perform search for '$query'", e)
-                }
-            }
-        }
-    }
-
-    /**
-     * Execute actual search.
-     *
-     * @param query Search query.
-     */
-    private fun executePerformSearch(query: String) {
-        val list = mPresenter.getSearchStations(query)
-        if (list.isEmpty()) {
-            SafeToast.showAnyThread(applicationContext, getString(R.string.no_search_results))
-            return
-        }
-        mUiScope.launch {
-            // TODO:
-        }
     }
 
     /**
@@ -821,11 +733,10 @@ class OpenRadioService : MediaLibraryService() {
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<Void>> {
             AppLogger.d("$TAG Search $query")
-            //val searchResult = musicSource.search(query, params?.extras ?: Bundle())
-            //mSession.notifySearchResultChanged(browser, query, searchResult.size, params)
-            return Futures.immediateFuture(
+            return callWhenSearchReady(query) {
+                mSession.notifySearchResultChanged(browser, query, it, params)
                 LibraryResult.ofVoid()
-            )
+            }
         }
 
         override fun onGetSearchResult(
@@ -836,16 +747,14 @@ class OpenRadioService : MediaLibraryService() {
             pageSize: Int,
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
-//            return callWhenMusicSourceReady {
-//                val searchResult = musicSource.search(query, params?.extras ?: Bundle())
-//                val fromIndex = max((page - 1) * pageSize, searchResult.size - 1)
-//                val toIndex = max(fromIndex + pageSize, searchResult.size)
-//                LibraryResult.ofItemList(searchResult.subList(fromIndex, toIndex), params)
-//            }
+            val list = mBrowseTree[query] ?: mutableListOf()
+            // TODO:
+            //val fromIndex = max(page * pageSize, list.size - 1)
+            //val toIndex = max(fromIndex + pageSize, list.size)
             AppLogger.d("$TAG GetSearchResult $query")
             return Futures.immediateFuture(
                 LibraryResult.ofItemList(
-                    ImmutableList.of(),
+                    list,
                     LibraryParams.Builder().build()
                 )
             )
@@ -857,9 +766,7 @@ class OpenRadioService : MediaLibraryService() {
             mediaItems: MutableList<MediaItem>
         ): ListenableFuture<MutableList<MediaItem>> {
             AppLogger.d("$TAG AddMediaItems ${mediaItems.size}")
-
             // TODO: Do we need this? SetMediaItems invoked earlier.
-
             if (mediaItems.size != 1) {
                 return Futures.immediateFuture(
                     mediaItems.map { mBrowseTree.getMediaItemByMediaId(it.mediaId)!! }.toMutableList()
@@ -906,16 +813,17 @@ class OpenRadioService : MediaLibraryService() {
         ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
             AppLogger.d("$TAG SetMediaItems ${mediaItems.size} $startIndex")
 
-            // TODO: It is weird that selection from the lost of playable result in items of size 1, unless
+            // TODO: It is weird that selection from the list of playable result in items of size 1, unless
             //       there is additional configuration somewhere to specify to load a whole playlist.
 
             if (mediaItems.size != 1) {
                 return super.onSetMediaItems(mediaSession, controller, mediaItems, startIndex, startPositionMs)
             }
-            val mItems = mBrowseTree.getMediaItemsByMediaId(mediaItems[0].mediaId)
+            val mediaId = mediaItems[0].mediaId
+            val mItems = mBrowseTree.getMediaItemsByMediaId(mediaId)
             var pos = 0
             for ((idx, i) in mItems.withIndex()) {
-                if (i.mediaId == mediaItems[0].mediaId) {
+                if (i.mediaId == mediaId) {
                     pos = idx
                     break
                 }
@@ -1053,11 +961,15 @@ class OpenRadioService : MediaLibraryService() {
                     override fun onResult(items: List<MediaItem>, radioStations: Set<RadioStation>, pageNumber: Int) {
                         AppLogger.d("$TAG loaded [$pageNumber:${items.size}] for $parentId")
                         if (pageNumber == 0) {
-                            mBrowseTree[parentId] = BrowseTree.BrowseData(ArrayList(items), radioStations.toMutableSet())
+                            mBrowseTree[parentId] =
+                                BrowseTree.BrowseData(ArrayList(items), radioStations.toMutableSet())
                             mUiScope.launch { maybeCreateInitialPlaylist() }
                         } else {
                             position = mBrowseTree[parentId]?.size ?: 0
-                            mBrowseTree.append(parentId, BrowseTree.BrowseData(ArrayList(items), radioStations.toMutableSet()))
+                            mBrowseTree.append(
+                                parentId,
+                                BrowseTree.BrowseData(ArrayList(items), radioStations.toMutableSet())
+                            )
                         }
                         conditionVariable.open()
                     }
@@ -1082,11 +994,50 @@ class OpenRadioService : MediaLibraryService() {
             }
         }
 
+        private fun <T> callWhenSearchReady(
+            query: String,
+            action: (size: Int) -> T
+        ): ListenableFuture<T> {
+            val conditionVariable = ConditionVariable()
+            var size = 0
+            val id = MediaId.MEDIA_ID_SEARCH_FROM_SERVICE
+            val command = mPresenter.getMediaItemCommand(id)
+            val dependencies = MediaItemCommandDependencies(
+                applicationContext, mPresenter, Country.COUNTRY_CODE_DEFAULT, id,
+                false, mIsRestoreState, AppUtils.makeSearchQueryBundle(query), mCommandScope,
+
+                object : ResultListener {
+                    override fun onResult(items: List<MediaItem>, radioStations: Set<RadioStation>, pageNumber: Int) {
+                        mBrowseTree[query] = BrowseTree.BrowseData(ArrayList(items), radioStations.toMutableSet())
+                        size = radioStations.size
+                        conditionVariable.open()
+                    }
+                }
+            )
+            if (command != null) {
+                command.execute(
+                    object : MediaItemCommand.IUpdatePlaybackState {
+
+                        override fun updatePlaybackState(error: String) {
+                            AppLogger.e("$TAG update playback state error $error")
+                        }
+                    },
+                    dependencies
+                )
+            } else {
+                AppLogger.w("$TAG skipping unmatched parentId: $id")
+            }
+            return mExecutorService.submit<T> {
+                conditionVariable.block()
+                action(size)
+            }
+        }
+
         private fun handleFavorite(args: Bundle, isFavorite: Boolean): Boolean {
-            val mediaId = OpenRadioStore.extractMediaId(args)
+            var mediaId = OpenRadioStore.extractMediaId(args)
             var rs = getRadioStationByMediaId(mediaId)
-            // This can happen when Favorite changed from automotive UI. The assumption is this ecent can be delivered
-            // from the now playing item only.
+            // This can happen when Favorite changed from automotive UI.
+            // The assumption is this event can be delivered from the now playing item only.
             if (rs.isInvalid()) {
                 if (mActiveRS.id == mediaId) {
                     rs = RadioStation.makeCopyInstance(mActiveRS)
@@ -1094,6 +1045,7 @@ class OpenRadioService : MediaLibraryService() {
                 // Lastly, get the current playing station.
                 if (rs.isInvalid()) {
                     rs = RadioStation.makeCopyInstance(mActiveRS)
+                    mediaId = rs.id
                 }
                 // We failed both cases, something went wrong ...
                 if (rs.isInvalid()) {
