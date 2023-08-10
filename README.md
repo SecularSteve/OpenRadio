@@ -4,8 +4,8 @@
 
 ### What is this ? ###
 
-* **Open Radio** is the project which is use [Android Auto SDK](http://developer.android.com/auto/index.html), innovative tool to bring Android Apps into vehicle's **Human Machine Interface (HMI)**, to provide live streaming of the world wide Radio Stations into the vehicle over Android mobile. As of end of 2019, Open Radio supported on Android TV. This is new feature and functionality is very limited. Updates will come in 2020!
-* This project is use [Community Radio Browser's API](http://www.radio-browser.info) - a service that provides a list of radio stations broadcasting their live stream on the Internet.
+* **Open Radio** is the project which is use media framework of Android to provide live streaming of the world wide Radio Stations. Open Radio supported on Mobile, Android Auto, Android TV and Android Automotive.
+* This project is use [Community Radio Browser's API](http://www.radio-browser.info) and [Web Radio](https://jcorporation.github.io/webradiodb) - services that provide a list of radio stations broadcasting their live stream on the Internet.
 * Graphics are provided by [Free Iconset: Beautiful Flat Mono Color Icons by Elegantthemes](http://www.iconarchive.com/show/beautiful-flat-one-color-icons-by-elegantthemes.html)
 * Playlist parser is provided by [William Seemann](https://github.com/wseemann/JavaPlaylistParser)
 * Playback powered by [Exo Player](https://github.com/google/ExoPlayer)
