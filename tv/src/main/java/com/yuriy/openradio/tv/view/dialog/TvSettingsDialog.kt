@@ -56,22 +56,22 @@ class TvSettingsDialog : BaseDialogFragment() {
 
         val context = requireContext()
 
-        val titleText = context.getString(R.string.app_settings_title)
+        val titleText = context.getString(com.yuriy.openradio.shared.R.string.app_settings_title)
         val title = view.findTextView(R.id.dialog_tv_settings_title_view)
         title.text = titleText
         val listView = view.findViewById<ListView>(R.id.settings_tv_list_view)
         // TODO: Refactor this and the same from activity_main_drawer to string resources
         val values = mutableListOf(
-            getString(R.string.main_menu_general),
-            getString(R.string.main_menu_source),
-            getString(R.string.main_menu_network),
-            getString(R.string.main_menu_buffering),
-            getString(R.string.main_menu_sleep_timer),
-            getString(R.string.main_menu_google_drive),
-            getString(R.string.main_menu_about)
+            getString(com.yuriy.openradio.shared.R.string.main_menu_general),
+            getString(com.yuriy.openradio.shared.R.string.main_menu_source),
+            getString(com.yuriy.openradio.shared.R.string.main_menu_network),
+            getString(com.yuriy.openradio.shared.R.string.main_menu_buffering),
+            getString(com.yuriy.openradio.shared.R.string.main_menu_sleep_timer),
+            getString(com.yuriy.openradio.shared.R.string.main_menu_google_drive),
+            getString(com.yuriy.openradio.shared.R.string.main_menu_about)
         )
         if (DependencyRegistryCommon.isGoogleApiAvailable.not()) {
-            values.remove(getString(R.string.main_menu_google_drive))
+            values.remove(getString(com.yuriy.openradio.shared.R.string.main_menu_google_drive))
         }
         val adapter = ArrayAdapterExt(context, android.R.layout.simple_list_item_1, values)
         listView.adapter = adapter

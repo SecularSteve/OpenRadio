@@ -58,7 +58,7 @@ class TvSearchFragment : SearchSupportFragment(), SearchSupportFragment.SearchRe
             AppLogger.e("Can't do resume pause on null view")
             return
         }
-        val frame = view.findView(R.id.lb_search_frame)
+        val frame = view.findView(androidx.leanback.R.id.lb_search_frame)
         if (!PermissionChecker.isRecordAudioGranted(context)) {
             PermissionChecker.requestRecordAudioPermission(requireActivity(), frame)
         }
@@ -106,7 +106,7 @@ class TvSearchFragment : SearchSupportFragment(), SearchSupportFragment.SearchRe
     }
 
     fun focusOnSearch() {
-        requireView().findView(R.id.lb_search_bar).requestFocus()
+        requireView().findView(androidx.leanback.R.id.lb_search_bar).requestFocus()
     }
 
     companion object {

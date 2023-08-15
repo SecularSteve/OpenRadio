@@ -19,6 +19,7 @@ package com.yuriy.openradio.shared.utils
 import android.Manifest.permission.MEDIA_CONTENT_CONTROL
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageInfo.REQUESTED_PERMISSION_GRANTED
 import android.content.pm.PackageManager
@@ -28,7 +29,6 @@ import android.util.Base64
 import androidx.annotation.XmlRes
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.MediaBrowserServiceCompat
-import com.yuriy.openradio.BuildConfig
 import com.yuriy.openradio.R
 import org.xmlpull.v1.XmlPullParserException
 import java.io.IOException
@@ -74,7 +74,7 @@ class PackageValidator(context: Context, @XmlRes xmlResId: Int) {
      * @param callingUid The user id of the caller.
      * @return `true` if the caller is known, `false` otherwise.
      */
-    fun isKnownCaller(callingPackage: String, callingUid: Int): Boolean {
+    fun isKnownCaller(applicationInfo: ApplicationInfo, callingPackage: String, callingUid: Int): Boolean {
         // If the caller has already been checked, return the previous result here.
         val (checkedUid, checkResult) = callerChecked[callingPackage] ?: Pair(0, false)
         if (checkedUid == callingUid) {
@@ -144,7 +144,7 @@ class PackageValidator(context: Context, @XmlRes xmlResId: Int) {
         }
 
         if (!isCallerKnown) {
-            logUnknownCaller(callerPackageInfo)
+            logUnknownCaller(applicationInfo, callerPackageInfo)
         }
 
         // Save our work for next time.
@@ -156,8 +156,9 @@ class PackageValidator(context: Context, @XmlRes xmlResId: Int) {
      * Logs an info level message with details of how to add a caller to the allowed callers list
      * when the app is debuggable.
      */
-    private fun logUnknownCaller(callerPackageInfo: CallerPackageInfo) {
-        if (BuildConfig.DEBUG && callerPackageInfo.signature != null) {
+    private fun logUnknownCaller(applicationInfo: ApplicationInfo, callerPackageInfo: CallerPackageInfo) {
+        val isDebuggable = 0 != applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE
+        if (isDebuggable && callerPackageInfo.signature != null) {
             val formattedLog =
                 context.getString(
                     R.string.allowed_caller_log,

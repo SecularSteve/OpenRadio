@@ -120,7 +120,7 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
                 val view = LayoutInflater
                     .from(applicationContext)
                     .inflate(R.layout.automotive_dialog_restart, null) as LinearLayout
-                val dialog = AlertDialog.Builder(this, R.style.Theme_AppCompat)
+                val dialog = AlertDialog.Builder(this, androidx.appcompat.R.style.Theme_AppCompat)
                     .setView(view)
                     .show()
                 val cancelBtn = view.findViewById<Button>(R.id.automotive_dialog_restart_cancel_btn)
@@ -211,10 +211,10 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
         try {
             descView.text = String.format(
                 resources.getString(R.string.stream_buffering_descr_automotive),
-                resources.getInteger(R.integer.min_buffer_val),
-                resources.getInteger(R.integer.max_buffer_val),
-                resources.getInteger(R.integer.min_buffer_sec),
-                resources.getInteger(R.integer.max_buffer_min)
+                resources.getInteger(com.yuriy.openradio.R.integer.min_buffer_val),
+                resources.getInteger(com.yuriy.openradio.R.integer.max_buffer_val),
+                resources.getInteger(com.yuriy.openradio.R.integer.min_buffer_sec),
+                resources.getInteger(com.yuriy.openradio.R.integer.max_buffer_min)
             )
         } catch (e: Exception) {
             /* Ignore */
@@ -294,7 +294,7 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
             .addOnFailureListener { exception: Exception? ->
                 AppLogger.e("Can't do sign in", exception)
                 SafeToast.showAnyThread(
-                    applicationContext, getString(R.string.can_not_get_account_name)
+                    applicationContext, getString(com.yuriy.openradio.shared.R.string.can_not_get_account_name)
                 )
             }
     }
@@ -377,10 +377,12 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
                 return
             }
             val message = when (command) {
-                GoogleDriveManager.Command.UPLOAD -> context.getString(R.string.google_drive_data_saved)
+                GoogleDriveManager.Command.UPLOAD -> context.getString(
+                    com.yuriy.openradio.shared.R.string.google_drive_data_saved
+                )
                 GoogleDriveManager.Command.DOWNLOAD -> {
                     mMediaPresenter.updateRootView()
-                    context.getString(R.string.google_drive_data_read)
+                    context.getString(com.yuriy.openradio.shared.R.string.google_drive_data_read)
                 }
             }
             SafeToast.showAnyThread(context, message)
@@ -394,8 +396,12 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
                 return
             }
             val message = when (command) {
-                GoogleDriveManager.Command.UPLOAD -> context.getString(R.string.google_drive_error_when_save)
-                GoogleDriveManager.Command.DOWNLOAD -> context.getString(R.string.google_drive_error_when_read)
+                GoogleDriveManager.Command.UPLOAD -> context.getString(
+                    com.yuriy.openradio.shared.R.string.google_drive_error_when_save
+                )
+                GoogleDriveManager.Command.DOWNLOAD -> context.getString(
+                    com.yuriy.openradio.shared.R.string.google_drive_error_when_read
+                )
             }
             SafeToast.showAnyThread(context, message)
             hideProgress(command)

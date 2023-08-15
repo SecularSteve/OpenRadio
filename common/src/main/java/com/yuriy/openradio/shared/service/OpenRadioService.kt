@@ -106,6 +106,7 @@ class OpenRadioService : MediaLibraryService() {
      * Media Session.
      */
     private lateinit var mSession: MediaLibrarySession
+    private var mBrowser: MediaSession.ControllerInfo? = null
 
     private val mPackageValidator by lazy {
         PackageValidator(applicationContext, R.xml.allowed_media_browser_callers)
@@ -193,7 +194,7 @@ class OpenRadioService : MediaLibraryService() {
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? {
         return if ("android.media.session.MediaController" == controllerInfo.packageName
-            || mPackageValidator.isKnownCaller(controllerInfo.packageName, controllerInfo.uid)
+            || mPackageValidator.isKnownCaller(applicationInfo, controllerInfo.packageName, controllerInfo.uid)
         ) {
             mSession
         } else null
@@ -292,8 +293,10 @@ class OpenRadioService : MediaLibraryService() {
             // To force update Favorites list.
             mediaId = MediaId.MEDIA_ID_FAVORITES_LIST
         }
-        // TODO:
-        mSession.notifyChildrenChanged(mediaId, 250, null)
+        mBrowser?.let {
+            mBrowseTree.invalidate(mediaId)
+            mSession.notifyChildrenChanged(it, mediaId, 250, null)
+        }
     }
 
     private fun registerReceivers() {
@@ -551,6 +554,7 @@ class OpenRadioService : MediaLibraryService() {
         handlePlayRequestUiThread()
     }
 
+
     /**
      * Listener for Exo Player events.
      */
@@ -663,16 +667,38 @@ class OpenRadioService : MediaLibraryService() {
         private val mSessionCmdNotSupported =
             Futures.immediateFuture(SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED))
 
+        override fun onSubscribe(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            parentId: String,
+            params: LibraryParams?
+        ): ListenableFuture<LibraryResult<Void>> {
+            AppLogger.d("$TAG [$browser] Subscribe to $parentId")
+            mBrowser = browser
+            return Futures.immediateFuture(LibraryResult.ofVoid())
+        }
+
+        override fun onUnsubscribe(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            parentId: String
+        ): ListenableFuture<LibraryResult<Void>> {
+            AppLogger.d("$TAG [$browser] Unsubscribe from $parentId")
+            mBrowser = browser
+            return Futures.immediateFuture(LibraryResult.ofVoid())
+        }
+
         @UnstableApi
         override fun onGetLibraryRoot(
             session: MediaLibrarySession, browser: MediaSession.ControllerInfo, params: LibraryParams?
         ): ListenableFuture<LibraryResult<MediaItem>> {
             AnalyticsUtils.logMessage(
-                "$TAG GetLibraryRoot for clientPkgName=${browser.packageName}, clientUid=${browser.uid}"
+                "$TAG [$browser] GetLibraryRoot for clientPkgName=${browser.packageName}, clientUid=${browser.uid}"
             )
+            mBrowser = browser
             // By default, all known clients are permitted to search, but only tell unknown callers
             // about search if permitted by the [BrowseTree].
-            mIsPackageValid = mPackageValidator.isKnownCaller(browser.packageName, browser.uid)
+            mIsPackageValid = mPackageValidator.isKnownCaller(applicationInfo, browser.packageName, browser.uid)
             val rootExtras = Bundle().apply {
                 putBoolean(
                     MediaConstants.BROWSER_SERVICE_EXTRAS_KEY_SEARCH_SUPPORTED,
@@ -700,7 +726,8 @@ class OpenRadioService : MediaLibraryService() {
             pageSize: Int,
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
-            AppLogger.d("$TAG GetChildren for $parentId page $page pageSize $pageSize")
+            AppLogger.d("$TAG [$browser] GetChildren for $parentId page $page pageSize $pageSize")
+            mBrowser = browser
             return callWhenSourceReady(parentId, page, pageSize) {
                 val list = mBrowseTree[parentId] ?: ImmutableList.of()
                 val sublist = list.subList(it, list.size)
@@ -717,7 +744,8 @@ class OpenRadioService : MediaLibraryService() {
             browser: MediaSession.ControllerInfo,
             mediaId: String
         ): ListenableFuture<LibraryResult<MediaItem>> {
-            AppLogger.d("$TAG GetItem for $mediaId")
+            AppLogger.d("$TAG [$browser] GetItem for $mediaId")
+            mBrowser = browser
             return Futures.immediateFuture(
                 LibraryResult.ofItem(
                     mBrowseTree.getMediaItemByMediaId(mediaId) ?: MediaItem.EMPTY,
@@ -732,7 +760,8 @@ class OpenRadioService : MediaLibraryService() {
             query: String,
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<Void>> {
-            AppLogger.d("$TAG Search $query")
+            AppLogger.d("$TAG [$browser] Search $query")
+            mBrowser = browser
             return callWhenSearchReady(query) {
                 mSession.notifySearchResultChanged(browser, query, it, params)
                 LibraryResult.ofVoid()
@@ -747,11 +776,12 @@ class OpenRadioService : MediaLibraryService() {
             pageSize: Int,
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
+            mBrowser = browser
             val list = mBrowseTree[query] ?: mutableListOf()
             // TODO:
             //val fromIndex = max(page * pageSize, list.size - 1)
             //val toIndex = max(fromIndex + pageSize, list.size)
-            AppLogger.d("$TAG GetSearchResult $query")
+            AppLogger.d("$TAG [$browser] GetSearchResult $query")
             return Futures.immediateFuture(
                 LibraryResult.ofItemList(
                     list,

@@ -40,7 +40,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.yuriy.openradio.shared.R
+import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.broadcast.AppLocalBroadcast
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiver
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiverCallback
@@ -365,13 +365,9 @@ class MediaPresenterImpl(
         if (msg.isEmpty()) {
             return false
         }
-        if (msg == context.getString(com.yuriy.openradio.R.string.media_stream_error)
-            || msg == context.getString(com.yuriy.openradio.R.string.media_stream_http_403)
-            || msg == context.getString(com.yuriy.openradio.R.string.media_stream_http_404)
-        ) {
-            return true
-        }
-        return false
+        return (msg == context.getString(R.string.media_stream_error)
+                || msg == context.getString(R.string.media_stream_http_403)
+                || msg == context.getString(R.string.media_stream_http_404))
     }
 
     /**

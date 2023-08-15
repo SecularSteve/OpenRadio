@@ -80,7 +80,7 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
 
     override fun onViewRecycled(holder: MediaItemViewHolder) {
         super.onViewRecycled(holder)
-        holder.mImageView.setImageResource(R.color.or_color_transparent)
+        holder.mImageView.setImageResource(com.yuriy.openradio.R.color.or_color_transparent)
     }
 
     fun removeListener() {
@@ -175,7 +175,7 @@ abstract class MediaItemsAdapter : RecyclerView.Adapter<MediaItemViewHolder>() {
         fun updateImage(context: Context, mediaMetadata: MediaMetadata, view: ImageView) {
             view.visible()
             // Show placeholder before load an image.
-            view.setImageResource(R.drawable.ic_radio_station)
+            view.setImageResource(com.yuriy.openradio.R.drawable.ic_radio_station)
             val iconId = MediaItemHelper.getDrawableId(mediaMetadata.extras)
             if (MediaItemHelper.isDrawableIdValid(iconId)) {
                 view.setImageResource(iconId)

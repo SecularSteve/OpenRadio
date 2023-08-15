@@ -46,8 +46,8 @@ import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.utils.findView
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
-import com.yuriy.openradio.shared.view.dialog.BaseDialogFragment
 import com.yuriy.openradio.shared.view.dialog.AddStationDialog
+import com.yuriy.openradio.shared.view.dialog.BaseDialogFragment
 import com.yuriy.openradio.shared.view.dialog.EqualizerDialog
 import com.yuriy.openradio.shared.view.list.MediaItemsAdapter
 import com.yuriy.openradio.tv.R
@@ -304,7 +304,7 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
         override fun onError(id: String) {
             SafeToast.showAnyThread(
                 applicationContext,
-                getString(R.string.error_loading_media)
+                getString(com.yuriy.openradio.shared.R.string.error_loading_media)
             )
         }
     }

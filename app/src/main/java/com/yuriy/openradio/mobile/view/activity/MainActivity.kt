@@ -61,9 +61,9 @@ import com.yuriy.openradio.shared.utils.findToolbar
 import com.yuriy.openradio.shared.utils.findView
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
-import com.yuriy.openradio.shared.view.dialog.BaseDialogFragment
 import com.yuriy.openradio.shared.view.dialog.AboutDialog
 import com.yuriy.openradio.shared.view.dialog.AddStationDialog
+import com.yuriy.openradio.shared.view.dialog.BaseDialogFragment
 import com.yuriy.openradio.shared.view.dialog.EqualizerDialog
 import com.yuriy.openradio.shared.view.dialog.GeneralSettingsDialog
 import com.yuriy.openradio.shared.view.dialog.GoogleDriveDialog
@@ -414,7 +414,9 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
         //    radioStation.getStreamBitrate(), findTextView(R.id.crs_bitrate_view), true
         //)
         val favoriteCheckView = findCheckBox(R.id.crs_favorite_check_view)
-        favoriteCheckView.buttonDrawable = AppCompatResources.getDrawable(applicationContext, R.drawable.src_favorite)
+        favoriteCheckView.buttonDrawable = AppCompatResources.getDrawable(
+            applicationContext, com.yuriy.openradio.R.drawable.src_favorite
+        )
         favoriteCheckView.isChecked = false
         mMediaPresenter.getCurrentMediaItem()?.apply {
             MediaItemsAdapter.handleFavoriteAction(
@@ -486,7 +488,7 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
             reference.hideProgressBar()
             SafeToast.showAnyThread(
                 reference.applicationContext,
-                reference.getString(R.string.error_loading_media)
+                reference.getString(com.yuriy.openradio.shared.R.string.error_loading_media)
             )
         }
     }

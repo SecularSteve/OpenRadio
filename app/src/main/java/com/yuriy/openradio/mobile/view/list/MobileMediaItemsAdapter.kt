@@ -59,7 +59,9 @@ class MobileMediaItemsAdapter(private var mContext: Context, private val mMediaP
         updateBitrateView(
             MediaItemHelper.getBitrateField(mediaItem), holder.mBitrateView, isPlayable
         )
-        holder.mFavoriteCheckView.buttonDrawable = AppCompatResources.getDrawable(mContext, R.drawable.src_favorite)
+        holder.mFavoriteCheckView.buttonDrawable = AppCompatResources.getDrawable(
+            mContext, com.yuriy.openradio.R.drawable.src_favorite
+        )
         if (isPlayable) {
             handleFavoriteAction(
                 holder.mFavoriteCheckView, mediaItem.mediaId, mediaMetadata, mMediaPresenter.getServiceCommander()

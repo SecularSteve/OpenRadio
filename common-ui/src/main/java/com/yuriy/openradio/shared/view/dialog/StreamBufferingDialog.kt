@@ -55,10 +55,10 @@ class StreamBufferingDialog : BaseDialogFragment() {
         try {
             descView.text = String.format(
                 resources.getString(R.string.stream_buffering_descr),
-                resources.getInteger(R.integer.min_buffer_val),
-                resources.getInteger(R.integer.max_buffer_val),
-                resources.getInteger(R.integer.min_buffer_sec),
-                resources.getInteger(R.integer.max_buffer_min)
+                resources.getInteger(com.yuriy.openradio.R.integer.min_buffer_val),
+                resources.getInteger(com.yuriy.openradio.R.integer.max_buffer_val),
+                resources.getInteger(com.yuriy.openradio.R.integer.min_buffer_sec),
+                resources.getInteger(com.yuriy.openradio.R.integer.max_buffer_min)
             )
         } catch (e: Exception) {
             /* Ignore */
@@ -173,9 +173,9 @@ class StreamBufferingDialog : BaseDialogFragment() {
             } catch (e: NumberFormatException) {
                 return false
             }
-            return if (valueInt > context.resources.getInteger(R.integer.max_buffer_val)) {
+            return if (valueInt > context.resources.getInteger(com.yuriy.openradio.R.integer.max_buffer_val)) {
                 false
-            } else valueInt >= context.resources.getInteger(R.integer.min_buffer_val)
+            } else valueInt >= context.resources.getInteger(com.yuriy.openradio.R.integer.min_buffer_val)
         }
 
         /**

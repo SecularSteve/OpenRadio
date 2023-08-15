@@ -8,6 +8,7 @@ apply from: "../constants.gradle"
 apply from: "../sign.gradle"
 
 android {
+    namespace = "com.yuriy.openradio.automotive"
     compileSdk project.ext.compileSdkVersion
 
     defaultConfig {

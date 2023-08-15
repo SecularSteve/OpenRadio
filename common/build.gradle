@@ -7,6 +7,7 @@ apply plugin: "com.google.gms.google-services"
 apply from: "../constants.gradle"
 
 android {
+    namespace = project.ext.namespace
     compileSdk project.ext.compileSdkVersion
 
     defaultConfig {
