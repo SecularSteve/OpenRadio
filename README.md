@@ -1,9 +1,11 @@
 # Open Radio #
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I2I1LGFPH)
+
 ### What is this ? ###
 
-* **Open Radio** is the project which is use [Android Auto SDK](http://developer.android.com/auto/index.html), innovative tool to bring Android Apps into vehicle's **Human Machine Interface (HMI)**, to provide live streaming of the world wide Radio Stations into the vehicle over Android mobile. As of end of 2019, Open Radio supported on Android TV. This is new feature and functionality is very limited. Updates will come in 2020!
-* This project is use [Community Radio Browser's API](http://www.radio-browser.info) - a service that provides a list of radio stations broadcasting their live stream on the Internet.
+* **Open Radio** is the project which is use media framework of Android to provide live streaming of the world wide Radio Stations. Open Radio supported on Mobile, Android Auto, Android TV and Android Automotive.
+* This project is use [Community Radio Browser's API](http://www.radio-browser.info) and [Web Radio](https://jcorporation.github.io/webradiodb) - services that provide a list of radio stations broadcasting their live stream on the Internet.
 * Graphics are provided by [Free Iconset: Beautiful Flat Mono Color Icons by Elegantthemes](http://www.iconarchive.com/show/beautiful-flat-one-color-icons-by-elegantthemes.html)
 * Playlist parser is provided by [William Seemann](https://github.com/wseemann/JavaPlaylistParser)
 * Playback powered by [Exo Player](https://github.com/google/ExoPlayer)
@@ -16,7 +18,7 @@
 * ACCESS_NETWORK_STATE - To monitor Internet connection state, detect connect and reconnect states.
 * WAKE_LOCK - To keep screen on while playing Radio Station.
 * ACCESS_COARSE_LOCATION - On user's demand only - to select Country for user based on Location. This helps to navigate local Radio Stations.
-* READ_EXTERNAL_STORAGE (Android 12 and older), READ_MEDIA_IMAGES (Android 13 and newer) - On user's demand only - to read image from phone's memory when set it as image for Local Radio Station.
+* READ_EXTERNAL_STORAGE (Android 12 and older), READ_MEDIA_IMAGES (Android 13 and newer, on user's demand only) to read image from phone's memory when set it as image for Local Radio Station.
 * FOREGROUND_SERVICE - To keep service active while playing stream.
 * BLUETOOTH, BLUETOOTH_ADMIN, BLUETOOTH_CONNECT - On user's demand only - to handle connection with a Bluetooth device.
 * RECORD_AUDIO - On user's demand only - to use voice search engine on Android TV.
