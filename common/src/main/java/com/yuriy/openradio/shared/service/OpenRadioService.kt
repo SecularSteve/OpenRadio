@@ -293,10 +293,7 @@ class OpenRadioService : MediaLibraryService() {
             // To force update Favorites list.
             mediaId = MediaId.MEDIA_ID_FAVORITES_LIST
         }
-        mBrowser?.let {
-            mBrowseTree.invalidate(mediaId)
-            mSession.notifyChildrenChanged(it, mediaId, 250, null)
-        }
+        notifyChildrenChanged(mediaId)
     }
 
     private fun registerReceivers() {
@@ -320,6 +317,13 @@ class OpenRadioService : MediaLibraryService() {
             val command =
                 if (mPresenter.isRadioStationFavorite(mActiveRS)) mFavoriteCommands[1] else mFavoriteCommands[0]
             mSession.setCustomLayout(listOf(command))
+        }
+    }
+
+    private fun notifyChildrenChanged(mediaId: String) {
+        mBrowser?.let {
+            mBrowseTree.invalidate(mediaId)
+            mSession.notifyChildrenChanged(it, mediaId, 250, null)
         }
     }
 
@@ -528,30 +532,47 @@ class OpenRadioService : MediaLibraryService() {
         if (rs == RadioStation.INVALID_INSTANCE) {
             return
         }
-        val rsPlayable = MediaItemBuilder.buildPlayable(rs)
-        val list = mutableListOf<MediaItem>()
         val mediaItemCount = mPlayer.mediaItemCount
         if (mediaItemCount != 0) {
             return
         }
-        // If this is very first start - give to player something to play:
-        list.add(rsPlayable)
-        // Create a NPL:
-        // TODO: Add here Favorites or Newest.
+        val rsPlayable = MediaItemBuilder.buildPlayable(rs)
+        val list = mutableListOf<MediaItem>()
         val radioStations = TreeSet<RadioStation>()
-        for (item in radioStations) {
-            val playable = MediaItemBuilder.buildPlayable(item)
-            // Do not add active rs again:
-            if (item.id != rs.id) {
+        // Create a NPL:
+        mScope.launch {
+            AppLogger.d("$TAG create init npl")
+            var radios = mPresenter.getAllFavorites()
+            if (radios.isEmpty().not()) {
+                AppLogger.d("$TAG create init npl fill with fav")
+                radioStations.addAll(radios)
+            } else {
+                AppLogger.d("$TAG create init npl fill with recent")
+                radios = mPresenter.getRecentlyAddedStations()
+                radioStations.addAll(radios)
+            }
+            AppLogger.d("$TAG create init npl with ${radioStations.size}")
+            var isActiveStationFound = false
+            for (item in radioStations) {
+                val playable = MediaItemBuilder.buildPlayable(item)
+                if (item.id == rs.id) {
+                    isActiveStationFound = true
+                }
                 list.add(playable)
             }
+            if (isActiveStationFound.not()) {
+                list.add(0, rsPlayable)
+            }
+        }.invokeOnCompletion {
+            mUiScope.launch {
+                // This is needed for Media Browser when framework will require media item by id and the view will contain
+                // Browsables only:
+                mBrowseTree[rs.id] = BrowseTree.BrowseData(list, radioStations)
+                val pos = list.indexOf(rsPlayable)
+                mPlayer.setMediaItems(list, pos, C.TIME_UNSET)
+                handlePlayRequestUiThread()
+            }
         }
-        // This is needed for Media Browser when framework will require media item by id and the view will contain
-        // Browsables only:
-        mBrowseTree[rs.id] = BrowseTree.BrowseData(list, radioStations)
-        val pos = list.indexOf(rsPlayable)
-        mPlayer.setMediaItems(list, pos, C.TIME_UNSET)
-        handlePlayRequestUiThread()
     }
 
 
@@ -819,11 +840,9 @@ class OpenRadioService : MediaLibraryService() {
                     // Add custom commands
                     .add(SessionCommand(CMD_FAVORITE_ON, Bundle()))
                     .add(SessionCommand(CMD_FAVORITE_OFF, Bundle()))
-                    .add(SessionCommand(CMD_REMOVE_BY_ID, Bundle()))
                     .add(SessionCommand(CMD_NET_CHANGED, Bundle()))
                     .add(SessionCommand(CMD_CLEAR_CACHE, Bundle()))
                     .add(SessionCommand(CMD_MASTER_VOLUME_CHANGED, Bundle()))
-                    .add(SessionCommand(CMD_NOTIFY_CHILDREN_CHANGED, Bundle()))
                     .add(SessionCommand(CMD_STOP_SERVICE, Bundle()))
                     .add(SessionCommand(CMD_TOGGLE_LAST_PLAYED_ITEM, Bundle()))
                     .add(SessionCommand(CMD_UPDATE_SORT_IDS, Bundle()))
@@ -921,7 +940,7 @@ class OpenRadioService : MediaLibraryService() {
                     mPresenter.updateSortIds(
                         mediaId, sortId, categoryMediaId,
                     )
-                    // notifyChildrenChanged(categoryMediaId)
+                    notifyChildrenChanged(categoryMediaId)
                     return mSessionCmdSuccess
                 }
 
@@ -939,22 +958,7 @@ class OpenRadioService : MediaLibraryService() {
                 }
 
                 CMD_UPDATE_TREE -> {
-                    // notifyChildrenChanged(mCurrentParentId)
-                    return mSessionCmdSuccess
-                }
-
-                CMD_NOTIFY_CHILDREN_CHANGED -> {
-                    // notifyChildrenChanged(
-                    //  intent.getStringExtra(OpenRadioStore.EXTRA_KEY_PARENT_ID) ?: MediaId.MEDIA_ID_ROOT
-                    // )
-                    return mSessionCmdSuccess
-                }
-
-                CMD_REMOVE_BY_ID -> {
-                    // TODO:
-                    // getStorage(mActiveRS.id).removeById(
-                    //    intent.getStringExtra(OpenRadioStore.EXTRA_KEY_MEDIA_ID) ?: AppUtils.EMPTY_STRING
-                    // )
+                    notifyChildrenChanged(mCurrentParentId)
                     return mSessionCmdSuccess
                 }
 
@@ -1107,8 +1111,6 @@ class OpenRadioService : MediaLibraryService() {
         const val CMD_CLEAR_CACHE = "com.yuriy.openradio.COMMAND.CLEAR_CACHE"
         const val CMD_MASTER_VOLUME_CHANGED = "com.yuriy.openradio.COMMAND.MASTER_VOLUME_CHANGED"
         const val CMD_UPDATE_TREE = "com.yuriy.openradio.COMMAND.UPDATE_TREE"
-        const val CMD_NOTIFY_CHILDREN_CHANGED = "com.yuriy.openradio.COMMAND.NOTIFY_CHILDREN_CHANGED"
-        const val CMD_REMOVE_BY_ID = "com.yuriy.openradio.COMMAND.REMOVE_BY_ID"
 
         private lateinit var TAG: String
 

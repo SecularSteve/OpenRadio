@@ -163,11 +163,10 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
      * @return Metadata.
      */
     val mediaMetadata: MediaMetadata?
-        // TODO:
-        get() = null
+        get() = if (::mMediaBrowser.isInitialized) mPlayer.mediaMetadata else null
 
     val currentMediaItem: MediaItem?
-        get() = mPlayer.currentMediaItem
+        get() = if (::mMediaBrowser.isInitialized) mPlayer.currentMediaItem else null
 
     private fun updateNowPlaying(player: Player) {
         val mediaItem = player.currentMediaItem ?: MediaItem.EMPTY

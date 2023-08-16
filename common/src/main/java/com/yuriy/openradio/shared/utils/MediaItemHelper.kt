@@ -125,7 +125,6 @@ object MediaItemHelper {
         if (extras == null) {
             return MediaSessionCompat.QueueItem.UNKNOWN_ID
         }
-        // TODO:
         return extras.getInt(KEY_SORT_ID, MediaSessionCompat.QueueItem.UNKNOWN_ID)
     }
 

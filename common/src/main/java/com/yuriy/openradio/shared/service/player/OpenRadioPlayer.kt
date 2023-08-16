@@ -495,8 +495,6 @@ class OpenRadioPlayer(
 
     override fun stop() {
         mPlayer.stop()
-        // TODO:
-        // mPlaylist.clear()
     }
 
     override fun getCurrentTracks(): Tracks {
