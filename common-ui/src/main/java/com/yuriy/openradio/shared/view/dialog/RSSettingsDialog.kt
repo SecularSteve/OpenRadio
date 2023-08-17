@@ -18,8 +18,6 @@ package com.yuriy.openradio.shared.view.dialog
 
 import android.app.Dialog
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.View
 import android.widget.NumberPicker
 import androidx.media3.common.MediaItem
@@ -83,13 +81,8 @@ class RSSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
             CoroutineScope(Dispatchers.Main).launch {
                 val bundle = OpenRadioStore.makeUpdateSortIdsBundle(mSortMediaId, mSortNewPosition, mParentCategoryId)
                 mMediaPresenter.getServiceCommander().sendCommand(OpenRadioService.CMD_UPDATE_SORT_IDS, bundle)
+                mMediaPresenter.handleCurrentIndexOnQueueChanged(mSortNewPosition)
             }
-            // TODO: Fix it properly - select item when it is updated in the service.
-            Handler(Looper.getMainLooper()).postDelayed(
-                {
-                    mMediaPresenter.handleCurrentIndexOnQueueChanged(mSortNewPosition)
-                }, 50
-            )
         }
         super.onPause()
     }

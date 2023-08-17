@@ -375,7 +375,7 @@ class MediaPresenterImpl(
      *
      * @param position Position of the item in the list.
      */
-    override fun setActiveItem(position: Int) {
+    override fun updateActiveItem(position: Int) {
         val prevPos = mAdapter?.activeItemId ?: -1
         mAdapter?.activeItemId = position
         mAdapter?.notifyItemChanged(prevPos)
@@ -505,7 +505,7 @@ class MediaPresenterImpl(
         val selectedPosition = positions[0]
         val clickedPosition = positions[1]
         // This will make selected item highlighted.
-        setActiveItem(clickedPosition)
+        updateActiveItem(clickedPosition)
         // This will do scroll to the position.
         mListView?.scrollToPosition(selectedPosition.coerceAtLeast(0))
     }
@@ -518,7 +518,16 @@ class MediaPresenterImpl(
     }
 
     override fun handleCurrentIndexOnQueueChanged(index: Int) {
-        setActiveItem(index)
+        val activePos = mAdapter?.activeItemId ?: -1
+        val pos = if (activePos != -1) index else -1
+        unsubscribeFromItem(mCurrentParentId)
+        addMediaItemToStack(mCurrentParentId)
+        Handler(Looper.getMainLooper()).postDelayed(
+            {
+                updateActiveItem(pos)
+                updateListPositions(pos)
+            }, 100
+        )
     }
 
     /**
@@ -702,7 +711,7 @@ class MediaPresenterImpl(
 
         @UnstableApi
         override fun onItemSelected(item: MediaItem, position: Int) {
-            setActiveItem(position)
+            updateActiveItem(position)
             handleItemSelected(item, position)
         }
     }

@@ -28,7 +28,6 @@ import com.yuriy.openradio.shared.permission.PermissionChecker
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.findView
-import com.yuriy.openradio.tv.R
 import com.yuriy.openradio.tv.view.activity.TvSearchActivity
 
 /*

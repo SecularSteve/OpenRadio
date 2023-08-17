@@ -78,7 +78,7 @@ interface MediaPresenter {
 
     fun getServiceCommander(): ServiceCommander
 
-    fun setActiveItem(position: Int)
+    fun updateActiveItem(position: Int)
 
     fun isFavorite(mediaId: String): Boolean
 

@@ -26,7 +26,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
-import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.model.ServiceCommander
 import com.yuriy.openradio.shared.model.media.MediaId

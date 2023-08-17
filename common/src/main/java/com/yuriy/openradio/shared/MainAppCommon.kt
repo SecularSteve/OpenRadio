@@ -24,13 +24,11 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
 import com.google.android.gms.security.ProviderInstaller
-import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.utils.AnalyticsUtils
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
-import com.yuriy.openradio.shared.utils.SafeToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
