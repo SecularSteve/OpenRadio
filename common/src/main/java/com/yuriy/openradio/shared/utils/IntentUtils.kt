@@ -46,7 +46,7 @@ object IntentUtils {
     /**
      * Project's url
      */
-    const val PROJECT_HOME_URL = "https://bitbucket.org/ChernyshovYuriy/openradio"
+    const val PROJECT_HOME_URL = "https://github.com/ChernyshovYuriy/OpenRadio"
 
     const val EXO_PLAYER_URL = "https://github.com/google/ExoPlayer"
 
@@ -56,7 +56,7 @@ object IntentUtils {
 
     const val SWIPE_EFFECT_URL = "https://github.com/xenione/swipe-maker"
 
-    const val REPORT_ISSUE_URL = "https://bitbucket.org/ChernyshovYuriy/openradio/issues/new"
+    const val REPORT_ISSUE_URL = "https://github.com/ChernyshovYuriy/OpenRadio/issues"
 
     const val RADIO_BROWSER_URL = "https://www.radio-browser.info"
 
