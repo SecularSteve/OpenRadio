@@ -63,14 +63,14 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
     /**
      * Browses media content offered by a [android.service.media.MediaBrowserService].
      */
-    private lateinit var mMediaBrowser: MediaBrowser
+    private var mMediaBrowser: MediaBrowser? = null
 
     private val mCoroutineContext = Dispatchers.Main
     private val mScope = CoroutineScope(mCoroutineContext + SupervisorJob())
 
     private val mPlayerListener = PlayerListener()
 
-    private val mPlayer: Player get() = mMediaBrowser
+    private val mPlayer: Player? get() = mMediaBrowser
 
     private var mNowPlaying: MediaItem? = null
 
@@ -88,21 +88,21 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
                     .setListener(BrowserListener())
                     .buildAsync()
                     .await()
-            mMediaBrowser.addListener(mPlayerListener)
-            val root = mMediaBrowser.getLibraryRoot(null).await().value
+            mMediaBrowser?.addListener(mPlayerListener)
+            val root = mMediaBrowser?.getLibraryRoot(null)?.await()?.value
             AppLogger.d("$mClassName root '${root?.mediaId}'")
             mListener.onConnected()
         }
     }
 
     private suspend fun getChildren(parentId: String, page: Int = 0): ImmutableList<MediaItem> {
-        return mMediaBrowser.getChildren(
+        return mMediaBrowser?.getChildren(
             parentId,
             page,
             DependencyRegistryCommon.PAGE_SIZE,
             null
         )
-            .await().value ?: ImmutableList.of()
+            ?.await()?.value ?: ImmutableList.of()
     }
 
     suspend fun sendCommand(command: String, parameters: Bundle?): Boolean =
@@ -112,9 +112,9 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
         command: String,
         parameters: Bundle?,
         resultCallback: ((Int, Bundle?) -> Unit)
-    ): Boolean = if (mMediaBrowser.isConnected) {
+    ): Boolean = if (mMediaBrowser?.isConnected == true) {
         val args = parameters ?: Bundle()
-        mMediaBrowser.sendCustomCommand(SessionCommand(command, args), args).await().let {
+        mMediaBrowser?.sendCustomCommand(SessionCommand(command, args), args)?.await()?.let {
             resultCallback(it.resultCode, it.extras)
         }
         true
@@ -123,7 +123,7 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
     }
 
     fun clean() {
-        mMediaBrowser.let {
+        mMediaBrowser?.let {
             it.removeListener(mPlayerListener)
             it.release()
         }
@@ -156,26 +156,25 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
      * @return Root Id.
      */
     val root: String
-        // TODO:
-        get() = mMediaBrowser.getLibraryRoot(null).get()?.value?.mediaId ?: ""
+        get() = mMediaBrowser?.getLibraryRoot(null)?.get()?.value?.mediaId ?: ""
 
     /**
      * @return Metadata.
      */
     val mediaMetadata: MediaMetadata?
-        get() = if (::mMediaBrowser.isInitialized) mPlayer.mediaMetadata else null
+        get() = mPlayer?.mediaMetadata
 
     val currentMediaItem: MediaItem?
-        get() = if (::mMediaBrowser.isInitialized) mPlayer.currentMediaItem else null
+        get() = mPlayer?.currentMediaItem
 
-    private fun updateNowPlaying(player: Player) {
-        val mediaItem = player.currentMediaItem ?: MediaItem.EMPTY
+    private fun updateNowPlaying(player: Player?) {
+        val mediaItem = player?.currentMediaItem ?: MediaItem.EMPTY
         if (mediaItem == MediaItem.EMPTY) {
             return
         }
         // The current media item from the CastPlayer may have lost some information.
-        val mediaItemFuture = mMediaBrowser.getItem(mediaItem.mediaId)
-        mediaItemFuture.addListener(
+        val mediaItemFuture = mMediaBrowser?.getItem(mediaItem.mediaId)
+        mediaItemFuture?.addListener(
             { mNowPlaying = mediaItemFuture.get().value },
             MoreExecutors.directExecutor()
         )
@@ -186,7 +185,7 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
      */
     fun playFromMediaId(mediaItem: MediaItem, parentMediaId: String) {
         val player = mPlayer
-        val isPrepared = player.playbackState != Player.STATE_IDLE
+        val isPrepared = player?.playbackState != Player.STATE_IDLE
         if (isPrepared && mediaItem.mediaId == mNowPlaying?.mediaId) {
             AppLogger.w(
                 "Playable item ${mediaItem.mediaId} is active already"
@@ -203,11 +202,11 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
                 }
                 val indexOf = playlist.indexOf(mediaItem)
                 val startWindowIndex = if (indexOf >= 0) indexOf else 0
-                player.setMediaItems(
+                player?.setMediaItems(
                     playlist, startWindowIndex, /* startPositionMs= */ C.TIME_UNSET
                 )
-                player.prepare()
-                player.play()
+                player?.prepare()
+                player?.play()
             }
         }
     }
