@@ -410,6 +410,7 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
         findProgressBar(R.id.crs_img_progress_view).gone()
         val imgView = findImageView(R.id.crs_img_view)
         MediaItemsAdapter.updateImage(applicationContext, metadata, imgView)
+        // TODO:
         //MediaItemsAdapter.updateBitrateView(
         //    radioStation.getStreamBitrate(), findTextView(R.id.crs_bitrate_view), true
         //)

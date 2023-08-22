@@ -283,10 +283,7 @@ class OpenRadioService : MediaLibraryService() {
         }
     }
 
-    private fun maybeNotifyRootCarChanged() {
-        if (DependencyRegistryCommon.isCar.not()) {
-            return
-        }
+    private fun maybeNotifyRootChanged() {
         // To force update Favorite menu tab.
         var mediaId = MediaId.MEDIA_ID_ROOT
         if (mCurrentParentId == MediaId.MEDIA_ID_FAVORITES_LIST && mPresenter.getAllFavorites().isNotEmpty()) {
@@ -1095,7 +1092,7 @@ class OpenRadioService : MediaLibraryService() {
                 MediaItemHelper.updateFavoriteField(currentMediaItem.mediaMetadata, isFavorite)
             }
             mPlayer.invalidateMetaData()
-            maybeNotifyRootCarChanged()
+            maybeNotifyRootChanged()
             return true
         }
     }
