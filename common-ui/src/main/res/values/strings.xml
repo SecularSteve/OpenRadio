@@ -106,7 +106,6 @@
     <string name="can_not_set_time">Can not set Time</string>
     <string name="can_not_set_date">Can not set Date</string>
     <string name="use_mobile_network">Use Mobile network</string>
-    <string name="support_ivan_text">We need Your support</string>
     <item type="id" name="imageUpdated" />
     <item type="id" name="imageId" />
 </resources>
