@@ -953,18 +953,23 @@ class OpenRadioPlayer(
 
         private fun updateStreamMetadata(msg: String) {
             mStreamMetadata = msg
-            if (mPlaylist.isNotEmpty()) {
+            mUiScope.launch {
+                // TODO: Need to find out how to break de-synchronization between report of metadata and
+                //       invocation of this code in coroutine.
+                val idx = mPlayer.currentMediaItemIndex
+                if (idx >= mPlaylist.size) {
+                    AppLogger.e("Update metadata, idx out of bounds")
+                    return@launch
+                }
+                val metadata = mPlaylist[idx].mediaMetadata
+                    .buildUpon()
+                    .setSubtitle(msg)
+                    .setExtras(mediaMetadata.extras)
+                    // Use this trick to send metadata updates
+                    .setTrackNumber(mTrackNumber.getAndIncrement())
+                    .build()
                 for (listener in mListeners) {
-                    mUiScope.launch {
-                        val metadata = mPlaylist[mPlayer.currentMediaItemIndex].mediaMetadata
-                            .buildUpon()
-                            .setSubtitle(msg)
-                            .setExtras(mediaMetadata.extras)
-                            // Use this trick to send metadata updates
-                            .setTrackNumber(mTrackNumber.getAndIncrement())
-                            .build()
-                        listener.onMediaMetadataChanged(metadata)
-                    }
+                    listener.onMediaMetadataChanged(metadata)
                 }
             }
         }
