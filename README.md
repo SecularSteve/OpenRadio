@@ -27,9 +27,8 @@
 
 * [Google Play](https://play.google.com/store/apps/details?id=com.yuriy.openradio) - this application is suitable now for the Android Media Browser simulator as well as for the Android Auto.
 
-### How to install and run ###
-* There is a possibility to run application as general Android one, just to be sure that everything works as expected.
-* **But the main feature is that application is fully compatible with vehicle's system.**
+**Application is fully compatible with vehicle's system.**
 
-In order to run application just like it does on vehicle it is necessary to install [Android Auto for Mobile](https://play.google.com/store/apps/details?id=com.google.android.projection.gearhead&hl=en). Once it is done - swipe from the left side and select **Open Radio** application from the list. 
+In order to run application just like it does on vehicle it is necessary to install [Android Auto for Mobile](https://play.google.com/store/apps/details?id=com.google.android.projection.gearhead&hl=en).
+
 **Enjoy!**
