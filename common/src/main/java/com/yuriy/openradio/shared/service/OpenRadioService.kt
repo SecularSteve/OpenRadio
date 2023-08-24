@@ -764,11 +764,12 @@ class OpenRadioService : MediaLibraryService() {
         ): ListenableFuture<LibraryResult<MediaItem>> {
             AppLogger.d("$TAG [$browser] GetItem for $mediaId")
             mBrowser = browser
+            val item = mBrowseTree.getMediaItemByMediaId(mediaId) ?: MediaItem.EMPTY
+            if (item.mediaId == null || item.mediaId == MediaItem.DEFAULT_MEDIA_ID) {
+                AnalyticsUtils.logMessage("GetItem for $mediaId failed")
+            }
             return Futures.immediateFuture(
-                LibraryResult.ofItem(
-                    mBrowseTree.getMediaItemByMediaId(mediaId) ?: MediaItem.EMPTY,
-                    LibraryParams.Builder().build()
-                )
+                LibraryResult.ofItem(item, LibraryParams.Builder().build())
             )
         }
 
@@ -1086,7 +1087,11 @@ class OpenRadioService : MediaLibraryService() {
             // Update Favorites Radio station: whether add it or remove it from the storage
             mPresenter.updateRadioStationFavorite(rs, isFavorite)
             val mediaItem = mBrowseTree.getMediaItemByMediaId(mediaId)
-            MediaItemHelper.updateFavoriteField(mediaItem!!.mediaMetadata, isFavorite)
+            if (mediaItem == null) {
+                AppLogger.e("Can't handle fav. for $mediaId $rs")
+                return false
+            }
+            MediaItemHelper.updateFavoriteField(mediaItem.mediaMetadata, isFavorite)
             val currentMediaItem = mPlayer.currentMediaItem
             if (currentMediaItem?.mediaId == mediaId) {
                 MediaItemHelper.updateFavoriteField(currentMediaItem.mediaMetadata, isFavorite)
