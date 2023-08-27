@@ -147,13 +147,12 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
      * Process call back from the Search Dialog.
      */
     private fun onActivityResultCallback(data: Intent?) {
-        // TODO: Bundles!
-//        var bundle = Bundle()
-//        if (data != null && data.extras != null) {
-//            bundle = Bundle(data.extras)
-//        }
+        var bundle = Bundle()
+        if (data != null && data.extras != null) {
+            bundle = Bundle(data.extras)
+        }
         mMediaPresenter.unsubscribeFromItem(MediaId.MEDIA_ID_SEARCH_FROM_APP)
-        mMediaPresenter.addMediaItemToStack(MediaId.MEDIA_ID_SEARCH_FROM_APP)
+        mMediaPresenter.addMediaItemToStack(MediaId.MEDIA_ID_SEARCH_FROM_APP, bundle = bundle)
     }
 
     /**

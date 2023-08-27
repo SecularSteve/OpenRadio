@@ -36,6 +36,7 @@ import com.google.common.util.concurrent.MoreExecutors
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.utils.AppLogger
+import com.yuriy.openradio.shared.utils.AppUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -95,14 +96,30 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
         }
     }
 
-    private suspend fun getChildren(parentId: String, page: Int = 0): ImmutableList<MediaItem> {
-        return mMediaBrowser?.getChildren(
-            parentId,
-            page,
-            DependencyRegistryCommon.PAGE_SIZE,
-            null
-        )
-            ?.await()?.value ?: ImmutableList.of()
+    private suspend fun getChildren(
+        parentId: String,
+        page: Int = 0,
+        bundle: Bundle = Bundle()
+    ): ImmutableList<MediaItem> {
+        return if (parentId == MediaId.MEDIA_ID_SEARCH_FROM_APP ||
+            parentId == MediaId.MEDIA_ID_SEARCH_FROM_SERVICE
+        ) {
+            mMediaBrowser?.getSearchResult(
+                AppUtils.getSearchQueryFromBundle(bundle),
+                page,
+                DependencyRegistryCommon.PAGE_SIZE,
+                null
+            )
+                ?.await()?.value ?: ImmutableList.of()
+        } else {
+            mMediaBrowser?.getChildren(
+                parentId,
+                page,
+                DependencyRegistryCommon.PAGE_SIZE,
+                null
+            )
+                ?.await()?.value ?: ImmutableList.of()
+        }
     }
 
     suspend fun sendCommand(command: String, parameters: Bundle?): Boolean =
@@ -139,12 +156,13 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
     fun subscribe(
         parentId: String,
         callback: MediaItemsSubscription?,
-        page: Int = 0
+        page: Int = 0,
+        bundle: Bundle = Bundle()
     ) {
         AppLogger.i("$mClassName subscribe:$parentId, page:$page")
         mScope.launch {
             callback?.onChildrenLoaded(
-                parentId, getChildren(parentId, page).toMutableList()
+                parentId, getChildren(parentId, page, bundle).toMutableList()
             )
         }
     }

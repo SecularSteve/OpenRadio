@@ -54,6 +54,7 @@ object AppUtils {
     const val UTF8 = "UTF-8"
     const val EMPTY_STRING = ""
 
+    const val USE_CUR_SEARCH_QUERY = "<<<:::>>>"
     private const val KEY_SEARCH_QUERY = "KEY_SEARCH_QUERY"
 
     /**
@@ -213,7 +214,7 @@ object AppUtils {
     }
 
     fun getSearchQueryFromBundle(queryBundle: Bundle): String {
-        return queryBundle.getString(KEY_SEARCH_QUERY, EMPTY_STRING)
+        return queryBundle.getString(KEY_SEARCH_QUERY, USE_CUR_SEARCH_QUERY)
     }
 
     fun getDensityDpi(context: Context): Int {

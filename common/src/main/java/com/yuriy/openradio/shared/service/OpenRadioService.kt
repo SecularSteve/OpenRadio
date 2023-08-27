@@ -107,6 +107,7 @@ class OpenRadioService : MediaLibraryService() {
      */
     private lateinit var mSession: MediaLibrarySession
     private var mBrowser: MediaSession.ControllerInfo? = null
+    private var mCurrentSearchQuery = AppUtils.EMPTY_STRING
 
     private val mPackageValidator by lazy {
         PackageValidator(applicationContext, R.xml.allowed_media_browser_callers)
@@ -779,8 +780,9 @@ class OpenRadioService : MediaLibraryService() {
             query: String,
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<Void>> {
-            AppLogger.d("$TAG [$browser] Search $query")
+            AppLogger.d("$TAG [$browser] Search for '$query'")
             mBrowser = browser
+            mCurrentSearchQuery = query
             return callWhenSearchReady(query) {
                 mSession.notifySearchResultChanged(browser, query, it, params)
                 LibraryResult.ofVoid()
@@ -796,11 +798,27 @@ class OpenRadioService : MediaLibraryService() {
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
             mBrowser = browser
-            val list = mBrowseTree[query] ?: mutableListOf()
+            // This happens when search item clicked, browser provides no clue as to the query the item belongs to.
+            // Maybe redesign is needed.
+            val queryStr = if (query == AppUtils.USE_CUR_SEARCH_QUERY) {
+                mCurrentSearchQuery
+            } else {
+                mCurrentSearchQuery = query
+                query
+            }
+            val list = mBrowseTree[queryStr] ?: mutableListOf()
             // TODO:
             //val fromIndex = max(page * pageSize, list.size - 1)
             //val toIndex = max(fromIndex + pageSize, list.size)
-            AppLogger.d("$TAG [$browser] GetSearchResult $query")
+            AppLogger.d("$TAG [$browser] GetSearchResult for '$queryStr'")
+            if (list.isEmpty()) {
+                return callWhenSearchReady(queryStr) {
+                    LibraryResult.ofItemList(
+                        mBrowseTree[queryStr] ?: mutableListOf(),
+                        LibraryParams.Builder().build()
+                    )
+                }
+            }
             return Futures.immediateFuture(
                 LibraryResult.ofItemList(
                     list,

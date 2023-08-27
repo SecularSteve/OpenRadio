@@ -331,7 +331,7 @@ class MediaPresenterImpl(
         }
     }
 
-    override fun addMediaItemToStack(mediaId: String, page: Int) {
+    override fun addMediaItemToStack(mediaId: String, page: Int, bundle: Bundle) {
         if (mCallback == null) {
             AppLogger.e("$TAG add media id to stack, callback null")
             return
@@ -344,7 +344,7 @@ class MediaPresenterImpl(
             mMediaItemsStack.add(mediaId)
         }
         mListener?.showProgressBar()
-        mMediaRsrMgr?.subscribe(mediaId, mCallback, page)
+        mMediaRsrMgr?.subscribe(mediaId, mCallback, page, bundle)
     }
 
     override fun updateDescription(descriptionView: TextView?, mediaMetadata: MediaMetadata) {
