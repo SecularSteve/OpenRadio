@@ -66,19 +66,23 @@ class RadioStation : Serializable, Comparable<RadioStation> {
     var homePage = AppUtils.EMPTY_STRING
     var lastCheckOkTime = AppUtils.EMPTY_STRING
     var lastCheckOk = 0
+
     // TODO: Convert to enum
     var countryCode = AppUtils.EMPTY_STRING
     var genre = AppUtils.EMPTY_STRING
     var urlResolved = AppUtils.EMPTY_STRING
+
     /**
      * Flag indicate that Radio Station has been added locally to the phone storage.
      */
     var isLocal = false
     var sortId = DependencyRegistryCommon.UNKNOWN_ID
+
     /**
      * Image Url. Used for internal logic only, for example fetch image from or determine image is not specified.
      */
     var imageUrl = AppUtils.EMPTY_STRING
+
     /**
      * List of current codecs:
      * AAC
@@ -99,6 +103,7 @@ class RadioStation : Serializable, Comparable<RadioStation> {
     private var mId = AppUtils.EMPTY_STRING
     private val mMediaStream: MediaStream
     private val mMediaStreamFixed: MediaStream
+
     // TODO: Convert to enum
     private var mCountry = AppUtils.EMPTY_STRING
 
@@ -162,12 +167,15 @@ class RadioStation : Serializable, Comparable<RadioStation> {
                 LocationService.GB_WRONG.lowercase(Locale.ROOT) -> {
                     LocationService.GB_CORRECT
                 }
+
                 LocationService.TW_WRONG_A.lowercase(Locale.ROOT) -> {
                     LocationService.TW_CORRECT
                 }
+
                 LocationService.TW_WRONG_B.lowercase(Locale.ROOT) -> {
                     LocationService.TW_CORRECT
                 }
+
                 else -> value
             }
         }
