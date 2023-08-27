@@ -799,7 +799,7 @@ class OpenRadioService : MediaLibraryService() {
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
             mBrowser = browser
             // This happens when search item clicked, browser provides no clue as to the query the item belongs to.
-            // Maybe redesign is needed.
+            // Maybe redesign is needed?
             val queryStr = if (query == AppUtils.USE_CUR_SEARCH_QUERY) {
                 mCurrentSearchQuery
             } else {
@@ -811,6 +811,8 @@ class OpenRadioService : MediaLibraryService() {
             //val fromIndex = max(page * pageSize, list.size - 1)
             //val toIndex = max(fromIndex + pageSize, list.size)
             AppLogger.d("$TAG [$browser] GetSearchResult for '$queryStr'")
+            // This happens when Search involved from non Automotive UI (onSearch is skipped currently).
+            // Maybe need to redesign?
             if (list.isEmpty()) {
                 return callWhenSearchReady(queryStr) {
                     LibraryResult.ofItemList(
