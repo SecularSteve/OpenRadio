@@ -27,6 +27,7 @@ import android.os.HandlerThread
 import android.os.Looper
 import android.os.Message
 import androidx.annotation.MainThread
+import androidx.annotation.UiThread
 import androidx.media.utils.MediaConstants
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -372,6 +373,7 @@ class OpenRadioService : MediaLibraryService() {
         }
     }
 
+    @UiThread
     private fun handlePlayListUrlsExtracted(urls: Array<String>) {
         if (urls.isEmpty()) {
             handleStopRequest()
@@ -381,10 +383,13 @@ class OpenRadioService : MediaLibraryService() {
             handleStopRequest()
             return
         }
-        mActiveRS.setVariantFixed(MediaStream.BIT_RATE_DEFAULT, urls[0])
-        // TODO:
-        //getStorage(mActiveRS.id).getById(mActiveRS.id).setVariantFixed(MediaStream.BIT_RATE_DEFAULT, urls[0])
-        handlePlayRequest()
+
+        mPlayer.currentMediaItem?.let {
+            val curIndx = mPlayer.currentMediaItemIndex
+            val newItem = it.buildUpon().setUri(urls[0]).build()
+            mPlayer.replaceMediaItem(curIndx, newItem)
+            handlePlayRequestUiThread()
+        }
     }
 
     /**
