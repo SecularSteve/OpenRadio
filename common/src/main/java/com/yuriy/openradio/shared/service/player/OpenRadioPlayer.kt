@@ -89,7 +89,7 @@ class OpenRadioPlayer(
 
         fun onHandledError(error: PlaybackException)
 
-        fun onReady(mediaItem: MediaItem)
+        fun onPlaybackStateChanged(mediaItem: MediaItem)
     }
 
     /**
@@ -886,12 +886,12 @@ class OpenRadioPlayer(
             AppLogger.d(
                 "$TAG playback ${PlayerUtils.playerStateToString(playerState)} for $mediaItem"
             )
+            mediaItem?.let {
+                mListener.onPlaybackStateChanged(it)
+            }
             when (playerState) {
                 Player.STATE_READY -> {
                     mNumOfExceptions.set(0)
-                    mediaItem?.let {
-                        mListener.onReady(it)
-                    }
                 }
 
                 Player.STATE_BUFFERING -> {

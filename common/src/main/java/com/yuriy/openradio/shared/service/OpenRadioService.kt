@@ -354,7 +354,7 @@ class OpenRadioService : MediaLibraryService() {
      * playlist.
      */
     private fun handleUnrecognizedInputFormatException() {
-        val playlistUrl = mActiveRS.mediaStream.getVariant(0).url
+        val playlistUrl = mActiveRS.getStreamUrlFixed()
         AnalyticsUtils.logMessage("UnrecognizedInputFormat:$playlistUrl")
         handleStopRequest()
         mScope.launch(Dispatchers.IO) {
@@ -583,7 +583,7 @@ class OpenRadioService : MediaLibraryService() {
             this@OpenRadioService.onHandledError(error)
         }
 
-        override fun onReady(mediaItem: MediaItem) {
+        override fun onPlaybackStateChanged(mediaItem: MediaItem) {
             mScope.launch {
                 mBrowseTree.getRadioStationByMediaId(mediaItem.mediaId).let {
                     if (mediaItem.mediaMetadata.isPlayable == false) {
