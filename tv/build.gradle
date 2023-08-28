@@ -56,6 +56,6 @@ dependencies {
     implementation project(':common')
     implementation project(':common-ui')
 
-    implementation "androidx.leanback:leanback:$leanbackVersion"
-    implementation "com.google.android.material:material:$materialVersion"
+    api "androidx.leanback:leanback:$leanbackVersion"
+    api "com.google.android.material:material:$materialVersion"
 }

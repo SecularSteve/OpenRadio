@@ -54,7 +54,7 @@ object ExoPlayerUtils {
     @UnstableApi
     fun buildRenderersFactory(context: Context): RenderersFactory {
         return DefaultRenderersFactory(context.applicationContext)
-            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF)
     }
 
     /**

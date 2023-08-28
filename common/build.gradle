@@ -48,11 +48,11 @@ android {
 
 dependencies {
     api "androidx.media:media:$androidxMediaVersion"
-    implementation group: "androidx.exifinterface", name: "exifinterface", version: "$exifinterfaceVersion"
+    api group: "androidx.exifinterface", name: "exifinterface", version: "$exifinterfaceVersion"
     ksp("androidx.room:room-compiler:$roomVersion")
-    implementation "androidx.room:room-runtime:$roomVersion"
-    implementation "androidx.room:room-ktx:$roomVersion"
-    implementation "androidx.work:work-runtime-ktx:$workVersion"
+    api "androidx.room:room-runtime:$roomVersion"
+    api "androidx.room:room-ktx:$roomVersion"
+    api "androidx.work:work-runtime-ktx:$workVersion"
     api "com.android.support:multidex:$multidexVersion"
     api "com.google.android.material:material:$materialVersion"
     api "androidx.core:core-ktx:$kotlinCoreKtx"
@@ -76,9 +76,8 @@ dependencies {
     api "androidx.media3:media3-exoplayer-dash:1.1.1"
     api "androidx.media3:media3-ui:1.1.1"
     api "androidx.media3:media3-cast:1.1.1"
-    api "com.google.android.exoplayer:extension-mediasession:2.19.1"
-    implementation "androidx.media3:media3-session:1.1.1"
-    implementation "com.google.android.gms:play-services-location:$googlePlayServicesLocationVersion"
+    api "androidx.media3:media3-session:1.1.1"
+    api "com.google.android.gms:play-services-location:$googlePlayServicesLocationVersion"
     api "com.google.http-client:google-http-client-gson:$googleHttpClientGsonVersion"
     api("com.google.api-client:google-api-client-android:$googleApiClientAndroidVersion") {
         exclude group: "org.apache.httpcomponents"
@@ -88,9 +87,9 @@ dependencies {
     }
     // https://mvnrepository.com/artifact/org.jdom/jdom2
     api group: "org.jdom", name: "jdom2", version: "$jdom2Version"
-    implementation "de.westnordost:countryboundaries:$countryboundariesVersion"
+    api "de.westnordost:countryboundaries:$countryboundariesVersion"
 
     // https://mvnrepository.com/artifact/junit/junit
-    testImplementation group: "junit", name: "junit", version: "$junitVersion"
-    testImplementation group: "org.json", name: "json", version: "$jsonTestVersion"
+    testApi group: "junit", name: "junit", version: "$junitVersion"
+    testApi group: "org.json", name: "json", version: "$jsonTestVersion"
 }

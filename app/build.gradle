@@ -78,9 +78,9 @@ dependencies {
     implementation project(':common')
     implementation project(':common-ui')
 
-    androidTestImplementation(
+    androidTestApi(
             "androidx.test.espresso:espresso-core:$espressoVersion",
             {exclude group: "com.android.support", module: "support-annotations"}
     )
-    androidTestImplementation "androidx.test.ext:junit:$junitAndroidXVersion"
+    androidTestApi "androidx.test.ext:junit:$junitAndroidXVersion"
 }
