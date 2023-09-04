@@ -53,14 +53,12 @@ import com.yuriy.openradio.shared.extentions.isEnded
 import com.yuriy.openradio.shared.extentions.isPlayEnabled
 import com.yuriy.openradio.shared.model.media.BrowseTree
 import com.yuriy.openradio.shared.model.media.MediaId
-import com.yuriy.openradio.shared.model.media.MediaStream
 import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.RemoteControlListener
 import com.yuriy.openradio.shared.model.media.getStreamUrlFixed
 import com.yuriy.openradio.shared.model.media.isInvalid
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommand
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommandDependencies
-import com.yuriy.openradio.shared.model.media.setVariantFixed
 import com.yuriy.openradio.shared.model.net.NetworkMonitorListener
 import com.yuriy.openradio.shared.model.net.UrlLayer
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager

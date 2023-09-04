@@ -38,6 +38,7 @@ import com.yuriy.openradio.shared.utils.findView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.lang.NullPointerException
 
 /**
  * Created by Yuriy Chernyshov
@@ -104,7 +105,14 @@ class RSSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
 
         val imageView = view.findImageView(R.id.dialog_rs_settings_logo_view)
         // At this point Image should be fetched from the internet or local file system.
-        imageView.setImageURI(item.mediaMetadata.artworkUri)
+        try {
+            imageView.setImageURI(item.mediaMetadata.artworkUri)
+        } catch (exception: NullPointerException) {
+            // TODO: Try to understand:
+            //       Attempt to invoke virtual method
+            //       'java.io.FileDescriptor android.content.res.AssetFileDescriptor.getFileDescriptor()'
+            //       on a null object reference
+        }
 
         if (isSortable) {
             handleSortUi(view, item, args)

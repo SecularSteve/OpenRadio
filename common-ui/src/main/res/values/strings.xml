@@ -106,6 +106,7 @@
     <string name="can_not_set_time">Can not set Time</string>
     <string name="can_not_set_date">Can not set Date</string>
     <string name="use_mobile_network">Use Mobile network</string>
+    <string name="empty_search_msg">Empty Search Query</string>
     <item type="id" name="imageUpdated" />
     <item type="id" name="imageId" />
 </resources>

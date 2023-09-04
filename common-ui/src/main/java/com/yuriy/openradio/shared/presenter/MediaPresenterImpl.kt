@@ -648,7 +648,7 @@ class MediaPresenterImpl(
         if (mListener == null) {
             return
         }
-        if (metadata == null) {
+        if (metadata?.title == null) {
             return
         }
         if (mCurrentRadioStationView?.visibility != View.VISIBLE) {

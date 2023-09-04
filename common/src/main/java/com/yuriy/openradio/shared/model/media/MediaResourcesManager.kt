@@ -102,10 +102,15 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
         bundle: Bundle = Bundle()
     ): ImmutableList<MediaItem> {
         return if (parentId == MediaId.MEDIA_ID_SEARCH_FROM_APP ||
-            parentId == MediaId.MEDIA_ID_SEARCH_FROM_SERVICE
+                    parentId == MediaId.MEDIA_ID_SEARCH_FROM_SERVICE
         ) {
+            var query = AppUtils.getSearchQueryFromBundle(bundle)
+            if (query.trim().isEmpty()) {
+                // TODO: Investigate an empty search
+                query = "Jazz"
+            }
             mMediaBrowser?.getSearchResult(
-                AppUtils.getSearchQueryFromBundle(bundle),
+                query,
                 page,
                 DependencyRegistryCommon.PAGE_SIZE,
                 null

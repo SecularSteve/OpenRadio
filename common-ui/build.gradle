@@ -37,5 +37,4 @@ dependencies {
     api "androidx.fragment:fragment-ktx:$fragmentKtxVersion"
     api "com.google.android.gms:play-services-auth:$googlePlayServicesAuthVersion"
     api "com.google.android.gms:play-services-drive:$googlePlayServicesDriveVersion"
-    api "com.sun.mail:android-mail:$androidMailVersion"
 }
