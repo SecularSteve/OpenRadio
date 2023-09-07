@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2018-2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,13 @@ abstract class IndexableMediaItemCommand internal constructor() : MediaItemComma
     }
 
     override fun doLoadNoDataReceived(): Boolean {
-        return mPageIndex.get() == UrlLayer.FIRST_PAGE_INDEX + 1
+        return pageNumber == UrlLayer.FIRST_PAGE_INDEX + 1
     }
 
-    val nextPageNumber: Int
-        get() = mPageIndex.getAndIncrement()
+    val pageNumber: Int
+        get() = mPageIndex.get()
+
+    fun nextPageNumber() {
+        mPageIndex.incrementAndGet()
+    }
 }

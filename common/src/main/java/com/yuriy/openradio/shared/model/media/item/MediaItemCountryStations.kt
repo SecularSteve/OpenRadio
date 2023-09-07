@@ -46,11 +46,15 @@ class MediaItemCountryStations : IndexableMediaItemCommand() {
             }
             withTimeoutOrNull(MediaItemCommand.CMD_TIMEOUT_MS) {
                 // Load all categories into menu
-                val pageNumber = nextPageNumber
+                val pageNumber = pageNumber
+                val set = dependencies.presenter.getStationsByCountry(dependencies.countryCode, pageNumber)
+                if (set.isEmpty().not()) {
+                    nextPageNumber()
+                }
                 handleDataLoaded(
                     playbackStateListener,
                     dependencies,
-                    dependencies.presenter.getStationsByCountry(dependencies.countryCode, pageNumber),
+                    set,
                     pageNumber
                 )
             } ?: dependencies.resultListener.onResult()

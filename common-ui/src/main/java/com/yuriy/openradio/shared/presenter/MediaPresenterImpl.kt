@@ -664,6 +664,7 @@ class MediaPresenterImpl(
     private fun onScrolledToEnd() {
         if (MediaId.isRefreshable(mCurrentParentId, mSourcesLayer)) {
             unsubscribeFromItem(mCurrentParentId)
+            // TODO: When list is completed - counter still increments on each swipe up.
             addMediaItemToStack(mCurrentParentId, mPageCounter.incrementAndGet())
         } else {
             AppLogger.w("$TAG category $mCurrentParentId is not refreshable")

@@ -48,7 +48,7 @@ abstract class MediaItemCommandImpl internal constructor() : MediaItemCommand {
                 dependencies.resultListener.onResult(dependencies.getMediaItems())
                 playbackStateListener.updatePlaybackState(dependencies.context.getString(R.string.no_data_message))
             } else {
-                dependencies.resultListener.onResult(dependencies.getMediaItems())
+                dependencies.resultListener.onResult(dependencies.getMediaItems(), pageNumber = pageNumber)
             }
             return
         }

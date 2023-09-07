@@ -44,11 +44,15 @@ class MediaItemChildCategories : IndexableMediaItemCommand() {
             withTimeoutOrNull(MediaItemCommand.CMD_TIMEOUT_MS) {
                 val childMenuId = dependencies.parentId
                     .replace(MediaId.MEDIA_ID_CHILD_CATEGORIES, AppUtils.EMPTY_STRING)
-                val pageNumber = nextPageNumber
+                val pageNumber = pageNumber
+                val set = dependencies.presenter.getStationsInCategory(childMenuId, pageNumber)
+                if (set.isEmpty().not()) {
+                    nextPageNumber()
+                }
                 handleDataLoaded(
                     playbackStateListener,
                     dependencies,
-                    dependencies.presenter.getStationsInCategory(childMenuId, pageNumber),
+                    set,
                     pageNumber
                 )
             } ?: dependencies.resultListener.onResult()

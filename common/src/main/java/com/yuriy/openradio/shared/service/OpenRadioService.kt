@@ -1036,11 +1036,8 @@ class OpenRadioService : MediaLibraryService() {
             )
             if (command != null) {
                 command.execute(
-                    object : MediaItemCommand.IUpdatePlaybackState {
-
-                        override fun updatePlaybackState(error: String) {
-                            AppLogger.e("$TAG update playback state error $error")
-                        }
+                    MediaItemCommand.IUpdatePlaybackState { error ->
+                        AppLogger.e("$TAG update playback state error $error")
                     },
                     dependencies
                 )
@@ -1077,11 +1074,8 @@ class OpenRadioService : MediaLibraryService() {
             )
             if (command != null) {
                 command.execute(
-                    object : MediaItemCommand.IUpdatePlaybackState {
-
-                        override fun updatePlaybackState(error: String) {
-                            AppLogger.e("$TAG update playback state error $error")
-                        }
+                    MediaItemCommand.IUpdatePlaybackState { error ->
+                        AppLogger.e("$TAG update playback state error $error")
                     },
                     dependencies
                 )
