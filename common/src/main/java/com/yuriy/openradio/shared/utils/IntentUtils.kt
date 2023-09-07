@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2017-2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.yuriy.openradio.shared.utils
 
 import android.app.Activity
@@ -31,34 +32,6 @@ import androidx.activity.result.contract.ActivityResultContracts
  * E-Mail: chernyshov.yuriy@gmail.com
  */
 object IntentUtils {
-
-    /**
-     * My profile's url.
-     */
-    const val AUTHOR_PROFILE_URL = "https://www.linkedin.com/in/yurii-chernyshov"
-
-    const val IVAN_FB_LINK = "https://www.facebook.com/IvanChernyshovRacer"
-
-    const val IVAN_IG_LINK = "https://www.instagram.com/ivan.chernyshov.racer"
-
-    /**
-     * Project's url
-     */
-    const val PROJECT_HOME_URL = "https://github.com/ChernyshovYuriy/OpenRadio"
-
-    const val EXO_PLAYER_URL = "https://github.com/google/ExoPlayer"
-
-    const val PLAY_LIST_PARSER_URL = "https://github.com/wseemann/JavaPlaylistParser"
-
-    const val OFFLINE_COUNTRIES_URL = "https://github.com/westnordost/countryboundaries"
-
-    const val SWIPE_EFFECT_URL = "https://github.com/xenione/swipe-maker"
-
-    const val REPORT_ISSUE_URL = "https://github.com/ChernyshovYuriy/OpenRadio/issues"
-
-    const val RADIO_BROWSER_URL = "https://www.radio-browser.info"
-
-    const val WEB_RADIO_URL = "https://jcorporation.github.io/webradiodb"
 
     /**
      * Make intent to navigate to provided url.
@@ -150,12 +123,5 @@ object IntentUtils {
         } else {
             intent.getParcelableExtra(key)
         }
-    }
-
-    inline fun getStringExtra(key: String, intent: Intent): String {
-        if (intent.hasExtra(key).not()) {
-            return AppUtils.EMPTY_STRING
-        }
-        return intent.getStringExtra(key) ?: AppUtils.EMPTY_STRING
     }
 }

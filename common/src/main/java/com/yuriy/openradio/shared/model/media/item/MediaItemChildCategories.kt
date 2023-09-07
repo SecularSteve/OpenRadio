@@ -40,8 +40,7 @@ class MediaItemChildCategories : IndexableMediaItemCommand() {
             deliverResult(dependencies)
             return
         }
-        mJob?.cancel()
-        mJob = dependencies.mScope.launch(Dispatchers.IO) {
+        dependencies.mScope.launch(Dispatchers.IO) {
             withTimeoutOrNull(MediaItemCommand.CMD_TIMEOUT_MS) {
                 val childMenuId = dependencies.parentId
                     .replace(MediaId.MEDIA_ID_CHILD_CATEGORIES, AppUtils.EMPTY_STRING)

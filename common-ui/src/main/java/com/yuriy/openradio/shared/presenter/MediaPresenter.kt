@@ -82,6 +82,8 @@ interface MediaPresenter {
 
     fun isFavorite(mediaId: String): Boolean
 
+    fun isAdapterEmpty(): Boolean
+
     fun unsubscribeFromItem(mediaId: String?)
 
     fun updateDescription(descriptionView: TextView?, mediaMetadata: MediaMetadata)

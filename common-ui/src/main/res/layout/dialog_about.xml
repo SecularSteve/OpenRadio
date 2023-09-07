@@ -200,6 +200,14 @@
 
         </LinearLayout>
 
+        <ImageView
+            android:id="@+id/about_item_support_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="25dp"
+            android:src="@drawable/support_button" />
+
     </LinearLayout>
 
 </ScrollView>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2015-2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ package com.yuriy.openradio.shared.model.media.item
  * On 8/31/15
  * E-Mail: chernyshov.yuriy@gmail.com
  */
-interface MediaItemCommand {
+fun interface MediaItemCommand {
 
     companion object {
         const val CMD_TIMEOUT_MS = 5000L
@@ -31,7 +31,7 @@ interface MediaItemCommand {
     /**
      * Interface to provide callback when an event occur during command execution.
      */
-    interface IUpdatePlaybackState {
+    fun interface IUpdatePlaybackState {
 
         /**
          * Callback when an event occur during command execution.

@@ -38,7 +38,6 @@ import com.yuriy.openradio.shared.utils.findView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.lang.NullPointerException
 
 /**
  * Created by Yuriy Chernyshov

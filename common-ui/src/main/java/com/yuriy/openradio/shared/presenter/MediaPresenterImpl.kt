@@ -386,6 +386,10 @@ class MediaPresenterImpl(
         return false
     }
 
+    override fun isAdapterEmpty(): Boolean {
+        return mAdapter?.itemCount == 0
+    }
+
     override fun updateListPositions(clickPosition: Int) {
         val layoutManager = mListView?.layoutManager as LinearLayoutManager? ?: return
         mListLastVisiblePosition = layoutManager.findLastCompletelyVisibleItemPosition()

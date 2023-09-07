@@ -21,7 +21,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.os.ConditionVariable
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
@@ -44,7 +43,7 @@ import androidx.media3.session.SessionResult
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.MoreExecutors
+import com.google.common.util.concurrent.SettableFuture
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.broadcast.BTConnectionReceiver
 import com.yuriy.openradio.shared.broadcast.BecomingNoisyReceiver
@@ -161,9 +160,7 @@ class OpenRadioService : MediaLibraryService() {
         BrowseTree()
     }
 
-    private val mExecutorService by lazy {
-        MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor())
-    }
+    private val mExecutorService = Executors.newSingleThreadExecutor()
 
     private lateinit var mFavoriteCommands: List<CommandButton>
 
@@ -1007,26 +1004,33 @@ class OpenRadioService : MediaLibraryService() {
             val defaultCountryCode = mPresenter.getCountryCode()
             // If Parent Id contains Country Code - use it in the API.
             val countryCode = MediaId.getCountryCode(parentId, defaultCountryCode)
-            val conditionVariable = ConditionVariable()
+            // Use this feature object to return response of the async nature in order it issued via this method.
+            val future = SettableFuture.create<T>()
             val dependencies = MediaItemCommandDependencies(
                 applicationContext, mPresenter, countryCode, parentId,
                 isSameCatalogue, mIsRestoreState, Bundle(), mCommandScope,
                 object : ResultListener {
 
                     override fun onResult(items: List<MediaItem>, radioStations: Set<RadioStation>, pageNumber: Int) {
-                        AppLogger.d("$TAG loaded [$pageNumber:${items.size}] for $parentId")
-                        if (pageNumber == 0) {
-                            mBrowseTree[parentId] =
-                                BrowseTree.BrowseData(ArrayList(items), radioStations.toMutableSet())
-                            mUiScope.launch { maybeCreateInitialPlaylist() }
-                        } else {
-                            position = mBrowseTree[parentId]?.size ?: 0
-                            mBrowseTree.append(
-                                parentId,
-                                BrowseTree.BrowseData(ArrayList(items), radioStations.toMutableSet())
-                            )
+
+                        mExecutorService.submit {
+
+                            AppLogger.d("$TAG loaded [$pageNumber:${items.size}] for $parentId")
+                            if (pageNumber == 0) {
+                                mBrowseTree[parentId] =
+                                    BrowseTree.BrowseData(ArrayList(items), radioStations.toMutableSet())
+                                mUiScope.launch { maybeCreateInitialPlaylist() }
+                            } else {
+                                position = mBrowseTree[parentId]?.size ?: 0
+                                mBrowseTree.append(
+                                    parentId,
+                                    BrowseTree.BrowseData(ArrayList(items), radioStations.toMutableSet())
+                                )
+                            }
+
+                            val result = action(position)
+                            future.set(result)
                         }
-                        conditionVariable.open()
                     }
                 }
             )
@@ -1043,29 +1047,31 @@ class OpenRadioService : MediaLibraryService() {
             } else {
                 AppLogger.w("$TAG skipping unmatched parentId: $parentId")
             }
-            return mExecutorService.submit<T> {
-                conditionVariable.block()
-                action(position)
-            }
+            return future
         }
 
         private fun <T> callWhenSearchReady(
             query: String,
             action: (size: Int) -> T
         ): ListenableFuture<T> {
-            val conditionVariable = ConditionVariable()
-            var size = 0
             val id = MediaId.MEDIA_ID_SEARCH_FROM_SERVICE
             val command = mPresenter.getMediaItemCommand(id)
+            val future = SettableFuture.create<T>()
             val dependencies = MediaItemCommandDependencies(
                 applicationContext, mPresenter, Country.COUNTRY_CODE_DEFAULT, id,
                 false, mIsRestoreState, AppUtils.makeSearchQueryBundle(query), mCommandScope,
 
                 object : ResultListener {
+
                     override fun onResult(items: List<MediaItem>, radioStations: Set<RadioStation>, pageNumber: Int) {
-                        mBrowseTree[query] = BrowseTree.BrowseData(ArrayList(items), radioStations.toMutableSet())
-                        size = radioStations.size
-                        conditionVariable.open()
+
+                        mExecutorService.submit {
+
+                            mBrowseTree[query] = BrowseTree.BrowseData(ArrayList(items), radioStations.toMutableSet())
+                            val size = radioStations.size
+                            val result = action(size)
+                            future.set(result)
+                        }
                     }
                 }
             )
@@ -1082,10 +1088,7 @@ class OpenRadioService : MediaLibraryService() {
             } else {
                 AppLogger.w("$TAG skipping unmatched parentId: $id")
             }
-            return mExecutorService.submit<T> {
-                conditionVariable.block()
-                action(size)
-            }
+            return future
         }
 
         private fun handleFavorite(args: Bundle, isFavorite: Boolean): Boolean {

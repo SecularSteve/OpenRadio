@@ -162,7 +162,7 @@ object MediaId {
                 categoryMediaId.isNotEmpty() &&
                         (MEDIA_ID_COUNTRY_STATIONS == categoryMediaId ||
                                 // To process list of a single selected country
-                                categoryMediaId.contains(MEDIA_ID_COUNTRIES_LIST) ||
+                                (categoryMediaId.contains(MEDIA_ID_COUNTRIES_LIST) && categoryMediaId != MEDIA_ID_COUNTRIES_LIST) ||
                                 categoryMediaId.contains(MEDIA_ID_CHILD_CATEGORIES))
                 )
     }

@@ -20,7 +20,6 @@ import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommand.IUpdatePlaybackState
 import com.yuriy.openradio.shared.utils.MediaItemBuilder
-import kotlinx.coroutines.Job
 import java.util.TreeSet
 
 /**
@@ -30,8 +29,6 @@ import java.util.TreeSet
  * E-Mail: chernyshov.yuriy@gmail.com
  */
 abstract class MediaItemCommandImpl internal constructor() : MediaItemCommand {
-
-    protected var mJob: Job? = null
 
     override fun execute(playbackStateListener: IUpdatePlaybackState, dependencies: MediaItemCommandDependencies) {
 

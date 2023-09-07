@@ -469,7 +469,7 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
             } else {
                 addBtn.gone()
             }
-            if (children.isEmpty()) {
+            if (children.isEmpty() && reference.mMediaPresenter.isAdapterEmpty()) {
                 reference.showNoDataMessage()
             }
 

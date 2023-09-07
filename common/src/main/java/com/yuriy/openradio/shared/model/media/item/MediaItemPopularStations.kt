@@ -41,8 +41,7 @@ class MediaItemPopularStations : MediaItemCommandImpl() {
             deliverResult(dependencies)
             return
         }
-        mJob?.cancel()
-        mJob = dependencies.mScope.launch(Dispatchers.IO) {
+        dependencies.mScope.launch(Dispatchers.IO) {
             withTimeoutOrNull(MediaItemCommand.CMD_TIMEOUT_MS) {
                 // Load all categories into menu
                 handleDataLoaded(
