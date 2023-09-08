@@ -8,11 +8,11 @@ project.ext {
     /**
      * Build and compile constants
      */
-    compileSdkVersion = 33
+    compileSdkVersion = 34
     minSdkVersion = 17
     minSdkVersionTv = 21
     minSdkVersionAutomotive = 28
-    targetSdkVersion = 33
+    targetSdkVersion = 34
 
     /**
      * Kotlin versions
@@ -59,6 +59,7 @@ project.ext {
     preferenceKtxVersion = "1.2.1"
     localbroadcastmanagerVersion = "1.1.0"
     workVersion = "2.8.1"
+    media3Version = "1.2.0-alpha01"
 
     /**
      * Application constants

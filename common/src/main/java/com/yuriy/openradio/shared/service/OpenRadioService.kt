@@ -96,7 +96,7 @@ class OpenRadioService : MediaLibraryService() {
      */
     private val mPlayer by lazy {
         OpenRadioPlayer(
-            applicationContext, PlayerListener(), mPresenter.getEqualizerLayer()
+            applicationContext, PlayerListener(), mPresenter.getEqualizerLayer(), mBrowseTree
         )
     }
 

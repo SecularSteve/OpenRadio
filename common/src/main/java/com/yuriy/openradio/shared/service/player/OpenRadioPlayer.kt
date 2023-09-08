@@ -52,6 +52,7 @@ import com.google.android.gms.cast.framework.CastContext
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.model.eq.EqualizerLayer
+import com.yuriy.openradio.shared.model.media.BrowseTree
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.utils.AnalyticsUtils
@@ -80,7 +81,8 @@ import kotlin.math.min
 class OpenRadioPlayer(
     private val mContext: Context,
     private val mListener: Listener,
-    private val mEqualizerLayer: EqualizerLayer
+    private val mEqualizerLayer: EqualizerLayer,
+    private val mBrowseTree: BrowseTree
 ) : Player {
     /**
      * Listener for the main public events.
@@ -961,15 +963,27 @@ class OpenRadioPlayer(
                     AppLogger.e("Update metadata, idx out of bounds")
                     return@launch
                 }
+
+                val radioStation = mBrowseTree.getRadioStationByMediaId(mPlayer.currentMediaItem?.mediaId ?: "")
                 val metadata = mPlaylist[idx].mediaMetadata
                     .buildUpon()
                     .setSubtitle(msg)
+                    // For Automotive:
+                    .setArtist(msg)
+                    // For Automotive:
+                    .setAlbumTitle(radioStation.country)
                     .setExtras(mediaMetadata.extras)
-                    // Use this trick to send metadata updates
+                    // Use this incremental trick number to trigger metadata updates
                     .setTrackNumber(mTrackNumber.getAndIncrement())
                     .build()
                 for (listener in mListeners) {
                     listener.onMediaMetadataChanged(metadata)
+                }
+
+                currentMediaItem?.let {
+                    val curIndx = currentMediaItemIndex
+                    val newItem = it.buildUpon().setMediaMetadata(metadata).build()
+                    replaceMediaItem(curIndx, newItem)
                 }
             }
         }
