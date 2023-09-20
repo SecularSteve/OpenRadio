@@ -545,8 +545,8 @@ class OpenRadioService : MediaLibraryService() {
                 AppLogger.d("$TAG create init npl fill with fav")
                 radioStations.addAll(radios)
             } else {
-                AppLogger.d("$TAG create init npl fill with recent")
-                radios = mPresenter.getRecentlyAddedStations()
+                AppLogger.d("$TAG create init npl fill with new stations")
+                radios = mPresenter.getNewStations()
                 radioStations.addAll(radios)
             }
             AppLogger.d("$TAG create init npl with ${radioStations.size}")
@@ -835,10 +835,11 @@ class OpenRadioService : MediaLibraryService() {
             mediaItems: MutableList<MediaItem>
         ): ListenableFuture<MutableList<MediaItem>> {
             AppLogger.d("$TAG AddMediaItems ${mediaItems.size}")
-            // TODO: Do we need this? SetMediaItems invoked earlier.
             if (mediaItems.size != 1) {
                 return Futures.immediateFuture(
-                    mediaItems.map { mBrowseTree.getMediaItemByMediaId(it.mediaId)!! }.toMutableList()
+                    mediaItems.mapNotNull {
+                        mBrowseTree.getMediaItemByMediaId(it.mediaId)
+                    }.toMutableList()
                 )
             }
             return Futures.immediateFuture(
@@ -887,15 +888,28 @@ class OpenRadioService : MediaLibraryService() {
                 return super.onSetMediaItems(mediaSession, controller, mediaItems, startIndex, startPositionMs)
             }
             val mediaId = mediaItems[0].mediaId
-            val mItems = mBrowseTree.getMediaItemsByMediaId(mediaId)
+            var items = mBrowseTree.getMediaItemsByMediaId(mediaId)
+
+            // This is a case when Google Assistant ask to play music but nothing selected.
+            if (items.isEmpty()) {
+                items = mBrowseTree.getMediaItemsByMediaId(mCurrentParentId)
+                val radioStations = TreeSet<RadioStation>()
+                // TODO: Do we need Radio Stations as well?
+//                for (i in items) {
+//                    radioStations.add(***)
+//                }
+                mBrowseTree[items[0].mediaId] = BrowseTree.BrowseData(items, radioStations)
+                mPlayer.setMediaItems(items, 0, C.TIME_UNSET)
+            }
+
             var pos = 0
-            for ((idx, i) in mItems.withIndex()) {
+            for ((idx, i) in items.withIndex()) {
                 if (i.mediaId == mediaId) {
                     pos = idx
                     break
                 }
             }
-            return super.onSetMediaItems(mediaSession, controller, mItems, pos, C.TIME_UNSET)
+            return super.onSetMediaItems(mediaSession, controller, items, pos, C.TIME_UNSET)
         }
 
         override fun onCustomCommand(
@@ -995,7 +1009,12 @@ class OpenRadioService : MediaLibraryService() {
             val isSameCatalogue = AppUtils.isSameCatalogue(parentId, mCurrentParentId)
             mCurrentParentId = parentId
             var position = 0
-            if (page == 0 && mBrowseTree[parentId] != null) {
+            if (page == 0
+                && mBrowseTree[parentId] != null
+                //  Do not cache these categories, always fetch fresh data.
+                && parentId != MediaId.MEDIA_ID_FAVORITES_LIST
+                && parentId != MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST
+            ) {
                 return Futures.immediateFuture(action(position))
             }
             val id = MediaId.getId(parentId, AppUtils.EMPTY_STRING)

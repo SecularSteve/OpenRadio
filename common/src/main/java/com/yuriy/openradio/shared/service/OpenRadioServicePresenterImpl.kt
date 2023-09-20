@@ -17,7 +17,7 @@ import com.yuriy.openradio.shared.model.media.item.MediaItemCountryStations
 import com.yuriy.openradio.shared.model.media.item.MediaItemFavoritesList
 import com.yuriy.openradio.shared.model.media.item.MediaItemLocalsList
 import com.yuriy.openradio.shared.model.media.item.MediaItemPopularStations
-import com.yuriy.openradio.shared.model.media.item.MediaItemRecentStations
+import com.yuriy.openradio.shared.model.media.item.MediaItemNewStations
 import com.yuriy.openradio.shared.model.media.item.MediaItemRoot
 import com.yuriy.openradio.shared.model.media.item.MediaItemRootCar
 import com.yuriy.openradio.shared.model.media.item.MediaItemSearchFromApp
@@ -83,7 +83,7 @@ class OpenRadioServicePresenterImpl(
         mMediaItemCommands[MediaId.MEDIA_ID_SEARCH_FROM_APP] = MediaItemSearchFromApp()
         mMediaItemCommands[MediaId.MEDIA_ID_SEARCH_FROM_SERVICE] = MediaItemSearchFromService()
         mMediaItemCommands[MediaId.MEDIA_ID_POPULAR_STATIONS] = MediaItemPopularStations()
-        mMediaItemCommands[MediaId.MEDIA_ID_RECENT_STATIONS] = MediaItemRecentStations()
+        mMediaItemCommands[MediaId.MEDIA_ID_NEW_STATIONS] = MediaItemNewStations()
     }
 
     override fun getMediaItemCommand(commandId: String): MediaItemCommand? {
@@ -130,9 +130,9 @@ class OpenRadioServicePresenterImpl(
         )
     }
 
-    override fun getRecentlyAddedStations(): Set<RadioStation> {
+    override fun getNewStations(): Set<RadioStation> {
         return mModelLayer.getStations(
-            mUrlLayer.getRecentlyAddedStations(),
+            mUrlLayer.getNewStations(),
             MediaIdBuilderDefault()
         )
     }

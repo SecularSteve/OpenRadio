@@ -106,7 +106,7 @@ class UrlLayerRadioBrowserImpl: UrlLayer {
         return Uri.parse(BASE_URL + "stations/topclick/" + DependencyRegistryCommon.PAGE_SIZE)
     }
 
-    override fun getRecentlyAddedStations(): Uri {
+    override fun getNewStations(): Uri {
         return Uri.parse(BASE_URL + "stations/lastchange/" + DependencyRegistryCommon.PAGE_SIZE)
     }
 

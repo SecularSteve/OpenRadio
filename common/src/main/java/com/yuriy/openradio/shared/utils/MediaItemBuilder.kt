@@ -110,11 +110,11 @@ object MediaItemBuilder {
             .build()
     }
 
-    fun buildRecentMenuItem(context: Context): MediaItem {
+    fun buildNewStationsMenuItem(context: Context): MediaItem {
         val bundle = Bundle()
         MediaItemHelper.setDrawableId(bundle, R.drawable.ic_fiber_new_black_24dp)
         return MediaItem.Builder()
-            .setMediaId(MediaId.MEDIA_ID_RECENT_STATIONS)
+            .setMediaId(MediaId.MEDIA_ID_NEW_STATIONS)
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_RADIO_STATIONS)

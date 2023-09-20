@@ -41,7 +41,7 @@ class MediaItemRoot(private val mSource: Source) : MediaItemCommand {
         }
         if (mSource == Source.RADIO_BROWSER) {
             // Recently added Radio Stations
-            dependencies.addMediaItem(MediaItemBuilder.buildRecentMenuItem(context))
+            dependencies.addMediaItem(MediaItemBuilder.buildNewStationsMenuItem(context))
             // Popular Radio Stations
             dependencies.addMediaItem(MediaItemBuilder.buildPopularMenuItem(context))
         }

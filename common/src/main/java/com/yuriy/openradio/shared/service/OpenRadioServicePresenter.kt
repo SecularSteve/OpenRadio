@@ -43,7 +43,7 @@ interface OpenRadioServicePresenter {
 
     fun getStationsByCountry(countryCode: String, pageNumber: Int): Set<RadioStation>
 
-    fun getRecentlyAddedStations(): Set<RadioStation>
+    fun getNewStations(): Set<RadioStation>
 
     fun getPopularStations(): Set<RadioStation>
 

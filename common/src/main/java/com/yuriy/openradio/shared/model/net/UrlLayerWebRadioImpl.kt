@@ -63,7 +63,7 @@ class UrlLayerWebRadioImpl : UrlLayer {
         return URI
     }
 
-    override fun getRecentlyAddedStations(): Uri {
+    override fun getNewStations(): Uri {
         return URI
     }
 

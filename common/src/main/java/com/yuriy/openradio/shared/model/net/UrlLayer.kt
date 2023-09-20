@@ -52,7 +52,7 @@ interface UrlLayer {
      *
      * @return [Uri]
      */
-    fun getRecentlyAddedStations(): Uri
+    fun getNewStations(): Uri
 
     /**
      * Get Uri for the search.

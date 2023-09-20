@@ -27,7 +27,6 @@ import androidx.core.app.ActivityCompat
 import com.google.android.material.snackbar.Snackbar
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.utils.AppUtils
-import com.yuriy.openradio.shared.utils.AppUtils.hasVersionM
 
 /**
  * [PermissionChecker] is a helper class that designed to manage permissions changes
@@ -133,7 +132,7 @@ object PermissionChecker {
      * **FALSE** otherwise.
      */
     private fun isGranted(context: Context, permission: String): Boolean {
-        return if (!hasVersionM()) {
+        return if (!AppUtils.hasVersionM()) {
             true
         } else permission.isNotEmpty() && (ActivityCompat.checkSelfPermission(context, permission)
                 == PackageManager.PERMISSION_GRANTED)

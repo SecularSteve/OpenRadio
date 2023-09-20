@@ -223,7 +223,7 @@ class RadioStation : Serializable, Comparable<RadioStation> {
     }
 
     override fun toString(): String {
-        return "RS " + hashCode() + " {" +
+        return "RS[" + hashCode() + "]{" +
                 "id=" + mId +
                 ", lastCheckOk=" + lastCheckOk +
                 ", lastCheckOkTime=" + lastCheckOkTime +

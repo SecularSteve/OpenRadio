@@ -40,7 +40,7 @@ class MediaItemRootCar(private val mSource: Source) : MediaItemCommand {
         }
         if (mSource == Source.RADIO_BROWSER) {
             // Recently added Radio Stations.
-            dependencies.addMediaItem(MediaItemBuilder.buildRecentMenuItem(context))
+            dependencies.addMediaItem(MediaItemBuilder.buildNewStationsMenuItem(context))
         }
         // Browse category to provide the rest of categories.
         dependencies.addMediaItem(MediaItemBuilder.buildBrowseMenuItem(context))

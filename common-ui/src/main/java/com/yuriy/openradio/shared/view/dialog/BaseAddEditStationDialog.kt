@@ -181,7 +181,7 @@ abstract class BaseAddEditStationDialog : BaseDialogFragment(), SourcesLayerDepe
     override fun onResume() {
         super.onResume()
         val context: Activity? = activity
-        if (!PermissionChecker.isExternalStorageGranted(context!!)) {
+        if (PermissionChecker.isExternalStorageGranted(context!!).not()) {
             PermissionChecker.requestExternalStoragePermission(
                 context, requireView().findView(R.id.dialog_add_edit_root_layout)
             )
