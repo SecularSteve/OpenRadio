@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2017-2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,12 @@
 
 package com.yuriy.openradio.shared.utils
 
-import android.content.Context
 import android.os.Bundle
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
-import com.yuriy.openradio.R
-import com.yuriy.openradio.shared.model.media.RadioStation
-import com.yuriy.openradio.shared.model.media.getStreamUrlFixed
 
 /**
  * Created by Yuriy Chernyshov
@@ -129,69 +125,6 @@ object MediaItemHelper {
     }
 
     /**
-     * Build [android.media.MediaMetadata] from provided
-     * [RadioStation].
-     *
-     * @param radioStation [RadioStation].
-     * @return [android.media.MediaMetadata]
-     */
-    fun metadataFromRadioStation(
-        context: Context,
-        radioStation: RadioStation,
-        streamTitle: String? = null
-    ): MediaMetadataCompat {
-        val title = radioStation.name
-        var artist = streamTitle
-        val genre = radioStation.genre
-        val source = radioStation.getStreamUrlFixed()
-        val id = radioStation.id
-        val album = radioStation.country
-
-        if (artist.isNullOrEmpty()) {
-            artist = context.getString(R.string.media_description_default)
-        }
-
-        val imageUri = radioStation.imageUri.toString()
-
-        // Adding the music source to the MediaMetadata (and consequently using it in the
-        // mediaSession.setMetadata) is not a good idea for a real world music app, because
-        // the session metadata can be accessed by notification listeners. This is done in this
-        // sample for convenience only.
-        val metadata = MediaMetadataCompat.Builder()
-            .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, id)
-            .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, source)
-            .putString(MediaMetadataCompat.METADATA_KEY_GENRE, genre)
-            .putString(MediaMetadataCompat.METADATA_KEY_ART_URI, imageUri)
-            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, imageUri)
-            // This is the way information display on Android Auto screen:
-            // DisplayTitle
-            // Artist
-            // Album
-            // METADATA_KEY_DISPLAY_TITLE is used to indicate whether METADATA_KEY_DISPLAY_DESCRIPTION
-            // needs to be parsed as description.
-            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
-            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
-            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
-            .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON_URI, imageUri)
-            .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, title)
-            .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE, streamTitle)
-            .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_DESCRIPTION, streamTitle)
-            .build()
-
-        // Info: There is no other way to set custom values in the description's bundle ...
-        // Use reflection to do this.
-        val description = metadata.description
-        var extras = description.extras
-        if (extras == null) {
-            extras = Bundle()
-            updateExtras(description, extras)
-        }
-        setDrawableId(extras, R.drawable.ic_radio_station_empty)
-        extras.putInt(KEY_SORT_ID, radioStation.sortId)
-        return metadata
-    }
-
-    /**
      * Try to extract useful information from the media description. In good case - this is metadata associated
      * with the stream, subtitles otherwise, in worse case - default string.
      *
@@ -214,54 +147,5 @@ object MediaItemHelper {
             result = value.extras!!.getString(MediaMetadataCompat.METADATA_KEY_ARTIST, defaultValue)
         }
         return result.ifEmpty { defaultValue }
-    }
-
-    /**
-     * Updates extras field of the Media Description object using reflection.
-     *
-     * @param description Media description to update extras field on.
-     * @param extras      Extras field to apply to provided Media Description.
-     */
-    private fun updateExtras(
-        description: MediaDescriptionCompat,
-        extras: Bundle?
-    ) {
-        val clazz: Class<*> = description.javaClass
-        try {
-            val field = clazz.getDeclaredField("mExtras")
-            field.isAccessible = true
-            field[description] = extras
-        } catch (e: Exception) {
-            AppLogger.e("Can not set bundles to description", e)
-        }
-    }
-
-    /**
-     * Create [MediaMetadataCompat] for the empty category.
-     *
-     * @param context Context of the callee.
-     * @return Object of the [MediaMetadataCompat] type.
-     */
-    fun buildMediaMetadataForEmptyCategory(
-        context: Context,
-        parentId: String?
-    ): MediaMetadataCompat {
-        val title = context.getString(R.string.category_empty)
-        val artist = AppUtils.EMPTY_STRING
-        val genre = AppUtils.EMPTY_STRING
-        val source = AppUtils.EMPTY_STRING
-
-        // Adding the music source to the MediaMetadata (and consequently using it in the
-        // mediaSession.setMetadata) is not a good idea for a real world music app, because
-        // the session metadata can be accessed by notification listeners. This is done in this
-        // sample for convenience only.
-        return MediaMetadataCompat.Builder()
-            .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, parentId)
-            .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_URI, source)
-            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
-            .putString(MediaMetadataCompat.METADATA_KEY_GENRE, genre)
-            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title) // Workaround to include bundles into build()
-            .putLong(MediaMetadataCompat.METADATA_KEY_DOWNLOAD_STATUS, MediaDescriptionCompat.STATUS_NOT_DOWNLOADED)
-            .build()
     }
 }

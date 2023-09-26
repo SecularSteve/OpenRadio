@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The "Open Radio" Project. Author: Chernyshov Yuriy [chernyshov.yuriy@gmail.com]
+ * Copyright 2017-2023 The "Open Radio" Project. Author: Chernyshov Yuriy [chernyshov.yuriy@gmail.com]
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.yuriy.openradio.shared.utils
 
 import android.os.Bundle
-import androidx.media3.common.IllegalSeekPositionException
+import android.util.Log
 import com.google.firebase.analytics.ktx.analytics
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.ktx.Firebase
@@ -32,37 +32,24 @@ import com.google.firebase.ktx.Firebase
  */
 object AnalyticsUtils {
 
-    private const val EVENT_ILLEGAL_SEEK_POSITION = "EVENT_ILLEGAL_SEEK_POSITION"
     private const val EVENT_UNSUPPORTED_PLAYLIST_V2 = "EVENT_UNSUPPORTED_PLAYLIST_V2"
     private const val EVENT_METADATA = "EVENT_METADATA"
     private const val EVENT_CANT_DECODE_BITES = "EVENT_CANT_DECODE_BITES_V2"
     private const val EVENT_GDRIVE_FILE_DELETED = "EVENT_GDRIVE_FILE_DELETED"
     private const val EVENT_ABOUT_PAGE = "EVENT_ABOUT_PAGE"
+    private const val EVENT_EMPTY_LOCAL_CONFIG = "EVENT_EMPTY_LOCAL_CONFIG"
     private const val KEY_METADATA = "KEY_METADATA"
     private const val KEY_URL = "KEY_URL"
     private const val KEY_BYTES_SIZE = "KEY_BYTES_SIZE"
     private const val KEY_URL_INVALID = "KEY_URL_INVALID"
     private const val KEY_MSG = "KEY_MSG"
-    private const val KEY_POS = "KEY_POS"
-    private const val KEY_IDX = "KEY_IDX"
-    private const val KEY_ITEMS_COUNT = "KEY_ITEMS_COUNT"
-    private const val KEY_OBJ = "KEY_OBJ"
 
-    fun logMessage(message: String) {
-        AppLogger.d(message)
+    fun logMessage(message: String, severity: Int = Log.DEBUG) {
+        when (severity) {
+            Log.ERROR -> AppLogger.e(message)
+            else -> AppLogger.d(message)
+        }
         Firebase.crashlytics.log(message)
-    }
-
-    fun logIllegalSeekPosition(itemsCount: Int, exception: IllegalSeekPositionException) {
-        val pos = exception.positionMs
-        val idx = exception.windowIndex
-        val timeLine = exception.timeline
-        val bundle = Bundle()
-        bundle.putLong(KEY_POS, pos)
-        bundle.putInt(KEY_IDX, idx)
-        bundle.putInt(KEY_ITEMS_COUNT, itemsCount)
-        bundle.putString(KEY_OBJ, timeLine.toString())
-        Firebase.analytics.logEvent(EVENT_ILLEGAL_SEEK_POSITION, bundle)
     }
 
     fun logUnsupportedPlaylist(value: String) {
@@ -85,6 +72,13 @@ object AnalyticsUtils {
 
     fun logAboutOpen() {
         Firebase.analytics.logEvent(EVENT_ABOUT_PAGE, Bundle())
+    }
+
+    fun logEmptyLocalConfig(msg: String) {
+        AppLogger.w(msg)
+        val bundle = Bundle()
+        bundle.putString(KEY_MSG, msg)
+        Firebase.analytics.logEvent(EVENT_EMPTY_LOCAL_CONFIG, bundle)
     }
 
     fun logBitmapDecode(value: String, bytesSize: Int) {

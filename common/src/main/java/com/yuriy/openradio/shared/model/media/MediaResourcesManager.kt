@@ -19,6 +19,9 @@ package com.yuriy.openradio.shared.model.media
 import android.content.ComponentName
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import androidx.core.os.ExecutorCompat
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -29,9 +32,12 @@ import androidx.media3.session.MediaBrowser
 import androidx.media3.session.MediaController
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionResult
 import androidx.media3.session.SessionToken
 import androidx.work.await
 import com.google.common.collect.ImmutableList
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.service.OpenRadioService
@@ -117,13 +123,24 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
             )
                 ?.await()?.value ?: ImmutableList.of()
         } else {
-            mMediaBrowser?.getChildren(
+            val children = mMediaBrowser?.getChildren(
                 parentId,
                 page,
                 DependencyRegistryCommon.PAGE_SIZE,
                 null
             )
-                ?.await()?.value ?: ImmutableList.of()
+            children?.addListener(
+                {
+                    //TODO: Maybe evolve this case?
+                    val result = children.get()!!
+                    val children = result.value!!
+//                    subItemMediaList.addAll(children)
+//                    mediaListAdapter.notifyDataSetChanged()
+                },
+                ExecutorCompat.create(Handler(Looper.getMainLooper()))
+            )
+
+            children?.await()?.value ?: ImmutableList.of()
         }
     }
 
@@ -235,9 +252,17 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
     }
 
     private inner class BrowserListener : MediaBrowser.Listener {
+        override fun onCustomCommand(
+            controller: MediaController,
+            command: SessionCommand,
+            args: Bundle
+        ): ListenableFuture<SessionResult> {
+            AppLogger.d("TODO: BrowserListener Custom Command $command")
+            return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+        }
 
         override fun onDisconnected(controller: MediaController) {
-            AppLogger.w("TODO: BrowserListener Disconnected")
+            AppLogger.d("TODO: BrowserListener Disconnected")
         }
 
         override fun onChildrenChanged(
@@ -246,7 +271,16 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
             itemCount: Int,
             params: MediaLibraryService.LibraryParams?
         ) {
-            AppLogger.w("TODO: BrowserListener ChildrenChanged for $parentId")
+            AppLogger.d("TODO: BrowserListener ChildrenChanged for $parentId")
+        }
+
+        override fun onSearchResultChanged(
+            browser: MediaBrowser,
+            query: String,
+            itemCount: Int,
+            params: MediaLibraryService.LibraryParams?
+        ) {
+            AppLogger.d("TODO: BrowserListener Search Result Changed to $query")
         }
     }
 

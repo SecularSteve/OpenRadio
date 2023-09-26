@@ -282,4 +282,27 @@ object MediaItemBuilder {
             )
             .build()
     }
+
+    fun buildDefaultPlayable(): MediaItem {
+        val bundle = Bundle()
+        MediaItemHelper.updateBitrateField(bundle, 128)
+        val uri = Uri.parse("http://stream.mangoradio.de")
+        return MediaItem.Builder()
+            .setMediaId("78012206-1aa1-11e9-a80b-52543be04c81")
+            .setUri(uri)
+            .setMimeType(AppUtils.getMimeTypeFromUri(uri))
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+                    .setTitle("MANGORADIO")
+                    .setSubtitle("Germany")
+                    .setDescription("Dance")
+                    .setArtworkUri(Uri.parse("https://mangoradio.de//android-icon-192x192.png"))
+                    .setExtras(bundle)
+                    .setIsBrowsable(false)
+                    .setIsPlayable(true)
+                    .build()
+            )
+            .build()
+    }
 }

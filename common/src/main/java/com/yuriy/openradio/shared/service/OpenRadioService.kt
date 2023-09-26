@@ -726,7 +726,7 @@ class OpenRadioService : MediaLibraryService() {
             }
             //mIsRestoreState = OpenRadioStore.getRestoreState(rootHints)
             val libraryParams = LibraryParams.Builder().setExtras(rootExtras).build()
-            val rootMediaItem = if (!mIsPackageValid) {
+            val rootMediaItem = if (mIsPackageValid.not()) {
                 MediaItem.EMPTY
             } else if (params?.isRecent == true) {
                 // TODO:
@@ -765,13 +765,11 @@ class OpenRadioService : MediaLibraryService() {
         ): ListenableFuture<LibraryResult<MediaItem>> {
             AppLogger.d("$TAG [$browser] GetItem for $mediaId")
             mBrowser = browser
-            val item = mBrowseTree.getMediaItemByMediaId(mediaId) ?: MediaItem.EMPTY
-            if (item.mediaId == null || item.mediaId == MediaItem.DEFAULT_MEDIA_ID) {
-                AnalyticsUtils.logMessage("GetItem for $mediaId failed")
-            }
-            return Futures.immediateFuture(
-                LibraryResult.ofItem(item, LibraryParams.Builder().build())
-            )
+            val item = mBrowseTree.getMediaItemByMediaId(mediaId)
+                ?: return Futures.immediateFuture(
+                    LibraryResult.ofError(LibraryResult.RESULT_ERROR_BAD_VALUE)
+                )
+            return Futures.immediateFuture(LibraryResult.ofItem(item, LibraryParams.Builder().build()))
         }
 
         override fun onSearch(
@@ -892,7 +890,26 @@ class OpenRadioService : MediaLibraryService() {
 
             // This is a case when Google Assistant ask to play music but nothing selected.
             if (items.isEmpty()) {
-                items = mBrowseTree.getMediaItemsByMediaId(mCurrentParentId)
+                val newItems = mutableListOf<MediaItem>()
+                for (item in mBrowseTree.getMediaItemsByMediaId(mCurrentParentId)) {
+                    // Firebase reported many instances with invalid configuration
+                    if (item.localConfiguration == null) {
+                        val msg = try {
+                            "${item.mediaId}-${IntentUtils.bundleToString(item.mediaMetadata.toBundle())}"
+                        } catch (exception: Exception) {
+                            "Can't create a message: ${exception.message}"
+                        }
+                        AnalyticsUtils.logEmptyLocalConfig(msg)
+                        continue
+                    }
+                    newItems.add(item)
+                }
+                // Still empty list? Add something to listen.
+                if (newItems.isEmpty()) {
+                    newItems.add(MediaItemBuilder.buildDefaultPlayable())
+                }
+                items = newItems
+
                 val radioStations = TreeSet<RadioStation>()
                 // TODO: Do we need Radio Stations as well?
 //                for (i in items) {

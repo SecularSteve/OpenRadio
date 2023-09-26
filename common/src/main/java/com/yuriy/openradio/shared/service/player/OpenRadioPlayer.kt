@@ -911,7 +911,7 @@ class OpenRadioPlayer(
                 updateStreamMetadata(mLiveStreamLabel)
             }
             if (events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)
-                && !events.contains(Player.EVENT_MEDIA_METADATA_CHANGED)
+                && events.contains(Player.EVENT_MEDIA_METADATA_CHANGED).not()
             ) {
                 // CastPlayer does not support onMetaDataChange. We can trigger this here when the
                 // media item changes.
