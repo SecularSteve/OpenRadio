@@ -21,10 +21,11 @@ import android.content.Context
 import android.content.res.Configuration
 import android.net.ConnectivityManager
 import androidx.multidex.MultiDexApplication
-import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.yuriy.openradio.shared.model.ModelLayerImpl
+import com.yuriy.openradio.shared.model.cast.CastLayer
+import com.yuriy.openradio.shared.model.cast.CastLayerImpl
 import com.yuriy.openradio.shared.model.eq.EqualizerLayer
 import com.yuriy.openradio.shared.model.eq.EqualizerLayerImpl
 import com.yuriy.openradio.shared.model.filter.FilterImpl
@@ -83,13 +84,13 @@ object DependencyRegistryCommon {
     private lateinit var sOpenRadioServicePresenter: OpenRadioServicePresenterImpl
     private lateinit var sSleepTimerModel: SleepTimerModel
     private lateinit var sSourcesLayer: SourcesLayer
+    private lateinit var sCastLayer: CastLayer
 
     /**
      * Flag that indicates whether application runs over normal Android or Android TV.
      */
     private var sIsTv = AtomicBoolean(false)
     private var sIsCar = AtomicBoolean(false)
-    private var sIsCastAvailable = AtomicBoolean(false)
     private var sIsGoogleApiAvailable = AtomicBoolean(false)
 
     @Volatile
@@ -125,17 +126,10 @@ object DependencyRegistryCommon {
         }
 
         val connectionResult = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context)
-        isCastAvailable = try {
-            CastContext.getSharedInstance(context)
-            true
-        } catch (e: Exception) {
-            AppLogger.e("Cast API availability exception '${e.message}'")
-            false
-        }
         isGoogleApiAvailable = connectionResult == ConnectionResult.SUCCESS
         AppLogger.i("Google API:$connectionResult")
-        AppLogger.i("Cast API:$isCastAvailable")
 
+        sCastLayer = CastLayerImpl(context)
         sSourcesLayer = SourcesLayerImpl(context)
         sNetworkLayer = NetworkLayerImpl(
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -185,7 +179,8 @@ object DependencyRegistryCommon {
             apiCacheInMemory,
             sSleepTimerModel,
             countriesCache,
-            listenerProxy
+            listenerProxy,
+            sCastLayer
         )
 
         sInit.set(true)
@@ -209,12 +204,6 @@ object DependencyRegistryCommon {
             sIsCar.set(value)
         }
 
-    var isCastAvailable: Boolean
-        get() = sIsCastAvailable.get()
-        private set(value) {
-            sIsCastAvailable.set(value)
-        }
-
     fun inject(dependency: ImagesProvider) {
         dependency.configureWith(sImagesPersistenceLayer)
     }
@@ -229,6 +218,9 @@ object DependencyRegistryCommon {
 
     fun injectSourcesLayer(dependency: SourcesLayerDependency) {
         dependency.configureWith(sSourcesLayer)
+    }
+    fun injectCastLayer(dependency: CastLayerDependency) {
+        dependency.configureWith(sCastLayer)
     }
 
     fun injectNetworkLayer(dependency: NetworkLayerDependency) {

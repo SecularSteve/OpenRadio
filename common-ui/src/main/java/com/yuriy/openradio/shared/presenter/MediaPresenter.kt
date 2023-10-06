@@ -23,6 +23,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.cast.framework.CastContext
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiverCallback
 import com.yuriy.openradio.shared.model.ServiceCommander
 import com.yuriy.openradio.shared.model.media.MediaItemsSubscription
@@ -77,6 +78,8 @@ interface MediaPresenter {
     fun getCurrentMediaItem(): MediaItem?
 
     fun getServiceCommander(): ServiceCommander
+
+    fun getCastContext(): CastContext?
 
     fun updateActiveItem(position: Int)
 

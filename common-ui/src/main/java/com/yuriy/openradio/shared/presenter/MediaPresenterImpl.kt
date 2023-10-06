@@ -40,12 +40,14 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.cast.framework.CastContext
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.broadcast.AppLocalBroadcast
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiver
 import com.yuriy.openradio.shared.broadcast.AppLocalReceiverCallback
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.model.ServiceCommander
+import com.yuriy.openradio.shared.model.cast.CastLayer
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.MediaItemsSubscription
 import com.yuriy.openradio.shared.model.media.MediaResourceManagerListener
@@ -89,7 +91,8 @@ class MediaPresenterImpl(
     private val mLocationStorage: LocationStorage,
     private val mSleepTimerModel: SleepTimerModel,
     private val mSourcesLayer: SourcesLayer,
-    private val mFavoritesStorage: FavoritesStorage
+    private val mFavoritesStorage: FavoritesStorage,
+    private val mCastLayer: CastLayer
 ) : MediaPresenter {
     /**
      * Manager object that acts as interface between Media Resources and current Activity.
@@ -218,6 +221,10 @@ class MediaPresenterImpl(
 
     override fun getServiceCommander(): ServiceCommander {
         return mServiceCommander
+    }
+
+    override fun getCastContext(): CastContext? {
+        return mCastLayer.getCastContext()
     }
 
     override fun getOnSaveInstancePassed(): Boolean {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2017-2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,7 @@ import com.yuriy.openradio.shared.utils.visible
 import com.yuriy.openradio.shared.view.dialog.AboutDialog
 import com.yuriy.openradio.shared.view.dialog.AddStationDialog
 import com.yuriy.openradio.shared.view.dialog.BaseDialogFragment
+import com.yuriy.openradio.shared.view.dialog.BatteryOptimizationDialog
 import com.yuriy.openradio.shared.view.dialog.EqualizerDialog
 import com.yuriy.openradio.shared.view.dialog.GeneralSettingsDialog
 import com.yuriy.openradio.shared.view.dialog.GoogleDriveDialog
@@ -111,8 +112,8 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
     private lateinit var mPauseBtn: View
     private lateinit var mProgressBarCrs: ProgressBar
     private lateinit var mMediaPresenter: MediaPresenter
-    private lateinit var mCastContext: CastContext
     private var mSavedInstanceState = Bundle()
+    private var mCastContext: CastContext? = null
 
     init {
         mLocalBroadcastReceiverCb = LocalBroadcastReceiverCallback()
@@ -153,11 +154,9 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
 
         DependencyRegistryCommonUi.inject(this)
 
-        // Initialize the Cast context. This is required so that the media route button can be
-        // created in the AppBar.
-        if (DependencyRegistryCommon.isCastAvailable) {
-            mCastContext = CastContext.getSharedInstance(applicationContext)
-        }
+        mCastContext = mMediaPresenter.getCastContext()
+
+        BatteryOptimizationDialog.handle(applicationContext, supportFragmentManager)
     }
 
     override fun onResume() {

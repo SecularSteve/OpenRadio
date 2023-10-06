@@ -16,6 +16,7 @@
 package com.yuriy.openradio.shared.service
 
 import android.content.Context
+import com.yuriy.openradio.shared.model.cast.CastLayer
 import com.yuriy.openradio.shared.model.eq.EqualizerLayer
 import com.yuriy.openradio.shared.model.media.Category
 import com.yuriy.openradio.shared.model.media.RadioStation
@@ -36,6 +37,8 @@ interface OpenRadioServicePresenter {
     fun stopNetworkMonitor(context: Context)
 
     fun isMobileNetwork(): Boolean
+
+    fun getCastLayer(): CastLayer
 
     fun getUseMobile(): Boolean
 

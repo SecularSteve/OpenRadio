@@ -37,6 +37,7 @@ import androidx.fragment.app.FragmentTransaction
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.yuriy.openradio.shared.view.dialog.AboutDialog
 import com.yuriy.openradio.shared.view.dialog.AddStationDialog
+import com.yuriy.openradio.shared.view.dialog.BatteryOptimizationDialog
 import com.yuriy.openradio.shared.view.dialog.EditStationDialog
 import com.yuriy.openradio.shared.view.dialog.EqualizerDialog
 import com.yuriy.openradio.shared.view.dialog.GeneralSettingsDialog
@@ -179,6 +180,7 @@ object UiUtils {
         removeFragment(transaction, manager.findFragmentByTag(SleepTimerDialog.DIALOG_TAG))
         removeFragment(transaction, manager.findFragmentByTag(StreamBufferingDialog.DIALOG_TAG))
         removeFragment(transaction, manager.findFragmentByTag(SourceDialog.DIALOG_TAG))
+        removeFragment(transaction, manager.findFragmentByTag(BatteryOptimizationDialog.DIALOG_TAG))
         try {
             transaction.commitNow()
         } catch (exception: IllegalStateException) {

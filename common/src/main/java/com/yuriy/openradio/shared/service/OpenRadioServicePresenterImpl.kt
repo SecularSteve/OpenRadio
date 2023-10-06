@@ -2,6 +2,7 @@ package com.yuriy.openradio.shared.service
 
 import android.content.Context
 import com.yuriy.openradio.shared.model.ModelLayer
+import com.yuriy.openradio.shared.model.cast.CastLayer
 import com.yuriy.openradio.shared.model.eq.EqualizerLayer
 import com.yuriy.openradio.shared.model.media.Category
 import com.yuriy.openradio.shared.model.media.MediaId
@@ -16,8 +17,8 @@ import com.yuriy.openradio.shared.model.media.item.MediaItemCountriesList
 import com.yuriy.openradio.shared.model.media.item.MediaItemCountryStations
 import com.yuriy.openradio.shared.model.media.item.MediaItemFavoritesList
 import com.yuriy.openradio.shared.model.media.item.MediaItemLocalsList
-import com.yuriy.openradio.shared.model.media.item.MediaItemPopularStations
 import com.yuriy.openradio.shared.model.media.item.MediaItemNewStations
+import com.yuriy.openradio.shared.model.media.item.MediaItemPopularStations
 import com.yuriy.openradio.shared.model.media.item.MediaItemRoot
 import com.yuriy.openradio.shared.model.media.item.MediaItemRootCar
 import com.yuriy.openradio.shared.model.media.item.MediaItemSearchFromApp
@@ -57,7 +58,8 @@ class OpenRadioServicePresenterImpl(
     private val mApiCacheInMemory: ApiCache,
     private val mSleepTimerModel: SleepTimerModel,
     private val mCountriesCache:TreeSet<Country>,
-    private val mListener: RadioStationManagerLayerListener
+    private val mListener: RadioStationManagerLayerListener,
+    private val mCastLayer: CastLayer
 ) : OpenRadioServicePresenter {
 
     private var mRemoteControlListener: RemoteControlListener? = null
@@ -92,6 +94,10 @@ class OpenRadioServicePresenterImpl(
 
     fun getRemoteControlListenerProxy(): RemoteControlListener {
         return mRemoteControlListenerProxy
+    }
+
+    override fun getCastLayer(): CastLayer {
+        return mCastLayer
     }
 
     override fun startNetworkMonitor(context: Context, listener: NetworkMonitorListener) {

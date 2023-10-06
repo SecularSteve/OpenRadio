@@ -21,10 +21,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.HandlerThread
-import android.os.Looper
-import android.os.Message
 import androidx.annotation.MainThread
 import androidx.annotation.UiThread
 import androidx.media.utils.MediaConstants
@@ -96,7 +92,11 @@ class OpenRadioService : MediaLibraryService() {
      */
     private val mPlayer by lazy {
         OpenRadioPlayer(
-            applicationContext, PlayerListener(), mPresenter.getEqualizerLayer(), mBrowseTree
+            applicationContext,
+            PlayerListener(),
+            mPresenter.getEqualizerLayer(),
+            mBrowseTree,
+            mPresenter.getCastLayer()
         )
     }
 
@@ -142,12 +142,6 @@ class OpenRadioService : MediaLibraryService() {
         }
     )
     private val mNetMonitorListener = NetworkMonitorListenerImpl()
-
-    /**
-     * Processes Messages sent to it from onStartCommand() that indicate which command to process.
-     */
-    @Volatile
-    private lateinit var mServiceHandler: ServiceHandler
 
     private val mStartIds: ConcurrentLinkedQueue<Int>
     private var mCurrentParentId = AppUtils.EMPTY_STRING
@@ -204,16 +198,6 @@ class OpenRadioService : MediaLibraryService() {
             setActiveRS(mPresenter.getLastRadioStation())
         }
         registerReceivers()
-        // Create and start a background HandlerThread since by
-        // default a Service runs in the UI Thread, which we don't
-        // want to block.
-        val thread = HandlerThread("ORS-Thread")
-        thread.start()
-        // Looper associated with the HandlerThread.
-        val looper = thread.looper
-        // Get the HandlerThread's Looper and use it for our Handler.
-        mServiceHandler = ServiceHandler(looper)
-        mPlayer.updatePlayer()
         mSession = with(
             MediaLibrarySession.Builder(
                 this, mPlayer, ServiceCallback()
@@ -255,9 +239,6 @@ class OpenRadioService : MediaLibraryService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         AppLogger.i("$TAG on start $intent ${IntentUtils.intentBundleToString(intent)}, id:$startId")
         mStartIds.add(startId)
-        if (intent != null) {
-            sendMessage(intent)
-        }
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -268,9 +249,6 @@ class OpenRadioService : MediaLibraryService() {
         mUiScope.cancel("Cancel on destroy")
         mScope.cancel("Cancel on destroy")
         unregisterReceivers()
-        if (this::mServiceHandler.isInitialized) {
-            mServiceHandler.looper.quit()
-        }
         mPresenter.close()
         mSession.run {
             release()
@@ -319,19 +297,6 @@ class OpenRadioService : MediaLibraryService() {
             mBrowseTree.invalidate(mediaId)
             mSession.notifyChildrenChanged(it, mediaId, 250, null)
         }
-    }
-
-    /**
-     * @param intent
-     */
-    private fun sendMessage(intent: Intent) {
-        if (this::mServiceHandler.isInitialized.not()) {
-            return
-        }
-        // Create a Message that will be sent to ServiceHandler.
-        val message = mServiceHandler.makeMessage(intent)
-        // Send the Message to ServiceHandler.
-        mServiceHandler.sendMessage(message)
     }
 
     /**
@@ -449,6 +414,9 @@ class OpenRadioService : MediaLibraryService() {
     private fun closeService() {
         handleStopRequest()
         stopSelfResultInt()
+        // TODO: There is on start command received after stop command ... need to find out the reason.
+        //       Also, when swipe the UI, progress indicator still on for the current media.
+        android.os.Process.killProcess(android.os.Process.myPid())
     }
 
     /**
@@ -456,16 +424,6 @@ class OpenRadioService : MediaLibraryService() {
      */
     private fun handleStopRequest() {
         mUiScope.launch { mPlayer.stop() }
-    }
-
-    /**
-     * This method executed in separate thread.
-     *
-     * @param command
-     * @param intent
-     */
-    private fun handleMessageInternal(command: String, intent: Intent) {
-        AppLogger.i("$TAG handle msg, cmd $command $intent, pkg valid $mIsPackageValid")
     }
 
     private fun togglePlayableItem() {
@@ -602,36 +560,6 @@ class OpenRadioService : MediaLibraryService() {
                     }
                 }
             }
-        }
-    }
-
-    /**
-     * An inner class that inherits from Handler and uses its
-     * handleMessage() hook method to process Messages sent to
-     * it from onStartCommand().
-     */
-    private inner class ServiceHandler(looper: Looper) : Handler(looper) {
-        /**
-         * A factory method that creates a Message that contains
-         * information of the command to perform.
-         */
-        fun makeMessage(intent: Intent): Message {
-            val message = Message.obtain()
-            message.obj = intent
-            return message
-        }
-
-        /**
-         * Hook method that process command sent from service.
-         */
-        override fun handleMessage(message: Message) {
-            val intent = message.obj as Intent
-            val bundle = intent.extras ?: return
-            val command = bundle.getString(OpenRadioStore.KEY_NAME_COMMAND_NAME)
-            if (command.isNullOrEmpty()) {
-                return
-            }
-            handleMessageInternal(command, intent)
         }
     }
 

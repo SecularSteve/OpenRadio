@@ -48,9 +48,8 @@ import androidx.media3.exoplayer.source.UnrecognizedInputFormatException
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.extractor.metadata.icy.IcyInfo
 import androidx.media3.extractor.metadata.id3.TextInformationFrame
-import com.google.android.gms.cast.framework.CastContext
 import com.yuriy.openradio.R
-import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
+import com.yuriy.openradio.shared.model.cast.CastLayer
 import com.yuriy.openradio.shared.model.eq.EqualizerLayer
 import com.yuriy.openradio.shared.model.media.BrowseTree
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
@@ -82,7 +81,8 @@ class OpenRadioPlayer(
     private val mContext: Context,
     private val mListener: Listener,
     private val mEqualizerLayer: EqualizerLayer,
-    private val mBrowseTree: BrowseTree
+    private val mBrowseTree: BrowseTree,
+    private val mCastLayer: CastLayer
 ) : Player {
     /**
      * Listener for the main public events.
@@ -121,10 +121,13 @@ class OpenRadioPlayer(
      * If Cast is available, create a CastPlayer to handle communication with a Cast session.
      */
     private val mCastPlayer: CastPlayer? by lazy {
-        AppLogger.i("Init CastPlayer")
+        val castCtx = mCastLayer.getCastContext()
+        AppLogger.i("Init CastPlayer with $castCtx")
+        if (castCtx == null) {
+            return@lazy null
+        }
         try {
-            val castContext = CastContext.getSharedInstance(mContext)
-            CastPlayer(castContext).apply {
+            CastPlayer(castCtx).apply {
                 setSessionAvailabilityListener(OpenRadioCastSessionAvailabilityListener())
                 addListener(mComponentListener)
             }
@@ -177,14 +180,17 @@ class OpenRadioPlayer(
     }
 
     init {
-        mPlayer = if (DependencyRegistryCommon.isCastAvailable) mCastPlayer!! else mExoPlayer
-        switchToPlayer(mPlayer)
+        mPlayer = mExoPlayer
         mEqualizerLayer.init((mExoPlayer as ExoPlayer).audioSessionId)
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Player interface
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    override fun setAudioAttributes(audioAttributes: AudioAttributes, handleAudioFocus: Boolean) {
+        mPlayer.setAudioAttributes(audioAttributes, handleAudioFocus)
+    }
 
     override fun setVolume(value: Float) {
         mPlayer.volume = value
@@ -203,8 +209,11 @@ class OpenRadioPlayer(
     }
 
     override fun release() {
-        mPlayer.release()
         mPlaylist.clear()
+        mEqualizerLayer.deinit()
+        reset()
+        mPlayer.release()
+        mCastPlayer?.release()
     }
 
     override fun play() {
@@ -755,12 +764,6 @@ class OpenRadioPlayer(
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    fun updatePlayer() {
-        if (DependencyRegistryCommon.isCastAvailable) {
-            switchToPlayer(mCastPlayer!!)
-        }
-    }
-
     fun invalidateMetaData() {
         mComponentListener.invalidateMetaData()
     }
@@ -785,45 +788,44 @@ class OpenRadioPlayer(
     private fun switchToPlayer(player: Player) {
         AppLogger.i("$TAG prev player: $mPlayer")
         AppLogger.i("$TAG new  player: $player")
-        if (mPlayer == player) {
-            return
-        }
-        // Remove add all listeners before changing the player state.
-        for (listener in mListeners) {
-            mPlayer.removeListener(listener)
-            player.addListener(listener)
-        }
-        // Add/remove our listener we use to workaround the missing metadata support of CastPlayer.
-        mPlayer.removeListener(mComponentListener)
-        player.addListener(mComponentListener)
 
-        player.repeatMode = mPlayer.repeatMode
-        player.shuffleModeEnabled = mPlayer.shuffleModeEnabled
-        player.playlistMetadata = mPlayer.playlistMetadata
-        player.trackSelectionParameters = mPlayer.trackSelectionParameters
-        player.volume = mPlayer.volume
-        player.playWhenReady = mPlayer.playWhenReady
-
-        // Prepare the new player.
-        player.setMediaItems(mPlaylist, currentMediaItemIndex, mPlayer.contentPosition)
-        player.prepare()
-
-        // Stop the previous player. Don't release so it can be used again.
-        mPlayer.clearMediaItems()
-        mPlayer.stop()
-
-        mPlayer = player
-        volume = AppPreferencesManager.getMasterVolume(
+        player.volume = AppPreferencesManager.getMasterVolume(
             mContext,
             OpenRadioService.MASTER_VOLUME_DEFAULT
         ).toFloat() / 100.0f
-    }
 
-    private fun releaseIntrnl() {
-        AppLogger.d("$TAG release intrl")
-        mEqualizerLayer.deinit()
-        reset()
-        mPlayer.release()
+        if (mPlayer === player) {
+            return
+        }
+
+        // Player state management.
+        var playbackPositionMs = C.TIME_UNSET
+        var currentItemIndex = C.INDEX_UNSET
+        var playWhenReady = true
+
+        val previousPlayer: Player = mPlayer
+        if (previousPlayer != null) {
+            // Save state from the previous player.
+            val playbackState = previousPlayer.playbackState
+            if (playbackState != Player.STATE_ENDED) {
+                playbackPositionMs = previousPlayer.currentPosition
+                playWhenReady = previousPlayer.playWhenReady
+                currentItemIndex = previousPlayer.currentMediaItemIndex
+                if (currentItemIndex != currentItemIndex) {
+                    playbackPositionMs = C.TIME_UNSET
+                    currentItemIndex = currentItemIndex
+                }
+            }
+            previousPlayer.stop()
+            previousPlayer.clearMediaItems()
+        }
+
+        mPlayer = player
+
+        // Media queue management.
+        player.setMediaItems(mPlaylist, currentItemIndex, playbackPositionMs)
+        player.playWhenReady = playWhenReady
+        player.prepare()
     }
 
     /**

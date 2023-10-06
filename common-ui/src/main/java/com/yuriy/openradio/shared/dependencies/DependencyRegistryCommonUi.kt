@@ -17,6 +17,7 @@
 package com.yuriy.openradio.shared.dependencies
 
 import android.content.Context
+import com.yuriy.openradio.shared.model.cast.CastLayer
 import com.yuriy.openradio.shared.model.eq.EqualizerLayer
 import com.yuriy.openradio.shared.model.media.RadioStationManagerLayer
 import com.yuriy.openradio.shared.model.net.NetworkLayer
@@ -49,7 +50,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 object DependencyRegistryCommonUi :
     NetworkLayerDependency, LocationStorageDependency, FavoritesStorageDependency,
     DeviceLocalsStorageDependency, EqualizerLayerDependency, RadioStationManagerLayerDependency,
-    NetworkSettingsStorageDependency, SleepTimerModelDependency, SourcesLayerDependency {
+    NetworkSettingsStorageDependency, SleepTimerModelDependency, SourcesLayerDependency, CastLayerDependency {
 
     private lateinit var sMediaPresenter: MediaPresenter
     private lateinit var sEditStationPresenter: EditStationPresenter
@@ -66,6 +67,7 @@ object DependencyRegistryCommonUi :
     private lateinit var sRadioStationManagerLayer: RadioStationManagerLayer
     private lateinit var sSleepTimerModel: SleepTimerModel
     private lateinit var sSourcesLayer: SourcesLayer
+    private lateinit var sCastLayer: CastLayer
 
     @Volatile
     private var sInit = AtomicBoolean(false)
@@ -86,13 +88,15 @@ object DependencyRegistryCommonUi :
         DependencyRegistryCommon.injectNetworkSettingsStorage(this)
         DependencyRegistryCommon.injectSleepTimerModel(this)
         DependencyRegistryCommon.injectSourcesLayer(this)
+        DependencyRegistryCommon.injectCastLayer(this)
         sMediaPresenter = MediaPresenterImpl(
             context,
             sNetworkLayer,
             sLocationStorage,
             sSleepTimerModel,
             sSourcesLayer,
-            sFavoritesStorage
+            sFavoritesStorage,
+            sCastLayer
         )
         sEditStationPresenter = EditStationPresenterImpl(
             sFavoritesStorage,
@@ -113,6 +117,10 @@ object DependencyRegistryCommonUi :
         )
 
         sInit.set(true)
+    }
+
+    override fun configureWith(castLayer: CastLayer) {
+        sCastLayer = castLayer
     }
 
     override fun configureWith(sourcesLayer: SourcesLayer) {

@@ -132,8 +132,8 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
             children?.addListener(
                 {
                     //TODO: Maybe evolve this case?
-                    val result = children.get()!!
-                    val children = result.value!!
+//                    val result = children.get()!!
+//                    val children = result.value!!
 //                    subItemMediaList.addAll(children)
 //                    mediaListAdapter.notifyDataSetChanged()
                 },

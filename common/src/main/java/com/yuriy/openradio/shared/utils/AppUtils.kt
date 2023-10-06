@@ -233,6 +233,9 @@ object AppUtils {
         if (hasVersionM().not()) {
             return true
         }
+//        val settingsIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+//            .setData(Uri.parse("package:$packageName"))
+//        getContext().startActivity(settingsIntent)
         val pwrm = context.applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
         val name = context.applicationContext.packageName
         return pwrm.isIgnoringBatteryOptimizations(name)

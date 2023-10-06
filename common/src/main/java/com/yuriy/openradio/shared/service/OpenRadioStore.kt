@@ -25,8 +25,6 @@ import com.yuriy.openradio.shared.utils.AppUtils
  */
 object OpenRadioStore {
 
-    const val KEY_NAME_COMMAND_NAME = "KEY_NAME_COMMAND_NAME"
-
     const val EXTRA_KEY_MEDIA_ID = "EXTRA_KEY_MEDIA_ID"
     const val EXTRA_KEY_MEDIA_IDS = "EXTRA_KEY_MEDIA_IDS"
     const val EXTRA_KEY_SORT_IDS = "EXTRA_KEY_SORT_IDS"
