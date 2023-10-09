@@ -181,6 +181,10 @@ class OpenRadioPlayer(
 
     init {
         mPlayer = mExoPlayer
+        mPlayer.volume = AppPreferencesManager.getMasterVolume(
+            mContext,
+            OpenRadioService.MASTER_VOLUME_DEFAULT
+        ).toFloat() / 100.0f
         mEqualizerLayer.init((mExoPlayer as ExoPlayer).audioSessionId)
     }
 
@@ -789,11 +793,6 @@ class OpenRadioPlayer(
         AppLogger.i("$TAG prev player: $mPlayer")
         AppLogger.i("$TAG new  player: $player")
 
-        player.volume = AppPreferencesManager.getMasterVolume(
-            mContext,
-            OpenRadioService.MASTER_VOLUME_DEFAULT
-        ).toFloat() / 100.0f
-
         if (mPlayer === player) {
             return
         }
@@ -802,6 +801,7 @@ class OpenRadioPlayer(
         var playbackPositionMs = C.TIME_UNSET
         var currentItemIndex = C.INDEX_UNSET
         var playWhenReady = true
+        var volume = 1.0F
 
         val previousPlayer: Player = mPlayer
         if (previousPlayer != null) {
@@ -810,6 +810,7 @@ class OpenRadioPlayer(
             if (playbackState != Player.STATE_ENDED) {
                 playbackPositionMs = previousPlayer.currentPosition
                 playWhenReady = previousPlayer.playWhenReady
+                volume = previousPlayer.volume
                 currentItemIndex = previousPlayer.currentMediaItemIndex
                 if (currentItemIndex != currentItemIndex) {
                     playbackPositionMs = C.TIME_UNSET
@@ -825,6 +826,7 @@ class OpenRadioPlayer(
         // Media queue management.
         player.setMediaItems(mPlaylist, currentItemIndex, playbackPositionMs)
         player.playWhenReady = playWhenReady
+        player.volume = volume
         player.prepare()
     }
 

@@ -300,7 +300,7 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
             handleChildrenLoaded(parentId, children)
         }
 
-        override fun onError(id: String) {
+        override fun onError(parentId: String) {
             SafeToast.showAnyThread(
                 applicationContext,
                 getString(com.yuriy.openradio.shared.R.string.error_loading_media)

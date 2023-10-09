@@ -18,7 +18,7 @@ package com.yuriy.openradio.shared.model.storage.drive
 
 import androidx.core.util.Pair
 import com.google.android.gms.tasks.Task
-import com.google.android.gms.tasks.Tasks
+import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.api.client.http.ByteArrayContent
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
@@ -43,19 +43,17 @@ class GoogleDriveHelper(private val mDriveService: Drive) {
     /**
      * Creates a text file in the user's My Drive folder and returns its file ID.
      */
-    fun createFile(folderId: String, name: String,
-                   content: String): Task<String> {
-        return Tasks.call(executor) {
-            val metadata = File()
-                .setParents(listOf(folderId))
-                .setMimeType(MIME_TYPE_TEXT)
-                .setName(name)
-            // Convert content to an AbstractInputStreamContent instance.
-            val contentStream = ByteArrayContent.fromString(MIME_TYPE_TEXT, content)
-            val file = mDriveService.files().create(metadata, contentStream).execute()
-                ?: throw IOException("Null result when requesting file creation.")
-            file.id
+    fun createFile(folderId: String, name: String, content: String): Task<String> {
+        val taskCompletionSource = TaskCompletionSource<String>()
+        executor.execute {
+            try {
+                val fileId = createFileInternal(folderId, name, content)
+                taskCompletionSource.setResult(fileId)
+            } catch (e: Exception) {
+                taskCompletionSource.setException(e)
+            }
         }
+        return taskCompletionSource.task
     }
 
     /**
@@ -64,15 +62,21 @@ class GoogleDriveHelper(private val mDriveService: Drive) {
      * @return
      */
     fun createFolder(name: String): Task<String> {
-        return Tasks.call(executor) {
-            val metadata = File()
-                .setMimeType(MIME_TYPE_FOLDER)
-                .setName(name)
-            val folder = mDriveService.files().create(metadata)
-                .setFields("id")
-                .execute()
-            folder.id
+        val taskCompletionSource = TaskCompletionSource<String>()
+        executor.execute {
+            try {
+                val metadata = File()
+                    .setMimeType(MIME_TYPE_FOLDER)
+                    .setName(name)
+                val folder = mDriveService.files().create(metadata)
+                    .setFields("id")
+                    .execute()
+                taskCompletionSource.setResult(folder.id)
+            } catch (e: Exception) {
+                taskCompletionSource.setException(e)
+            }
         }
+        return taskCompletionSource.task
     }
 
     /**
@@ -80,29 +84,33 @@ class GoogleDriveHelper(private val mDriveService: Drive) {
      * contents.
      */
     fun readFile(fileId: String): Task<Pair<String, String>> {
-        return Tasks.call(executor) {
-            // Retrieve the metadata as a File object.
-            val metadata = mDriveService.files()[fileId].execute()
-            val name = metadata.name
-            mDriveService.files()[fileId].executeMediaAsInputStream().use { `is` ->
-                BufferedReader(InputStreamReader(`is`)).use { reader ->
-                    val stringBuilder = StringBuilder()
-                    var line: String?
-                    while (reader.readLine().also { line = it } != null) {
-                        stringBuilder.append(line)
-                    }
-                    return@call Pair.create(name, stringBuilder.toString())
-                }
+        val taskCompletionSource = TaskCompletionSource<Pair<String, String>>()
+        executor.execute {
+            try {
+                // Retrieve the metadata as a File object.
+                val metadata = mDriveService.files()[fileId].execute()
+                val name = metadata.name
+                val content = readContentFromInputStream(fileId)
+                taskCompletionSource.setResult(Pair.create(name, content))
+            } catch (e: Exception) {
+                taskCompletionSource.setException(e)
             }
         }
+        return taskCompletionSource.task
     }
 
-    fun deleteFile(fileId: String): Task<Void?> {
-        return Tasks.call(executor) {
-            // Delete file with specified id..
-            mDriveService.files().delete(fileId).execute()
-            null
+    fun deleteFile(fileId: String): Task<Unit> {
+        val taskCompletionSource = TaskCompletionSource<Unit>()
+        executor.execute {
+            try {
+                // Delete file with specified id
+                mDriveService.files().delete(fileId).execute()
+                taskCompletionSource.setResult(Unit)
+            } catch (e: Exception) {
+                taskCompletionSource.setException(e)
+            }
         }
+        return taskCompletionSource.task
     }
 
     /**
@@ -110,12 +118,19 @@ class GoogleDriveHelper(private val mDriveService: Drive) {
      * created by this app.
      */
     fun queryFolder(name: String): Task<FileList> {
-        return Tasks.call(executor) {
-            mDriveService.files().list()
-                .setSpaces("drive")
-                .setQ("mimeType='$MIME_TYPE_FOLDER' and trashed=false and name='$name'")
-                .execute()
+        val taskCompletionSource = TaskCompletionSource<FileList>()
+        executor.execute {
+            try {
+                val fileList = mDriveService.files().list()
+                    .setSpaces("drive")
+                    .setQ("mimeType='$MIME_TYPE_FOLDER' and trashed=false and name='$name'")
+                    .execute()
+                taskCompletionSource.setResult(fileList)
+            } catch (e: Exception) {
+                taskCompletionSource.setException(e)
+            }
         }
+        return taskCompletionSource.task
     }
 
     /**
@@ -123,11 +138,44 @@ class GoogleDriveHelper(private val mDriveService: Drive) {
      * created by this app.
      */
     fun queryFile(fileName: String): Task<FileList> {
-        return Tasks.call(executor) {
-            mDriveService.files().list()
-                .setSpaces("drive")
-                .setQ("mimeType='$MIME_TYPE_TEXT' and trashed=false and name='$fileName'")
-                .execute()
+        val taskCompletionSource = TaskCompletionSource<FileList>()
+        executor.execute {
+            try {
+                val fileList = mDriveService.files().list()
+                    .setSpaces("drive")
+                    .setQ("mimeType='$MIME_TYPE_TEXT' and trashed=false and name='$fileName'")
+                    .execute()
+                taskCompletionSource.setResult(fileList)
+            } catch (e: Exception) {
+                taskCompletionSource.setException(e)
+            }
         }
+        return taskCompletionSource.task
+    }
+
+    private fun readContentFromInputStream(fileId: String): String {
+        val inputStream = mDriveService.files()[fileId].executeMediaAsInputStream()
+        return inputStream.use { `is` ->
+            BufferedReader(InputStreamReader(`is`)).use { reader ->
+                val stringBuilder = StringBuilder()
+                var line: String?
+                while (reader.readLine().also { line = it } != null) {
+                    stringBuilder.append(line)
+                }
+                stringBuilder.toString()
+            }
+        }
+    }
+
+    private fun createFileInternal(folderId: String, name: String, content: String): String {
+        val metadata = File()
+            .setParents(listOf(folderId))
+            .setMimeType(MIME_TYPE_TEXT)
+            .setName(name)
+        // Convert content to an AbstractInputStreamContent instance.
+        val contentStream = ByteArrayContent.fromString(MIME_TYPE_TEXT, content)
+        val file = mDriveService.files().create(metadata, contentStream).execute()
+            ?: throw IOException("Null result when requesting file creation.")
+        return file.id
     }
 }
