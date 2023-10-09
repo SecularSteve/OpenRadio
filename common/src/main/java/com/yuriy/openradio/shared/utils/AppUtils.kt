@@ -198,6 +198,11 @@ object AppUtils {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
     }
 
+    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.P)
+    fun hasVersionP(): Boolean {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+    }
+
     @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
     fun hasVersionS(): Boolean {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S

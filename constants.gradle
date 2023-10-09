@@ -51,7 +51,7 @@ project.ext {
     firebaseCrashlyticsVersion = "17.3.0"
     jdom2Version = "2.0.6"
     googleHttpClientGsonVersion = "1.26.0"
-    googleApiClientAndroidVersion = "1.26.0"
+    googleApiClientAndroidVersion = "2.2.0"
     googleApiServicesDrive = "v3-rev197-1.25.0"
     countryboundariesVersion = "1.5"
     androidxMediaVersion = "1.6.0"

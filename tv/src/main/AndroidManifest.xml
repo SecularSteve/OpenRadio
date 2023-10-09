@@ -20,7 +20,7 @@
     <!-- Declare Leanback support -->
     <uses-feature
         android:name="android.software.leanback"
-        android:required="false" />
+        android:required="true" />
 
     <!-- Declare touchscreen not required -->
     <uses-feature

@@ -23,8 +23,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.Scopes
 import com.google.android.gms.common.api.Scope
-import com.google.api.client.extensions.android.http.AndroidHttp
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
@@ -278,7 +278,14 @@ class GoogleDriveManager(private val mContext: Context, private val mListener: L
             mContext, setOf(DriveScopes.DRIVE_FILE)
         )
         credential.selectedAccount = account
-        val drive = Drive.Builder(AndroidHttp.newCompatibleTransport(), GsonFactory(), credential)
+
+        val drive = Drive.Builder(
+            if (AppUtils.hasVersionP()) {
+                NetHttpTransport()
+            } else {
+                com.google.api.client.http.apache.ApacheHttpTransport.Builder().build()
+            }, GsonFactory(), credential
+        )
             .setApplicationName(mContext.getString(R.string.app_name))
             .build()
 

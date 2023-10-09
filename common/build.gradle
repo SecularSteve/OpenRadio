@@ -43,6 +43,15 @@ android {
                     'META-INF/DEPENDENCIES'
             ]
         }
+        exclude "org/apache/http/version.properties"
+        exclude "org/apache/http/client/version.properties"
+    }
+
+    configurations {
+        configureEach {
+            exclude group: "commons-logging", module: "commons-logging"
+            exclude group: "org.apache.httpcomponents"
+        }
     }
 }
 
@@ -80,15 +89,13 @@ dependencies {
     api "androidx.media3:media3-session:$media3Version"
     api "com.google.android.gms:play-services-location:$googlePlayServicesLocationVersion"
     api "com.google.http-client:google-http-client-gson:$googleHttpClientGsonVersion"
-    api("com.google.api-client:google-api-client-android:$googleApiClientAndroidVersion") {
-        exclude group: "org.apache.httpcomponents"
-    }
-    api("com.google.apis:google-api-services-drive:$googleApiServicesDrive") {
-        exclude group: "org.apache.httpcomponents"
-    }
+    api "com.google.api-client:google-api-client-android:$googleApiClientAndroidVersion"
+    api "com.google.apis:google-api-services-drive:$googleApiServicesDrive"
     // https://mvnrepository.com/artifact/org.jdom/jdom2
     api group: "org.jdom", name: "jdom2", version: "$jdom2Version"
     api "de.westnordost:countryboundaries:$countryboundariesVersion"
+    // https://mvnrepository.com/artifact/com.google.http-client/google-http-client-apache-v2
+    implementation group: 'com.google.http-client', name: 'google-http-client-apache-v2', version: '1.43.3'
 
     // https://mvnrepository.com/artifact/junit/junit
     testApi group: "junit", name: "junit", version: "$junitVersion"
