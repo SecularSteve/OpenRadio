@@ -53,7 +53,7 @@
     <string name="google_drive_download_info">Download Favorites and Local added Radio Stations from Google Drive.</string>
     <string name="can_not_play_station">Can not play Station</string>
     <string name="error_loading_media">Error Loading Media</string>
-    <string name="app_settings_title">Application Settings</string>
+    <string name="app_settings_title">Settings</string>
     <string name="stream_buffering_label">@string/buffering</string>
     <string name="stream_buffering_descr">Restart playback when values are changed\nRange is %1$d - %2$d milliseconds\n(%3$d second - %4$d minutes)</string>
     <string name="invalid_buffer_desc">Invalid value of buffer : </string>

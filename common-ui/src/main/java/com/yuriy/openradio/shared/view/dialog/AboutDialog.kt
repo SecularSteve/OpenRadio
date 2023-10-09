@@ -23,6 +23,7 @@ import android.view.View
 import androidx.media3.common.MediaLibraryInfo
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.utils.AnalyticsUtils
+import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.IntentUtils
 import com.yuriy.openradio.shared.utils.findImageView
 import com.yuriy.openradio.shared.utils.findTextView
@@ -45,6 +46,11 @@ class AboutDialog : BaseDialogFragment() {
         val exoPlayerVersion = view.findTextView(R.id.about_exo_player_ver_link_view)
         val exoPlayerVersionText = getString(R.string.about_exo_text) + " " + MediaLibraryInfo.VERSION
         exoPlayerVersion.text = exoPlayerVersionText
+
+        val versionText = AppUtils.getApplicationVersion(context) + "." +
+                AppUtils.getApplicationVersionCode(context)
+        val versionCodeView = view.findTextView(R.id.dialog_about_version_view)
+        versionCodeView.text = versionText
 
         setOnClickOnText(context, view, R.id.about_author_link_view, AUTHOR_PROFILE_URL)
         setOnClickOnText(context, view, R.id.about_project_link_view, PROJECT_HOME_URL)

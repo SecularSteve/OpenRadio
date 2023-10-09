@@ -27,6 +27,7 @@ import android.os.PowerManager
 import android.util.DisplayMetrics
 import android.webkit.MimeTypeMap
 import androidx.annotation.ChecksSdkIntAtLeast
+import androidx.core.content.pm.PackageInfoCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
@@ -172,13 +173,13 @@ object AppUtils {
         return height.coerceAtMost(width)
     }
 
-    fun getApplicationVersionCode(context: Context): Int {
+    fun getApplicationVersionCode(context: Context): Long {
         val packageInfo = getPackageInfo(context)
         return if (packageInfo != null) {
-            packageInfo.versionCode
+            PackageInfoCompat.getLongVersionCode(packageInfo)
         } else {
             AppLogger.w("Can't get application code")
-            0
+            0L
         }
     }
 

@@ -48,7 +48,6 @@ import com.yuriy.openradio.shared.model.media.PlaybackState
 import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.presenter.MediaPresenterListener
 import com.yuriy.openradio.shared.utils.AppLogger
-import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.PlayerUtils
 import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.utils.UiUtils
@@ -311,10 +310,6 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
             drawer.closeDrawer(GravityCompat.START)
             true
         }
-        val versionText = AppUtils.getApplicationVersion(context) + "." +
-                AppUtils.getApplicationVersionCode(context)
-        val versionView = navigationView.getHeaderView(0).findTextView(R.id.drawer_ver_code_view)
-        versionView.text = versionText
 
         if (DependencyRegistryCommon.isGoogleApiAvailable.not()) {
             navigationView.menu.removeItem(R.id.nav_google_drive)
