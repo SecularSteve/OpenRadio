@@ -44,7 +44,6 @@ abstract class MediaItemCommandImpl internal constructor() : MediaItemCommand {
     ) {
         if (set.isEmpty()) {
             if (doLoadNoDataReceived()) {
-                dependencies.addMediaItem(MediaItemBuilder.buildChildCategories())
                 dependencies.resultListener.onResult(dependencies.getMediaItems())
                 playbackStateListener.updatePlaybackState(dependencies.context.getString(R.string.no_data_message))
             } else {

@@ -977,6 +977,11 @@ class OpenRadioService : MediaLibraryService() {
 
                     override fun onResult(items: List<MediaItem>, radioStations: Set<RadioStation>, pageNumber: Int) {
 
+                        if (items.isEmpty()) {
+                            future.set(action(mBrowseTree[parentId]?.size ?: 0))
+                            return
+                        }
+
                         mExecutorService.submit {
 
                             AppLogger.d("$TAG loaded [$pageNumber:${items.size}] for $parentId")
@@ -992,8 +997,7 @@ class OpenRadioService : MediaLibraryService() {
                                 )
                             }
 
-                            val result = action(position)
-                            future.set(result)
+                            future.set(action(position))
                         }
                     }
                 }
