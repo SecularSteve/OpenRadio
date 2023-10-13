@@ -57,12 +57,9 @@ class RadioStationJsonDeserializer : RadioStationDeserializer {
             JsonUtils.getStringValue(jsonObject, RadioStationJsonHelper.KEY_ID)
         )
         radioStation.name = JsonUtils.getStringValue(jsonObject, RadioStationJsonHelper.KEY_NAME)
-        var bitrateStr = JsonUtils.getStringValue(jsonObject, RadioStationJsonHelper.KEY_BITRATE, "0")
-        if (!TextUtils.isDigitsOnly(bitrateStr) || bitrateStr.isEmpty()) {
-            bitrateStr = "0"
-        }
+        val bitrateStr = JsonUtils.getIntValue(jsonObject, RadioStationJsonHelper.KEY_BITRATE, 0)
         radioStation.setVariant(
-            bitrateStr.toInt(),
+            bitrateStr,
             JsonUtils.getStringValue(jsonObject, RadioStationJsonHelper.KEY_STREAM_URL)
         )
         radioStation.country = JsonUtils.getStringValue(jsonObject, RadioStationJsonHelper.KEY_COUNTRY)

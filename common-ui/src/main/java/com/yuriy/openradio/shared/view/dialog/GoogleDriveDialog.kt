@@ -122,7 +122,7 @@ class GoogleDriveDialog : BaseDialogFragment(), MediaPresenterDependency {
                 mProgressBarUpload.visible()
             }
             GoogleDriveManager.Command.DOWNLOAD -> activity.runOnUiThread {
-                mProgressBarDownload.gone()
+                mProgressBarDownload.visible()
             }
         }
     }

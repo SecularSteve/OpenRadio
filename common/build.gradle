@@ -53,6 +53,10 @@ android {
             exclude group: "org.apache.httpcomponents"
         }
     }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
 }
 
 dependencies {

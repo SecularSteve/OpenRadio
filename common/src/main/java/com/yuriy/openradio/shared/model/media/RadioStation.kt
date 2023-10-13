@@ -203,10 +203,18 @@ class RadioStation : Serializable, Comparable<RadioStation> {
         }
 
     override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || javaClass != other.javaClass) return false
+        if (this === other) {
+            return true
+        }
+        if (other == null || javaClass != other.javaClass) {
+            return false
+        }
         val station = other as RadioStation
-        return if (mId != station.mId) false else mMediaStream == station.mMediaStream
+        return if (mId != station.mId) {
+            false
+        } else {
+            mMediaStream == station.mMediaStream
+        }
     }
 
     override fun hashCode(): Int {
@@ -216,8 +224,9 @@ class RadioStation : Serializable, Comparable<RadioStation> {
     }
 
     override fun compareTo(other: RadioStation): Int {
-        if (sortId != DependencyRegistryCommon.UNKNOWN_ID) {
-            return sortId.compareTo(other.sortId)
+        val sortIdValue = sortId.compareTo(other.sortId)
+        if (sortIdValue != 0) {
+            return sortIdValue
         }
         return name.compareTo(other.name)
     }

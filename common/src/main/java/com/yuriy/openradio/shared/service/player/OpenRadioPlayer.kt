@@ -17,6 +17,7 @@
 package com.yuriy.openradio.shared.service.player
 
 import android.content.Context
+import android.media.AudioManager
 import android.os.Looper
 import android.view.Surface
 import android.view.SurfaceHolder
@@ -64,6 +65,7 @@ import kotlinx.coroutines.launch
 import java.net.HttpURLConnection
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.min
+
 
 /**
  * Created by Chernyshov Yurii
@@ -186,6 +188,16 @@ class OpenRadioPlayer(
             OpenRadioService.MASTER_VOLUME_DEFAULT
         ).toFloat() / 100.0f
         mEqualizerLayer.init((mExoPlayer as ExoPlayer).audioSessionId)
+
+        val audioManager = mContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager?
+        val currentVolume = audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC)
+        val maxVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        // Set the volume for media stream
+        //val desiredVolume = 50
+        //audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, desiredVolume, 0)
+        AppLogger.i("Volume cur. $currentVolume")
+        AppLogger.i("Volume max. $maxVolume")
+        AppLogger.i("Volume plr. ${mPlayer.volume}")
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -98,9 +98,9 @@ abstract class AbstractRadioStationsStorage(contextRef: WeakReference<Context>, 
      * @return List of Radio Stations.
      */
     fun getAllFromString(marshalledRadioStations: String): Set<RadioStation> {
-        val list = TreeSet<RadioStation>()
+        val set = TreeSet<RadioStation>()
         if (marshalledRadioStations.isEmpty()) {
-            return list
+            return set
         }
         val deserializer = RadioStationJsonDeserializer()
         val radioStationsPairs = marshalledRadioStations.split(KEY_VALUE_PAIR_DELIMITER.toRegex()).toTypedArray()
@@ -117,9 +117,9 @@ abstract class AbstractRadioStationsStorage(contextRef: WeakReference<Context>, 
                 AppLogger.e("Can not deserialize (getAllFromString) from '${keyValue[1]}'")
                 continue
             }
-            list.add(radioStation)
+            set.add(radioStation)
         }
-        return list
+        return set
     }
 
     /**
