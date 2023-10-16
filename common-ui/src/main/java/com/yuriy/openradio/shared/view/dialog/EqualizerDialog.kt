@@ -43,8 +43,8 @@ class EqualizerDialog : BaseDialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val view = inflater.inflate(
-                R.layout.dialog_eq,
-                activity?.findViewById(R.id.dialog_eq_root)
+            R.layout.dialog_eq,
+            activity?.findViewById(R.id.dialog_eq_root)
         )
         DependencyRegistryCommonUi.inject(this)
         mLinearLayout = view.findViewById(R.id.eq_controls_view)
@@ -68,9 +68,9 @@ class EqualizerDialog : BaseDialogFragment() {
         updateEqualizerUi(state)
         val presets = state.presets
         val adapter = ArrayAdapter(
-                requireActivity(),
-                android.R.layout.simple_spinner_item,
-                presets
+            requireActivity(),
+            android.R.layout.simple_spinner_item,
+            presets
         )
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         val spinner = view.findSpinner(R.id.eq_presets_spinner)
@@ -84,7 +84,9 @@ class EqualizerDialog : BaseDialogFragment() {
                 }
             }
 
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // Not used
+            }
         }
     }
 
@@ -96,23 +98,26 @@ class EqualizerDialog : BaseDialogFragment() {
         for (i in 0 until state.numOfBands) {
             val frequencyView = TextView(context)
             frequencyView.layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            )
             frequencyView.gravity = Gravity.CENTER_HORIZONTAL
             val msg0 = (state.centerFrequencies[i] / 1000).toString() + " Hz"
             frequencyView.text = msg0
             mLinearLayout.addView(frequencyView)
             val lowerBandLevelView = TextView(context)
             lowerBandLevelView.layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            )
             val msg1 = (lowerEqualizerBandLevel / 100).toString() + " dB"
             lowerBandLevelView.text = msg1
             val upperBandLevelView = TextView(context)
             upperBandLevelView.layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            )
             val msg2 = (upperEqualizerBandLevel / 100).toString() + " dB"
             upperBandLevelView.text = msg2
             val params = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT - 60, 120
+                ViewGroup.LayoutParams.MATCH_PARENT - 60, 120
             )
             params.weight = 1f
             val seekBar = SeekBar(context)
@@ -124,21 +129,20 @@ class EqualizerDialog : BaseDialogFragment() {
             seekBar.progress = (upperEqualizerBandLevel - lowerEqualizerBandLevel) / 2 + state.bandLevels[i]
             seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-//                    mEqualizer.setBandLevel(equalizerBandIndex, (short) (progress + lowerEqualizerBandLevel));
+                    // Not used
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeekBar) {
-                    //not used
+                    // Not used
                 }
 
                 override fun onStopTrackingTouch(seekBar: SeekBar) {
-//                    properties.edit_preferences.putInt("seek_" + seek_id, seekBar.getProgress()).commit();
-//                    properties.edit_preferences.putInt("position", 0).commit();
+                    // Not used
                 }
             })
             seekBar.progressDrawable = ColorDrawable(Color.rgb(56, 60, 62))
             val seekBarLayout = LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
             )
             seekBarLayout.weight = 1f
             seekBarLayout.setMargins(5, 0, 5, 0)

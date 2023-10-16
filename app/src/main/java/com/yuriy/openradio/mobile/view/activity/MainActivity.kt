@@ -148,7 +148,7 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
             mSavedInstanceState = Bundle(savedInstanceState)
         }
 
-        initUi(applicationContext)
+        initUi()
         hideProgressBar()
 
         DependencyRegistryCommonUi.inject(this)
@@ -234,7 +234,7 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
     /**
      * Initialize UI components.
      */
-    private fun initUi(context: Context) {
+    private fun initUi() {
         // Set content.
         setContentView(R.layout.main_drawer)
         mPlayBtn = findView(R.id.crs_play_btn_view)
