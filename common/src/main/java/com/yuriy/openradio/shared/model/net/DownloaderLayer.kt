@@ -47,6 +47,6 @@ interface DownloaderLayer {
         context: Context,
         uri: Uri,
         parameters: List<Pair<String, String>> = ArrayList(),
-        contentTypeFilter: String = AppUtils.EMPTY_STRING
+        contentTypeFilter: String? = AppUtils.EMPTY_STRING
     ): ByteArray
 }

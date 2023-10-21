@@ -70,7 +70,7 @@ class RadioStationValidator(
                     return@launch
                 }
                 val pairs = urlData.second
-                if (pairs == null) {
+                if (pairs == null || pairs.isEmpty()) {
                     mUiScope.launch { onFailure("Radio Station's stream is invalid") }
                     return@launch
                 }

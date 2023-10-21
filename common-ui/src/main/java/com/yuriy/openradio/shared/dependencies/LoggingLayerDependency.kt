@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,15 @@
 
 package com.yuriy.openradio.shared.dependencies
 
-import com.yuriy.openradio.shared.presenter.MediaPresenter
+import com.yuriy.openradio.shared.model.logging.LoggingLayer
 
 /**
- * [MediaPresenterDependency] is an interface that helps to inject [MediaPresenter] into a client.
+ * [LoggingLayerDependency] is an interface that helps to inject [LoggingLayer] into a client.
  */
-interface MediaPresenterDependency {
+interface LoggingLayerDependency {
 
     /**
-     * Callback to provide [MediaPresenter] to a client.
+     * Callback to provide [LoggingLayer] to a client.
      */
-    fun configureWith(mediaPresenter: MediaPresenter)
+    fun configureWith(loggingLayer: LoggingLayer)
 }

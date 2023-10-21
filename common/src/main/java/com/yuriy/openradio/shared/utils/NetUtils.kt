@@ -120,6 +120,7 @@ object NetUtils {
                     isRedirect = true
                 }
             } catch (exception: Exception) {
+                // TODO: If SocketTimeoutException - retry with increased timeout.
                 AppLogger.e("Can not get http connection (2) from $url", exception)
             }
         } while (isRedirect)

@@ -19,6 +19,8 @@ package com.yuriy.openradio.shared.dependencies
 import android.content.Context
 import com.yuriy.openradio.shared.model.cast.CastLayer
 import com.yuriy.openradio.shared.model.eq.EqualizerLayer
+import com.yuriy.openradio.shared.model.logging.LoggingLayer
+import com.yuriy.openradio.shared.model.logging.LoggingLayerImpl
 import com.yuriy.openradio.shared.model.media.RadioStationManagerLayer
 import com.yuriy.openradio.shared.model.net.NetworkLayer
 import com.yuriy.openradio.shared.model.source.SourcesLayer
@@ -68,6 +70,7 @@ object DependencyRegistryCommonUi :
     private lateinit var sSleepTimerModel: SleepTimerModel
     private lateinit var sSourcesLayer: SourcesLayer
     private lateinit var sCastLayer: CastLayer
+    private lateinit var sLoggingLayer: LoggingLayer
 
     @Volatile
     private var sInit = AtomicBoolean(false)
@@ -89,6 +92,7 @@ object DependencyRegistryCommonUi :
         DependencyRegistryCommon.injectSleepTimerModel(this)
         DependencyRegistryCommon.injectSourcesLayer(this)
         DependencyRegistryCommon.injectCastLayer(this)
+        sLoggingLayer = LoggingLayerImpl(context)
         sMediaPresenter = MediaPresenterImpl(
             context,
             sNetworkLayer,
@@ -189,5 +193,9 @@ object DependencyRegistryCommonUi :
 
     fun injectServiceCommander(dependency: ServiceCommanderDependency) {
         dependency.configureWith(sMediaPresenter.getServiceCommander())
+    }
+
+    fun injectLoggingLayer(dependency: LoggingLayerDependency) {
+        dependency.configureWith(sLoggingLayer)
     }
 }

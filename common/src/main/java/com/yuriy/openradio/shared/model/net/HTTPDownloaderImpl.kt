@@ -48,9 +48,11 @@ class HTTPDownloaderImpl(private val mUrlLayer: UrlLayer) : DownloaderLayer {
     override fun downloadDataFromUri(
         context: Context, uri: Uri,
         parameters: List<Pair<String, String>>,
-        contentTypeFilter: String
+        contentTypeFilter: String?
     ): ByteArray {
-        val task = BytesDownloader(context, mUrlLayer, uri, parameters, contentTypeFilter)
+        val task = BytesDownloader(
+            context, mUrlLayer, uri, parameters, contentTypeFilter ?: AppUtils.EMPTY_STRING
+        )
         return mExecutor.submit(task).get()
     }
 
@@ -65,7 +67,7 @@ class HTTPDownloaderImpl(private val mUrlLayer: UrlLayer) : DownloaderLayer {
         override fun call(): ByteArray {
 
             data class Response(
-                val url:URL? = null,
+                val url: URL? = null,
                 val responseCode: Int = -1,
                 val connection: HttpURLConnection? = null
             )
@@ -117,9 +119,8 @@ class HTTPDownloaderImpl(private val mUrlLayer: UrlLayer) : DownloaderLayer {
 
             val connection = responseObj.connection ?: return response
 
-            val contentType = connection.getHeaderField("Content-Type")
-
-            if (mContentTypeFilter != AppUtils.EMPTY_STRING && !contentType.startsWith(mContentTypeFilter)) {
+            val contentType = connection.getHeaderField("Content-Type") ?: AppUtils.EMPTY_STRING
+            if (mContentTypeFilter != AppUtils.EMPTY_STRING && contentType.startsWith(mContentTypeFilter).not()) {
                 NetUtils.closeHttpURLConnection(responseObj.connection)
                 AppLogger.w("$CLASS_NAME filtered out $contentType for ${responseObj.url}")
                 return response

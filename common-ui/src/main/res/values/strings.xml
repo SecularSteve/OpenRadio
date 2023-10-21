@@ -109,4 +109,5 @@
     <string name="empty_search_msg">Empty Search Query</string>
     <item type="id" name="imageUpdated" />
     <item type="id" name="imageId" />
+    <string name="send_logs_lbl">Send Logs</string>
 </resources>

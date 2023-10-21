@@ -43,8 +43,10 @@ import com.yuriy.openradio.automotive.R
 import com.yuriy.openradio.automotive.dependencies.DependencyRegistryAutomotive
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
+import com.yuriy.openradio.shared.dependencies.LoggingLayerDependency
 import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
 import com.yuriy.openradio.shared.dependencies.SourcesLayerDependency
+import com.yuriy.openradio.shared.model.logging.LoggingLayer
 import com.yuriy.openradio.shared.model.source.Source
 import com.yuriy.openradio.shared.model.source.SourcesLayer
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
@@ -73,7 +75,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency, SourcesLayerDependency {
+class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency, SourcesLayerDependency,
+    LoggingLayerDependency {
 
     private lateinit var mMinBuffer: EditText
     private lateinit var mMaxBuffer: EditText
@@ -86,8 +89,13 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
     private lateinit var mMediaPresenter: MediaPresenter
     private lateinit var mPresenter: AutomotiveSettingsActivityPresenter
     private lateinit var mSourcesLayer: SourcesLayer
+    private lateinit var mLoggingLayer: LoggingLayer
     private var mInitSrc: Source? = null
     private var mNewSrc: Source? = null
+
+    override fun configureWith(loggingLayer: LoggingLayer) {
+        mLoggingLayer = loggingLayer
+    }
 
     override fun configureWith(mediaPresenter: MediaPresenter) {
         mMediaPresenter = mediaPresenter
@@ -106,6 +114,7 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
         setContentView(R.layout.automotive_activity_settings)
 
         DependencyRegistryCommon.injectSourcesLayer(this)
+        DependencyRegistryCommonUi.injectLoggingLayer(this)
         DependencyRegistryCommonUi.inject(this)
         DependencyRegistryAutomotive.inject(this)
 
@@ -187,7 +196,9 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
                 }
             }
 
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // Not in ise.
+            }
         }
 
         val masterVolumeSeekBar = findSeekBar(R.id.automotive_master_vol_seek_bar)
@@ -195,8 +206,14 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
             AppPreferencesManager.getMasterVolume(applicationContext, OpenRadioService.MASTER_VOLUME_DEFAULT)
         masterVolumeSeekBar.setOnSeekBarChangeListener(
             object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
-                override fun onStartTrackingTouch(seekBar: SeekBar) {}
+                override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                    // Not in ise.
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar) {
+                    // Not in ise.
+                }
+
                 override fun onStopTrackingTouch(seekBar: SeekBar) {
                     CoroutineScope(Dispatchers.Main).launch {
                         val bundle = OpenRadioStore.makeMasterVolumeChangedBundle(seekBar.progress)
@@ -256,6 +273,33 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
         mLauncher = IntentUtils.registerForActivityResultIntrl(
             this, ::onActivityResultCallback
         )
+
+        val sendLogsProgress = findViewById<ProgressBar>(R.id.automotive_logs_progress)
+        val sendLogs = findViewById<Button>(R.id.automotive_logs_btn)
+        sendLogs.setOnClickListener {
+            sendLogsProgress.visible()
+            mLoggingLayer.collectAdbLogs(
+                {
+                    mLoggingLayer.sendLogsViaEmail(
+                        it,
+                        {
+                            runOnUiThread {
+                                sendLogsProgress.gone()
+                                SafeToast.showAnyThread(applicationContext, "Logs are sent")
+                            }
+                        },
+                        {
+                            runOnUiThread { sendLogsProgress.gone() }
+                            SafeToast.showAnyThread(applicationContext, "Can't send logs")
+                        }
+                    )
+                },
+                {
+                    runOnUiThread { sendLogsProgress.gone() }
+                    SafeToast.showAnyThread(applicationContext, "Can't create logs")
+                }
+            )
+        }
     }
 
     override fun onDestroy() {
@@ -380,6 +424,7 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
                 GoogleDriveManager.Command.UPLOAD -> context.getString(
                     com.yuriy.openradio.shared.R.string.google_drive_data_saved
                 )
+
                 GoogleDriveManager.Command.DOWNLOAD -> {
                     mMediaPresenter.updateRootView()
                     context.getString(com.yuriy.openradio.shared.R.string.google_drive_data_read)
@@ -399,6 +444,7 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
                 GoogleDriveManager.Command.UPLOAD -> context.getString(
                     com.yuriy.openradio.shared.R.string.google_drive_error_when_save
                 )
+
                 GoogleDriveManager.Command.DOWNLOAD -> context.getString(
                     com.yuriy.openradio.shared.R.string.google_drive_error_when_read
                 )

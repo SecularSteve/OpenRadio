@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2017 - 2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,13 @@ import android.widget.AdapterView
 import android.widget.CheckBox
 import android.widget.CompoundButton
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.SeekBar
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
+import com.yuriy.openradio.shared.dependencies.LoggingLayerDependency
 import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
+import com.yuriy.openradio.shared.model.logging.LoggingLayer
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
 import com.yuriy.openradio.shared.permission.PermissionChecker
 import com.yuriy.openradio.shared.presenter.MediaPresenter
@@ -34,13 +37,15 @@ import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.service.OpenRadioStore
 import com.yuriy.openradio.shared.service.location.LocationService
 import com.yuriy.openradio.shared.utils.AppUtils
-import com.yuriy.openradio.shared.utils.SafeToast.showAnyThread
+import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.findCheckBox
 import com.yuriy.openradio.shared.utils.findEditText
 import com.yuriy.openradio.shared.utils.findSeekBar
 import com.yuriy.openradio.shared.utils.findSpinner
 import com.yuriy.openradio.shared.utils.findTextView
+import com.yuriy.openradio.shared.utils.gone
+import com.yuriy.openradio.shared.utils.visible
 import com.yuriy.openradio.shared.view.list.CountriesArrayAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,16 +57,22 @@ import kotlinx.coroutines.launch
  * On 12/20/14
  * E-Mail: chernyshov.yuriy@gmail.com
  */
-class GeneralSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
+class GeneralSettingsDialog : BaseDialogFragment(), MediaPresenterDependency, LoggingLayerDependency {
 
     private lateinit var mUserAgentEditView: EditText
     private lateinit var mMediaPresenter: MediaPresenter
+    private lateinit var mLoggingLayer: LoggingLayer
 
     override fun configureWith(mediaPresenter: MediaPresenter) {
         mMediaPresenter = mediaPresenter
     }
 
+    override fun configureWith(loggingLayer: LoggingLayer) {
+        mLoggingLayer = loggingLayer
+    }
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        DependencyRegistryCommonUi.injectLoggingLayer(this)
         DependencyRegistryCommonUi.inject(this)
         val activity = requireActivity()
         val context = requireContext()
@@ -102,9 +113,13 @@ class GeneralSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
                     progress: Int,
                     fromUser: Boolean
                 ) {
+                    // Not used.
                 }
 
-                override fun onStartTrackingTouch(seekBar: SeekBar) {}
+                override fun onStartTrackingTouch(seekBar: SeekBar) {
+                    // Not used.
+                }
+
                 override fun onStopTrackingTouch(seekBar: SeekBar) {
                     CoroutineScope(Dispatchers.Main).launch {
                         val bundle = OpenRadioStore.makeMasterVolumeChangedBundle(seekBar.progress)
@@ -154,8 +169,38 @@ class GeneralSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
                 mMediaPresenter.onLocationChanged(code)
             }
 
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // Not used.
+            }
         }
+
+        val sendLogsProgress = view.findViewById<ProgressBar>(R.id.send_logs_progress_view)
+        val sendLogs = view.findButton(R.id.send_logs_btn)
+        sendLogs.setOnClickListener {
+            sendLogsProgress.visible()
+            mLoggingLayer.collectAdbLogs(
+                {
+                    mLoggingLayer.sendLogsViaEmail(
+                        it,
+                        {
+                            activity.runOnUiThread {
+                                sendLogsProgress.gone()
+                                SafeToast.showAnyThread(context, "Logs are sent")
+                            }
+                        },
+                        {
+                            activity.runOnUiThread { sendLogsProgress.gone() }
+                            SafeToast.showAnyThread(context, "Can't send logs")
+                        }
+                    )
+                },
+                {
+                    activity.runOnUiThread { sendLogsProgress.gone() }
+                    SafeToast.showAnyThread(context, "Can't create logs")
+                }
+            )
+        }
+
         return createAlertDialog(view)
     }
 
@@ -171,7 +216,7 @@ class GeneralSettingsDialog : BaseDialogFragment(), MediaPresenterDependency {
         val context = activity ?: return
         val userAgent = mUserAgentEditView.text.toString().trim { it <= ' ' }
         if (userAgent.isEmpty()) {
-            showAnyThread(context, getString(R.string.user_agent_empty_warning))
+            SafeToast.showAnyThread(context, getString(R.string.user_agent_empty_warning))
             return
         }
         AppPreferencesManager.setCustomUserAgent(context, userAgent)

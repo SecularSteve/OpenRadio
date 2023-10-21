@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
-package com.yuriy.openradio.shared.dependencies
+package com.yuriy.openradio.shared.model.logging
 
-import com.yuriy.openradio.shared.presenter.MediaPresenter
+import java.io.File
 
-/**
- * [MediaPresenterDependency] is an interface that helps to inject [MediaPresenter] into a client.
- */
-interface MediaPresenterDependency {
+interface LoggingLayer {
 
-    /**
-     * Callback to provide [MediaPresenter] to a client.
-     */
-    fun configureWith(mediaPresenter: MediaPresenter)
+    fun collectAdbLogs(
+        onSuccess: (file: File) -> Unit,
+        onError: (msg: String) -> Unit
+    )
+
+    fun sendLogsViaEmail(
+        zipFile: File,
+        onSuccess: () -> Unit,
+        onError: (msg: String) -> Unit
+    )
+
+    fun clearLogs()
 }
