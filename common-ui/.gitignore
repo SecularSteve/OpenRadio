@@ -1,3 +1,4 @@
 /build
 src/main/res/raw/email_usr
 src/main/res/raw/email_pwd
+google-services.json
