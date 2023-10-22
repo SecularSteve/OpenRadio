@@ -72,6 +72,16 @@ dependencies {
     api "androidx.activity:activity-ktx:$kotlinActivityKtx"
     // Import the Firebase BoM (see: https://firebase.google.com/docs/android/learn-more#bom)
     api platform("com.google.firebase:firebase-bom:$firebaseBom")
+    api ("com.google.firebase:firebase-auth-ktx") {
+        exclude module: "play-services-ads-identifier"
+        exclude module: "play-services-measurement"
+        exclude module: "play-services-measurement-sdk"
+    }
+    api ("com.google.firebase:firebase-firestore-ktx") {
+        exclude module: "play-services-ads-identifier"
+        exclude module: "play-services-measurement"
+        exclude module: "play-services-measurement-sdk"
+    }
     api ("com.google.firebase:firebase-analytics-ktx") {
         exclude module: "play-services-ads-identifier"
         exclude module: "play-services-measurement"
@@ -95,6 +105,8 @@ dependencies {
     api "com.google.http-client:google-http-client-gson:$googleHttpClientGsonVersion"
     api "com.google.api-client:google-api-client-android:$googleApiClientAndroidVersion"
     api "com.google.apis:google-api-services-drive:$googleApiServicesDrive"
+    // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
+    implementation("com.squareup.okhttp3:okhttp:$okhttp3Version")
     // https://mvnrepository.com/artifact/org.jdom/jdom2
     api group: "org.jdom", name: "jdom2", version: "$jdom2Version"
     api "de.westnordost:countryboundaries:$countryboundariesVersion"

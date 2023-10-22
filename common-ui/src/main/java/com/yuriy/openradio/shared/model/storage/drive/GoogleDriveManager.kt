@@ -30,6 +30,7 @@ import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
+import com.yuriy.openradio.shared.dependencies.StorageManagerDependency
 import com.yuriy.openradio.shared.model.storage.StorageManagerLayer
 import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.AppUtils
@@ -51,7 +52,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * @param mContext  Context of the application.
  * @param mListener Listener for the Google Drive client events.
  */
-class GoogleDriveManager(private val mContext: Context, private val mListener: Listener) {
+class GoogleDriveManager(private val mContext: Context, private val mListener: Listener) : StorageManagerDependency {
 
     /**
      * Listener for the Google Drive client events.
@@ -106,11 +107,11 @@ class GoogleDriveManager(private val mContext: Context, private val mListener: L
     }
 
     init {
-        DependencyRegistryCommonUi.inject(this)
+        DependencyRegistryCommonUi.injectStorageManagerLayer(this)
     }
 
-    fun configureWith(storagePresenter: StorageManagerLayer) {
-        mStorageManagerLayer = storagePresenter
+    override fun configureWith(storageManagerLayer: StorageManagerLayer) {
+        mStorageManagerLayer = storageManagerLayer
     }
 
     fun connect(account: Account?) {

@@ -30,7 +30,6 @@ import com.yuriy.openradio.shared.model.storage.LocationStorage
 import com.yuriy.openradio.shared.model.storage.NetworkSettingsStorage
 import com.yuriy.openradio.shared.model.storage.StorageManagerLayer
 import com.yuriy.openradio.shared.model.storage.StorageManagerLayerImpl
-import com.yuriy.openradio.shared.model.storage.drive.GoogleDriveManager
 import com.yuriy.openradio.shared.model.timer.SleepTimerModel
 import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.presenter.MediaPresenterImpl
@@ -167,7 +166,7 @@ object DependencyRegistryCommonUi :
         dependency.configureWith(sMediaPresenter)
     }
 
-    fun inject(dependency: GoogleDriveManager) {
+    fun injectStorageManagerLayer(dependency: StorageManagerDependency) {
         dependency.configureWith(sStorageManagerLayer)
     }
 

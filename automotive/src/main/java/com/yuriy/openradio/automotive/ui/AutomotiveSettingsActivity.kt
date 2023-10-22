@@ -338,7 +338,7 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
             .addOnFailureListener { exception: Exception? ->
                 AppLogger.e("Can't do sign in", exception)
                 SafeToast.showAnyThread(
-                    applicationContext, getString(com.yuriy.openradio.shared.R.string.can_not_get_account_name)
+                    applicationContext, getString(com.yuriy.openradio.shared.R.string.can_not_sign_in)
                 )
             }
     }
@@ -422,12 +422,12 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
             }
             val message = when (command) {
                 GoogleDriveManager.Command.UPLOAD -> context.getString(
-                    com.yuriy.openradio.shared.R.string.google_drive_data_saved
+                    com.yuriy.openradio.shared.R.string.storage_data_saved
                 )
 
                 GoogleDriveManager.Command.DOWNLOAD -> {
                     mMediaPresenter.updateRootView()
-                    context.getString(com.yuriy.openradio.shared.R.string.google_drive_data_read)
+                    context.getString(com.yuriy.openradio.shared.R.string.storage_data_read)
                 }
             }
             SafeToast.showAnyThread(context, message)
@@ -442,11 +442,11 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
             }
             val message = when (command) {
                 GoogleDriveManager.Command.UPLOAD -> context.getString(
-                    com.yuriy.openradio.shared.R.string.google_drive_error_when_save
+                    com.yuriy.openradio.shared.R.string.storage_error_when_save
                 )
 
                 GoogleDriveManager.Command.DOWNLOAD -> context.getString(
-                    com.yuriy.openradio.shared.R.string.google_drive_error_when_read
+                    com.yuriy.openradio.shared.R.string.storage_error_when_read
                 )
             }
             SafeToast.showAnyThread(context, message)

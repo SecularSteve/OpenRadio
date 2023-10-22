@@ -18,7 +18,6 @@ package com.yuriy.openradio.mobile.view.activity
 
 import android.annotation.SuppressLint
 import android.app.assist.AssistContent
-import android.content.Context
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -66,7 +65,7 @@ import com.yuriy.openradio.shared.view.dialog.BaseDialogFragment
 import com.yuriy.openradio.shared.view.dialog.BatteryOptimizationDialog
 import com.yuriy.openradio.shared.view.dialog.EqualizerDialog
 import com.yuriy.openradio.shared.view.dialog.GeneralSettingsDialog
-import com.yuriy.openradio.shared.view.dialog.GoogleDriveDialog
+import com.yuriy.openradio.shared.view.dialog.StorageDialog
 import com.yuriy.openradio.shared.view.dialog.NetworkDialog
 import com.yuriy.openradio.shared.view.dialog.SearchDialog
 import com.yuriy.openradio.shared.view.dialog.SleepTimerDialog
@@ -281,8 +280,8 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
 
                 R.id.nav_google_drive -> {
                     // Show Google Drive Dialog
-                    val dialog = BaseDialogFragment.newInstance(GoogleDriveDialog::class.java.name)
-                    dialog.show(transaction, GoogleDriveDialog.DIALOG_TAG)
+                    val dialog = BaseDialogFragment.newInstance(StorageDialog::class.java.name)
+                    dialog.show(transaction, StorageDialog.DIALOG_TAG)
                 }
 
                 R.id.nav_about -> {

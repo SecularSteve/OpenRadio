@@ -43,12 +43,10 @@ project.ext {
     junitAndroidXVersion = "1.1.5"
     espressoVersion = "3.1.0"
     // https://mvnrepository.com/artifact/org.json/json
-    jsonTestVersion = "20230227"
+    jsonTestVersion = "20230618"
     exoPlayerVersion = "2.18.7"
     multidexVersion = "1.0.3"
     leanbackVersion = "1.0.0"
-    firebaseInstallationsVersion = "16.3.5"
-    firebaseCrashlyticsVersion = "17.3.0"
     jdom2Version = "2.0.6"
     googleHttpClientGsonVersion = "1.26.0"
     googleApiClientAndroidVersion = "2.2.0"
@@ -63,6 +61,7 @@ project.ext {
     localbroadcastmanagerVersion = "1.1.0"
     workVersion = "2.8.1"
     media3Version = "1.2.0-alpha02"
+    okhttp3Version = "4.12.0"
 
     /**
      * Application constants
@@ -74,8 +73,9 @@ project.ext {
     /**
      * Firebase
      */
-    firebaseCrashlyticsGradle = "2.5.2"
-    firebaseBom = "26.1.1"
+    firebaseCrashlyticsGradle = "2.9.9"
+    // The last version support API 17.
+    firebaseBom = "28.4.2"
 
     /**
      * Sign

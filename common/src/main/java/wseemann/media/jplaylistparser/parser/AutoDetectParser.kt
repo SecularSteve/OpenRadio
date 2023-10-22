@@ -23,7 +23,7 @@ import com.yuriy.openradio.shared.utils.AppUtils
 import com.yuriy.openradio.shared.utils.NetUtils
 import okhttp3.Call
 import okhttp3.Callback
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -199,7 +199,7 @@ class AutoDetectParser(private val mTimeout: Int) {
             AnalyticsUtils.logMessage("UnsupportedPlaylist:$url")
         }
         var result = AppUtils.EMPTY_STRING
-        val httpUrl = HttpUrl.parse(url)
+        val httpUrl = url.toHttpUrlOrNull()
         if (httpUrl == null) {
             if (withAnalytics) {
                 AnalyticsUtils.logUnsupportedInvalidPlaylist(url)
@@ -227,7 +227,7 @@ class AutoDetectParser(private val mTimeout: Int) {
                     }
 
                     override fun onResponse(call: Call, response: Response) {
-                        AppLogger.d("StreamExtension:response:${response.headers()}")
+                        AppLogger.d("StreamExtension:response:${response.headers}")
                         val content = response.header("content-disposition", AppUtils.EMPTY_STRING)
                         result = getFileExtension(getFileExtFromHeaderParam(content))
 //                        if (result.isEmpty()) {

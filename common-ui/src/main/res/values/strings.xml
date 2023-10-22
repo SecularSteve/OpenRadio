@@ -41,16 +41,16 @@
     <string name="playback_buffer_description">Duration of media that must be buffered for playback to start or resume, in milliseconds</string>
     <string name="playback_buffer_after_rebuffer_description">Duration of media that must be buffered for playback to resume after a re-buffer, in milliseconds</string>
     <string name="restore_default">Restore Default</string>
-    <string name="google_drive_error_when_save">Error while save Radio Stations to Google Drive</string>
-    <string name="google_drive_error_when_read">Error while read Radio Stations from Google Drive</string>
-    <string name="google_drive_data_saved">Radio Stations are saved to Google Drive</string>
-    <string name="google_drive_data_read">Radio Stations are read from Google Drive</string>
-    <string name="can_not_get_account_name">Can not get Google Account name</string>
-    <string name="google_drive">Google Drive</string>
-    <string name="google_drive_init_warning">Initial connection may take a long time.</string>
-    <string name="google_drive_upload_info">Upload Favorites and Local added Radio Stations to Google Drive.\nNOTE: This operation will overwrite Radio Stations uploaded previously!</string>
+    <string name="storage_error_when_save">Error while save Radio Stations to Storage</string>
+    <string name="storage_error_when_read">Error while read Radio Stations from Storage</string>
+    <string name="storage_data_saved">Radio Stations are saved to Storage</string>
+    <string name="storage_data_read">Radio Stations are read from Storage</string>
+    <string name="can_not_create_user">Can not Create Account</string>
+    <string name="can_not_sign_in">Can not Sign In</string>
+    <string name="storage">Storage</string>
+    <string name="storage_upload_info">Upload Favorites and Local Stations to Storage.\nNOTE: This may overwrite previous uploads.</string>
     <string name="upload">Upload</string>
-    <string name="google_drive_download_info">Download Favorites and Local added Radio Stations from Google Drive.</string>
+    <string name="storage_download_info">Download Favorites and Local Stations from Storage.</string>
     <string name="can_not_play_station">Can not play Station</string>
     <string name="error_loading_media">Error Loading Media</string>
     <string name="app_settings_title">Settings</string>
@@ -90,7 +90,7 @@
     <string name="main_menu_buffering">@string/buffering</string>
     <string name="main_menu_network">@string/network</string>
     <string name="main_menu_source">@string/source</string>
-    <string name="main_menu_google_drive">Google Drive</string>
+    <string name="main_menu_storage">Storage</string>
     <string name="main_menu_about">About</string>
     <string name="main_menu_sleep_timer">Sleep Timer</string>
     <string name="easy_swipe_title">Swipe effect</string>
@@ -110,4 +110,7 @@
     <item type="id" name="imageUpdated" />
     <item type="id" name="imageId" />
     <string name="send_logs_lbl">Send Logs</string>
+    <string name="e_mail_txt">E-Mail</string>
+    <string name="password_txt">Password</string>
+    <string name="create_account_text">Create Your Account\nusing any Email and Password combination\nor Log In</string>
 </resources>
