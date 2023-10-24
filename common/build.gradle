@@ -104,7 +104,6 @@ dependencies {
     api "com.google.android.gms:play-services-location:$googlePlayServicesLocationVersion"
     api "com.google.http-client:google-http-client-gson:$googleHttpClientGsonVersion"
     api "com.google.api-client:google-api-client-android:$googleApiClientAndroidVersion"
-    api "com.google.apis:google-api-services-drive:$googleApiServicesDrive"
     // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
     implementation("com.squareup.okhttp3:okhttp:$okhttp3Version")
     // https://mvnrepository.com/artifact/org.jdom/jdom2

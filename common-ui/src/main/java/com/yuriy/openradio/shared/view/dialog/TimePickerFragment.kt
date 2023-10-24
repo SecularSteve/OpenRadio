@@ -43,7 +43,7 @@ class TimePickerFragment : DialogFragment(), TimePickerDialog.OnTimeSetListener 
         if (dialog != null) {
             dialog.onTimeSet(hourOfDay, minute)
         } else {
-            SafeToast.showAnyThread(context, getString(R.string.can_not_set_time))
+            SafeToast.showAnyThread(context, getString(R.string.failure))
         }
     }
 

@@ -28,7 +28,7 @@ import com.yuriy.openradio.shared.model.media.RadioStationToAdd
 import com.yuriy.openradio.shared.model.media.getStreamUrlFixed
 import com.yuriy.openradio.shared.model.media.isInvalid
 import com.yuriy.openradio.shared.utils.AppUtils
-import com.yuriy.openradio.shared.utils.SafeToast.showAnyThread
+import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.findCheckBox
 import com.yuriy.openradio.shared.utils.gone
@@ -103,7 +103,7 @@ class EditStationDialog : BaseAddEditStationDialog() {
      * @param addOrEditBtn Edit button.
      */
     private fun handleInvalidRadioStation(context: Context, addOrEditBtn: Button) {
-        showAnyThread(context, context.getString(R.string.can_not_edit_station_label))
+        SafeToast.showAnyThread(context, context.getString(R.string.failure))
         addOrEditBtn.isEnabled = false
     }
 

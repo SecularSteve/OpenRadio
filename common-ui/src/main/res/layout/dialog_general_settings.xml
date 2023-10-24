@@ -144,7 +144,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/settings_master_volume"
+            android:text="@string/settings_player_volume"
             android:textSize="20sp" />
 
         <SeekBar

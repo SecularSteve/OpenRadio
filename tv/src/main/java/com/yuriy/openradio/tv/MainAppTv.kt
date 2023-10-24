@@ -16,14 +16,13 @@
 
 package com.yuriy.openradio.tv
 
-import android.content.Context
 import com.yuriy.openradio.shared.MainAppCommonUi
 import com.yuriy.openradio.tv.dependencies.DependencyRegistryTv
 
-open class MainAppTv: MainAppCommonUi() {
+open class MainAppTv : MainAppCommonUi() {
 
-    override fun attachBaseContext(base: Context) {
-        super.attachBaseContext(base)
+    override fun onCreate() {
+        super.onCreate()
         DependencyRegistryTv.init()
     }
 }

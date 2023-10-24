@@ -41,7 +41,7 @@ import com.yuriy.openradio.shared.view.dialog.BatteryOptimizationDialog
 import com.yuriy.openradio.shared.view.dialog.EditStationDialog
 import com.yuriy.openradio.shared.view.dialog.EqualizerDialog
 import com.yuriy.openradio.shared.view.dialog.GeneralSettingsDialog
-import com.yuriy.openradio.shared.view.dialog.StorageDialog
+import com.yuriy.openradio.shared.view.dialog.CloudStorageDialog
 import com.yuriy.openradio.shared.view.dialog.NetworkDialog
 import com.yuriy.openradio.shared.view.dialog.RSSettingsDialog
 import com.yuriy.openradio.shared.view.dialog.RemoveStationDialog
@@ -55,6 +55,10 @@ fun Activity.findTextView(id: Int): TextView {
 }
 
 fun Activity.findButton(id: Int): Button {
+    return findViewById(id)
+}
+
+fun Activity.findImageButton(id: Int): ImageButton {
     return findViewById(id)
 }
 
@@ -83,6 +87,14 @@ fun Activity.findToolbar(id: Int): Toolbar {
 }
 
 fun Activity.findProgressBar(id: Int): ProgressBar {
+    return findViewById(id)
+}
+
+fun Activity.findLinearLayout(id: Int): LinearLayout {
+    return findViewById(id)
+}
+
+fun View.findProgressBar(id: Int): ProgressBar {
     return findViewById(id)
 }
 
@@ -172,7 +184,7 @@ object UiUtils {
         removeFragment(transaction, manager.findFragmentByTag(EditStationDialog.DIALOG_TAG))
         removeFragment(transaction, manager.findFragmentByTag(EqualizerDialog.DIALOG_TAG))
         removeFragment(transaction, manager.findFragmentByTag(GeneralSettingsDialog.DIALOG_TAG))
-        removeFragment(transaction, manager.findFragmentByTag(StorageDialog.DIALOG_TAG))
+        removeFragment(transaction, manager.findFragmentByTag(CloudStorageDialog.DIALOG_TAG))
         removeFragment(transaction, manager.findFragmentByTag(NetworkDialog.DIALOG_TAG))
         removeFragment(transaction, manager.findFragmentByTag(RemoveStationDialog.DIALOG_TAG))
         removeFragment(transaction, manager.findFragmentByTag(RSSettingsDialog.DIALOG_TAG))

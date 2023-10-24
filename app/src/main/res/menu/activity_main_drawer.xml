@@ -42,7 +42,7 @@
         <item
             android:id="@+id/nav_google_drive"
             android:icon="@drawable/ic_cloud_black_24dp"
-            android:title="@string/main_menu_storage"/>
+            android:title="@string/main_menu_cloud_storage"/>
         <item
             android:id="@+id/nav_about"
             android:icon="@drawable/ic_info_black_24dp"

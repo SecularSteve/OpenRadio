@@ -45,7 +45,7 @@ class DatePickerFragment : DialogFragment(), DatePickerDialog.OnDateSetListener 
         if (dialog != null) {
             dialog.onDateSet(year, month, day)
         } else {
-            SafeToast.showAnyThread(context, getString(R.string.can_not_set_date))
+            SafeToast.showAnyThread(context, getString(R.string.failure))
         }
     }
 

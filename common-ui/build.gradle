@@ -36,7 +36,6 @@ dependencies {
     api "androidx.constraintlayout:constraintlayout:$constraintlayoutAndroidXVersion"
     api "androidx.fragment:fragment-ktx:$fragmentKtxVersion"
     api "com.google.android.gms:play-services-auth:$googlePlayServicesAuthVersion"
-    api "com.google.android.gms:play-services-drive:$googlePlayServicesDriveVersion"
     // https://mvnrepository.com/artifact/com.sun.mail/jakarta.mail
     api "com.sun.mail:jakarta.mail:2.0.1"
 }

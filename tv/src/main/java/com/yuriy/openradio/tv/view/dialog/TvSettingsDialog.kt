@@ -28,7 +28,7 @@ import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.view.dialog.AboutDialog
 import com.yuriy.openradio.shared.view.dialog.BaseDialogFragment
 import com.yuriy.openradio.shared.view.dialog.GeneralSettingsDialog
-import com.yuriy.openradio.shared.view.dialog.StorageDialog
+import com.yuriy.openradio.shared.view.dialog.CloudStorageDialog
 import com.yuriy.openradio.shared.view.dialog.NetworkDialog
 import com.yuriy.openradio.shared.view.dialog.SleepTimerDialog
 import com.yuriy.openradio.shared.view.dialog.SourceDialog
@@ -67,11 +67,11 @@ class TvSettingsDialog : BaseDialogFragment() {
             getString(com.yuriy.openradio.shared.R.string.main_menu_network),
             getString(com.yuriy.openradio.shared.R.string.main_menu_buffering),
             getString(com.yuriy.openradio.shared.R.string.main_menu_sleep_timer),
-            getString(com.yuriy.openradio.shared.R.string.main_menu_storage),
+            getString(com.yuriy.openradio.shared.R.string.main_menu_cloud_storage),
             getString(com.yuriy.openradio.shared.R.string.main_menu_about)
         )
         if (DependencyRegistryCommon.isGoogleApiAvailable.not()) {
-            values.remove(getString(com.yuriy.openradio.shared.R.string.main_menu_storage))
+            values.remove(getString(com.yuriy.openradio.shared.R.string.main_menu_cloud_storage))
         }
         val adapter = ArrayAdapterExt(context, android.R.layout.simple_list_item_1, values)
         listView.adapter = adapter
@@ -111,8 +111,8 @@ class TvSettingsDialog : BaseDialogFragment() {
                     }
                     5 -> {
                         // Show Google Drive Dialog
-                        val dialog = newInstance(StorageDialog::class.java.name)
-                        dialog.show(transaction, StorageDialog.DIALOG_TAG)
+                        val dialog = newInstance(CloudStorageDialog::class.java.name)
+                        dialog.show(transaction, CloudStorageDialog.DIALOG_TAG)
                     }
                     6 -> {
                         // Show About Dialog

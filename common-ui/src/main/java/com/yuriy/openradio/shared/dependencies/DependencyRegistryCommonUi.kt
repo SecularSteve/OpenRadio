@@ -17,6 +17,8 @@
 package com.yuriy.openradio.shared.dependencies
 
 import android.content.Context
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.ktx.initialize
 import com.yuriy.openradio.shared.model.cast.CastLayer
 import com.yuriy.openradio.shared.model.eq.EqualizerLayer
 import com.yuriy.openradio.shared.model.logging.LoggingLayer
@@ -30,6 +32,7 @@ import com.yuriy.openradio.shared.model.storage.LocationStorage
 import com.yuriy.openradio.shared.model.storage.NetworkSettingsStorage
 import com.yuriy.openradio.shared.model.storage.StorageManagerLayer
 import com.yuriy.openradio.shared.model.storage.StorageManagerLayerImpl
+import com.yuriy.openradio.shared.model.storage.firestore.FirestoreManager
 import com.yuriy.openradio.shared.model.timer.SleepTimerModel
 import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.presenter.MediaPresenterImpl
@@ -70,6 +73,7 @@ object DependencyRegistryCommonUi :
     private lateinit var sSourcesLayer: SourcesLayer
     private lateinit var sCastLayer: CastLayer
     private lateinit var sLoggingLayer: LoggingLayer
+    private lateinit var sFirestoreManager: FirestoreManager
 
     @Volatile
     private var sInit = AtomicBoolean(false)
@@ -118,6 +122,8 @@ object DependencyRegistryCommonUi :
             context,
             sRadioStationManagerLayer
         )
+        Firebase.initialize(context)
+        sFirestoreManager = FirestoreManager(context)
 
         sInit.set(true)
     }
@@ -168,6 +174,10 @@ object DependencyRegistryCommonUi :
 
     fun injectStorageManagerLayer(dependency: StorageManagerDependency) {
         dependency.configureWith(sStorageManagerLayer)
+    }
+
+    fun injectFirestoreManager(dependency: FirestoreManagerDependency) {
+        dependency.configureWith(sFirestoreManager)
     }
 
     fun inject(dependency: EditStationDialog) {

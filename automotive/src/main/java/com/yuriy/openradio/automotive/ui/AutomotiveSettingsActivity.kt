@@ -18,7 +18,6 @@ package com.yuriy.openradio.automotive.ui
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -33,16 +32,14 @@ import android.widget.ProgressBar
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.SeekBar
-import androidx.activity.result.ActivityResultLauncher
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.yuriy.openradio.automotive.R
 import com.yuriy.openradio.automotive.dependencies.DependencyRegistryAutomotive
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommon
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
+import com.yuriy.openradio.shared.dependencies.FirestoreManagerDependency
 import com.yuriy.openradio.shared.dependencies.LoggingLayerDependency
 import com.yuriy.openradio.shared.dependencies.MediaPresenterDependency
 import com.yuriy.openradio.shared.dependencies.SourcesLayerDependency
@@ -50,18 +47,17 @@ import com.yuriy.openradio.shared.model.logging.LoggingLayer
 import com.yuriy.openradio.shared.model.source.Source
 import com.yuriy.openradio.shared.model.source.SourcesLayer
 import com.yuriy.openradio.shared.model.storage.AppPreferencesManager
-import com.yuriy.openradio.shared.model.storage.drive.GoogleDriveError
-import com.yuriy.openradio.shared.model.storage.drive.GoogleDriveManager
+import com.yuriy.openradio.shared.model.storage.firestore.FirestoreManager
 import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.service.OpenRadioService
 import com.yuriy.openradio.shared.service.OpenRadioStore
 import com.yuriy.openradio.shared.service.location.LocationService
-import com.yuriy.openradio.shared.utils.AppLogger
-import com.yuriy.openradio.shared.utils.IntentUtils
 import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.findCheckBox
 import com.yuriy.openradio.shared.utils.findEditText
+import com.yuriy.openradio.shared.utils.findImageButton
+import com.yuriy.openradio.shared.utils.findLinearLayout
 import com.yuriy.openradio.shared.utils.findProgressBar
 import com.yuriy.openradio.shared.utils.findSeekBar
 import com.yuriy.openradio.shared.utils.findSpinner
@@ -69,6 +65,9 @@ import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.utils.findToolbar
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
+import com.yuriy.openradio.shared.view.dialog.AccountDialog
+import com.yuriy.openradio.shared.view.dialog.BaseDialogFragment
+import com.yuriy.openradio.shared.view.dialog.CloudStorageDialog
 import com.yuriy.openradio.shared.view.dialog.StreamBufferingDialog
 import com.yuriy.openradio.shared.view.list.CountriesArrayAdapter
 import kotlinx.coroutines.CoroutineScope
@@ -76,22 +75,26 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency, SourcesLayerDependency,
-    LoggingLayerDependency {
+    LoggingLayerDependency, FirestoreManagerDependency {
 
     private lateinit var mMinBuffer: EditText
     private lateinit var mMaxBuffer: EditText
     private lateinit var mPlayBuffer: EditText
     private lateinit var mPlayBufferRebuffer: EditText
-    private lateinit var mProgressBarUpload: ProgressBar
-    private lateinit var mProgressBarDownload: ProgressBar
-    private lateinit var mGoogleDriveManager: GoogleDriveManager
-    private lateinit var mLauncher: ActivityResultLauncher<Intent>
+    private lateinit var mProgress: ProgressBar
     private lateinit var mMediaPresenter: MediaPresenter
     private lateinit var mPresenter: AutomotiveSettingsActivityPresenter
+    private lateinit var mFirestoreManager: FirestoreManager
     private lateinit var mSourcesLayer: SourcesLayer
     private lateinit var mLoggingLayer: LoggingLayer
+    private lateinit var mAccView: LinearLayout
+    private lateinit var mAccEmailView: TextView
     private var mInitSrc: Source? = null
     private var mNewSrc: Source? = null
+
+    override fun configureWith(firestoreManager: FirestoreManager) {
+        mFirestoreManager = firestoreManager
+    }
 
     override fun configureWith(loggingLayer: LoggingLayer) {
         mLoggingLayer = loggingLayer
@@ -116,6 +119,7 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
         DependencyRegistryCommon.injectSourcesLayer(this)
         DependencyRegistryCommonUi.injectLoggingLayer(this)
         DependencyRegistryCommonUi.inject(this)
+        DependencyRegistryCommonUi.injectFirestoreManager(this)
         DependencyRegistryAutomotive.inject(this)
 
         val toolbar = findToolbar(R.id.automotive_settings_toolbar)
@@ -201,10 +205,10 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
             }
         }
 
-        val masterVolumeSeekBar = findSeekBar(R.id.automotive_master_vol_seek_bar)
-        masterVolumeSeekBar.progress =
+        val playerVolSeek = findSeekBar(R.id.automotive_player_vol_seek_bar)
+        playerVolSeek.progress =
             AppPreferencesManager.getMasterVolume(applicationContext, OpenRadioService.MASTER_VOLUME_DEFAULT)
-        masterVolumeSeekBar.setOnSeekBarChangeListener(
+        playerVolSeek.setOnSeekBarChangeListener(
             object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                     // Not in ise.
@@ -254,25 +258,18 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
             mPlayBufferRebuffer
         )
 
-        // TODO: Refactor GDrive to handle in single place:
+        val uploadTo = findImageButton(R.id.automotive_cloud_storage_upload_btn)
+        val downloadFrom = findImageButton(R.id.automotive_cloud_storage_download_btn)
+        val accSignOut = findImageButton(R.id.automotive_account_sign_out_btn)
+        mProgress = findProgressBar(R.id.automotive_cloud_storage_progress_view)
+        mAccView = findLinearLayout(R.id.automotive_account_layout)
+        mAccEmailView = findTextView(R.id.automotive_account_email_text_view)
 
-        val uploadTo = findButton(R.id.automotive_upload_to_google_drive_btn)
-        val downloadFrom = findButton(R.id.automotive_download_from_google_drive_btn)
-        mProgressBarUpload = findProgressBar(R.id.automotive_upload_to_google_drive_progress)
-        mProgressBarDownload = findProgressBar(R.id.automotive_download_to_google_drive_progress)
+        uploadTo.setOnClickListener { uploadRadioStations() }
+        downloadFrom.setOnClickListener { downloadRadioStations() }
+        accSignOut.setOnClickListener { signOut() }
 
-        uploadTo.setOnClickListener { uploadRadioStationsToGoogleDrive() }
-        downloadFrom.setOnClickListener { downloadRadioStationsFromGoogleDrive() }
-
-        val listener = GoogleDriveManagerListenerImpl()
-        mGoogleDriveManager = GoogleDriveManager(applicationContext, listener)
-
-        hideProgress(GoogleDriveManager.Command.UPLOAD)
-        hideProgress(GoogleDriveManager.Command.DOWNLOAD)
-
-        mLauncher = IntentUtils.registerForActivityResultIntrl(
-            this, ::onActivityResultCallback
-        )
+        hideProgress()
 
         val sendLogsProgress = findViewById<ProgressBar>(R.id.automotive_logs_progress)
         val sendLogs = findViewById<Button>(R.id.automotive_logs_btn)
@@ -302,11 +299,16 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (mFirestoreManager.isUserExist()) {
+            showAccLayout()
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-        hideProgress(GoogleDriveManager.Command.UPLOAD)
-        hideProgress(GoogleDriveManager.Command.DOWNLOAD)
-        mGoogleDriveManager.disconnect()
+        hideProgress()
         // In case a user selected a new source but did not restart.
         if (mInitSrc != null && mInitSrc != mNewSrc) {
             mSourcesLayer.setActiveSource(mInitSrc!!)
@@ -329,50 +331,105 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
         )
     }
 
-    private fun onActivityResultCallback(data: Intent?) {
-        GoogleSignIn
-            .getSignedInAccountFromIntent(data)
-            .addOnSuccessListener { googleAccount: GoogleSignInAccount ->
-                mGoogleDriveManager.connect(googleAccount.account)
-            }
-            .addOnFailureListener { exception: Exception? ->
-                AppLogger.e("Can't do sign in", exception)
-                SafeToast.showAnyThread(
-                    applicationContext, getString(com.yuriy.openradio.shared.R.string.can_not_sign_in)
-                )
-            }
-    }
-
-    private fun uploadRadioStationsToGoogleDrive() {
-        mGoogleDriveManager.uploadRadioStations()
-    }
-
-    private fun downloadRadioStationsFromGoogleDrive() {
-        mGoogleDriveManager.downloadRadioStations()
-    }
-
-    private fun showProgress(command: GoogleDriveManager.Command) {
-        when (command) {
-            GoogleDriveManager.Command.UPLOAD -> runOnUiThread {
-                mProgressBarUpload.visible()
-            }
-
-            GoogleDriveManager.Command.DOWNLOAD -> runOnUiThread {
-                mProgressBarDownload.visible()
-            }
+    private fun uploadRadioStations() {
+        if (mFirestoreManager.isUserExist().not()) {
+            showAccountDialog()
+        } else {
+            showAccLayout()
+            handleCommand(CloudStorageDialog.Command.UPLOAD)
         }
     }
 
-    private fun hideProgress(command: GoogleDriveManager.Command) {
-        when (command) {
-            GoogleDriveManager.Command.UPLOAD -> runOnUiThread {
-                mProgressBarUpload.gone()
-            }
-
-            GoogleDriveManager.Command.DOWNLOAD -> runOnUiThread {
-                mProgressBarDownload.gone()
-            }
+    private fun downloadRadioStations() {
+        if (mFirestoreManager.isUserExist().not()) {
+            showAccountDialog()
+        } else {
+            showAccLayout()
+            handleCommand(CloudStorageDialog.Command.DOWNLOAD)
         }
+    }
+
+    private fun signOut() {
+        if (mFirestoreManager.isUserExist()) {
+            mFirestoreManager.signOut()
+            hideAccLayout()
+        }
+    }
+
+    private fun showAccLayout() {
+        runOnUiThread {
+            mAccView.visible()
+            mAccEmailView.text = mFirestoreManager.getUserEmail()
+        }
+    }
+
+    private fun hideAccLayout() {
+        runOnUiThread {
+            mAccView.gone()
+        }
+    }
+
+    private fun showProgress() {
+        mProgress.visible()
+    }
+
+    private fun hideProgress() {
+        mProgress.gone()
+    }
+
+    private fun showAccountDialog() {
+        val dialog = BaseDialogFragment.newInstance(AccountDialog::class.java.name)
+        val transaction = supportFragmentManager.beginTransaction()
+        dialog.show(transaction, AccountDialog.DIALOG_TAG)
+    }
+
+    private fun handleCommand(command: CloudStorageDialog.Command) {
+        showProgress()
+        mFirestoreManager.getToken(
+            {
+                when (command) {
+                    CloudStorageDialog.Command.UPLOAD -> {
+                        mFirestoreManager.upload(
+                            it,
+                            {
+                                hideProgress()
+                                SafeToast.showAnyThread(
+                                    applicationContext, getString(com.yuriy.openradio.shared.R.string.success)
+                                )
+                            },
+                            {
+                                hideProgress()
+                                SafeToast.showAnyThread(
+                                    applicationContext, getString(com.yuriy.openradio.shared.R.string.failure)
+                                )
+                            }
+                        )
+                    }
+
+                    CloudStorageDialog.Command.DOWNLOAD -> {
+                        mFirestoreManager.download(
+                            it,
+                            {
+                                hideProgress()
+                                SafeToast.showAnyThread(
+                                    applicationContext, getString(com.yuriy.openradio.shared.R.string.success)
+                                )
+                            },
+                            {
+                                hideProgress()
+                                SafeToast.showAnyThread(
+                                    applicationContext, getString(com.yuriy.openradio.shared.R.string.failure)
+                                )
+                            }
+                        )
+                    }
+                }
+            },
+            {
+                hideProgress()
+                SafeToast.showAnyThread(applicationContext, "Can't get Token")
+            }
+        )
     }
 
     @SuppressLint("InflateParams")
@@ -401,56 +458,6 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
                 }
             }
             view.addView(child)
-        }
-    }
-
-    private inner class GoogleDriveManagerListenerImpl : GoogleDriveManager.Listener {
-
-        override fun onAccountRequested(client: GoogleSignInClient) {
-            mLauncher.launch(client.signInIntent)
-        }
-
-        override fun onStart(command: GoogleDriveManager.Command) {
-            showProgress(command)
-        }
-
-        override fun onSuccess(command: GoogleDriveManager.Command) {
-            val context = this@AutomotiveSettingsActivity.applicationContext
-            if (context == null) {
-                AppLogger.e("Can not handle Google Drive success, context is null")
-                return
-            }
-            val message = when (command) {
-                GoogleDriveManager.Command.UPLOAD -> context.getString(
-                    com.yuriy.openradio.shared.R.string.storage_data_saved
-                )
-
-                GoogleDriveManager.Command.DOWNLOAD -> {
-                    mMediaPresenter.updateRootView()
-                    context.getString(com.yuriy.openradio.shared.R.string.storage_data_read)
-                }
-            }
-            SafeToast.showAnyThread(context, message)
-            hideProgress(command)
-        }
-
-        override fun onError(command: GoogleDriveManager.Command, error: GoogleDriveError?) {
-            val context = this@AutomotiveSettingsActivity.applicationContext
-            if (context == null) {
-                AppLogger.e("Can not handle Google Drive error, context is null, error:$error")
-                return
-            }
-            val message = when (command) {
-                GoogleDriveManager.Command.UPLOAD -> context.getString(
-                    com.yuriy.openradio.shared.R.string.storage_error_when_save
-                )
-
-                GoogleDriveManager.Command.DOWNLOAD -> context.getString(
-                    com.yuriy.openradio.shared.R.string.storage_error_when_read
-                )
-            }
-            SafeToast.showAnyThread(context, message)
-            hideProgress(command)
         }
     }
 }

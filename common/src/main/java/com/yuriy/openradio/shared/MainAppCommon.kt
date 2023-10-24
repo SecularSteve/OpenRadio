@@ -46,14 +46,10 @@ open class MainAppCommon : MultiDexApplication() {
     private val mAppJob = SupervisorJob()
     protected val mAppScope = CoroutineScope(Dispatchers.Main + mAppJob)
 
-    override fun attachBaseContext(base: Context) {
-        super.attachBaseContext(base)
-        MultiDex.install(base)
-        DependencyRegistryCommon.init(base)
-    }
-
     override fun onCreate() {
         super.onCreate()
+        MultiDex.install(applicationContext)
+        DependencyRegistryCommon.init(applicationContext)
         // Address devices API 19 and lower.
         try {
             ProviderInstaller.installIfNeeded(applicationContext)

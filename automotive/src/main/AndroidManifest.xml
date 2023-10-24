@@ -35,7 +35,7 @@
         <activity
             android:name=".ui.AutomotiveSettingsActivity"
             android:exported="true"
-            android:label="Settings"
+            android:label="@string/app_settings_title"
             android:theme="@style/Theme.Automotive">
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />

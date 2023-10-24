@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
     Copyright 2021 The "Open Radio" Project. Author: Chernyshov Yuriy
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +17,15 @@
     android:id="@+id/automotive_settings_activity"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:layout_margin="15dp">
+    android:layout_margin="15dp"
+    android:orientation="vertical">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
         android:layout_marginTop="15dp"
-        android:layout_marginBottom="15dp">
+        android:layout_marginBottom="15dp"
+        android:background="@android:color/transparent">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/automotive_settings_toolbar"
@@ -54,17 +53,17 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
                 android:layout_marginTop="15dp"
-                android:layout_marginBottom="30dp" >
+                android:layout_marginBottom="30dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="40dp"
-                    android:textSize="20sp"
-                    android:text="@string/source_semicolon"/>
+                    android:text="@string/source_semicolon"
+                    android:textSize="20sp" />
 
                 <RadioGroup
                     android:id="@+id/sources_radio_group_car"
@@ -101,17 +100,17 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
                 android:layout_marginBottom="15dp"
-                android:orientation="horizontal"
-                android:layout_gravity="center_vertical">
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
                     android:layout_marginEnd="15dp"
                     android:text="@string/default_country_label"
-                    android:textSize="20sp"
-                    android:layout_gravity="center_vertical"/>
+                    android:textSize="20sp" />
 
                 <Spinner
                     android:id="@+id/automotive_settings_default_country_spinner"
@@ -126,13 +125,6 @@
                 android:layout_marginBottom="15dp"
                 android:alpha="0.5"
                 android:background="@color/or_color_text" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:text="@string/cache_desc_text"
-                android:textSize="24sp" />
 
             <Button
                 android:id="@+id/automotive_settings_clear_cache_btn"
@@ -152,12 +144,12 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/settings_master_volume"
                 android:layout_marginTop="15dp"
+                android:text="@string/settings_player_volume"
                 android:textSize="24sp" />
 
             <SeekBar
-                android:id="@+id/automotive_master_vol_seek_bar"
+                android:id="@+id/automotive_player_vol_seek_bar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="30dp"
@@ -173,8 +165,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/buffering"
                 android:layout_marginTop="15dp"
+                android:text="@string/buffering"
                 android:textSize="24sp" />
 
             <TextView
@@ -189,8 +181,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="15dp"
-                android:orientation="horizontal"
-                android:baselineAligned="false">
+                android:baselineAligned="false"
+                android:orientation="horizontal">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -272,8 +264,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="30dp"
-                android:textSize="24sp"
-                android:text="@string/restore_default" />
+                android:text="@string/restore_default"
+                android:textSize="24sp" />
 
             <View
                 android:layout_width="match_parent"
@@ -282,66 +274,59 @@
                 android:alpha="0.5"
                 android:background="@color/or_color_text" />
 
-            <TextView
-                android:id="@+id/automotive_google_drive_title"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:id="@+id/automotive_account_layout"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="15dp"
-                android:text="@string/storage"
-                android:textSize="24sp" />
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/automotive_account_email_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:paddingBottom="5dp"
+                    android:text="account" />
+
+                <ImageButton
+                    android:id="@+id/automotive_account_sign_out_btn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="15dp"
+                    android:src="@drawable/ic_sign_out" />
+
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="30dp"
-                android:baselineAligned="false">
+                android:baselineAligned="false"
+                android:orientation="horizontal">
 
-                <RelativeLayout
+                <ImageButton
+                    android:id="@+id/automotive_cloud_storage_upload_btn"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1">
+                    android:layout_weight="0.5"
+                    android:src="@drawable/ic_cloud_upload" />
 
-                    <Button
-                        android:id="@+id/automotive_upload_to_google_drive_btn"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerHorizontal="true"
-                        android:layout_centerVertical="true"
-                        android:textSize="24sp"
-                        android:text="@string/upload" />
-
-                    <ProgressBar
-                        android:id="@+id/automotive_upload_to_google_drive_progress"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true" />
-
-                </RelativeLayout>
-
-                <RelativeLayout
+                <ImageButton
+                    android:id="@+id/automotive_cloud_storage_download_btn"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1">
-
-                    <Button
-                        android:id="@+id/automotive_download_from_google_drive_btn"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerHorizontal="true"
-                        android:layout_centerVertical="true"
-                        android:textSize="24sp"
-                        android:text="@string/download" />
-
-                    <ProgressBar
-                        android:id="@+id/automotive_download_to_google_drive_progress"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true" />
-
-                </RelativeLayout>
+                    android:layout_weight="0.5"
+                    android:src="@drawable/ic_cloud_download" />
 
             </LinearLayout>
+
+            <ProgressBar
+                android:id="@+id/automotive_cloud_storage_progress_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="30dp"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"/>
 
             <View
                 android:layout_width="match_parent"
@@ -361,15 +346,15 @@
                     android:layout_height="wrap_content"
                     android:layout_centerHorizontal="true"
                     android:layout_centerVertical="true"
-                    android:textSize="24sp"
-                    android:text="@string/send_logs_lbl" />
+                    android:text="@string/send_logs_lbl"
+                    android:textSize="24sp" />
 
                 <ProgressBar
                     android:id="@+id/automotive_logs_progress"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
-                    android:visibility="gone"/>
+                    android:visibility="gone" />
 
             </RelativeLayout>
 

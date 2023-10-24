@@ -90,7 +90,7 @@ class SleepTimerDialog : BaseDialogFragment(), SleepTimerModelDependency {
         if (mIsEnabled) {
             if (mSleepTimerModel.isTimestampNotValid(timestamp)) {
                 val ctx = context ?: return
-                SafeToast.showAnyThread(ctx, getString(R.string.can_not_set_time))
+                SafeToast.showAnyThread(ctx, getString(R.string.failure))
                 return
             }
         }

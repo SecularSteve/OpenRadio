@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package com.yuriy.openradio.shared.model.storage.drive
+package com.yuriy.openradio.shared.dependencies
 
-import com.yuriy.openradio.shared.utils.AppUtils
+import com.yuriy.openradio.shared.model.storage.firestore.FirestoreManager
 
 /**
- * Created by Chernyshov Yurii
- * At Android Studio
- * On 06/07/17
- * E-Mail: chernyshov.yuriy@gmail.com
+ * [FirestoreManagerDependency] is an interface that helps to inject [FirestoreManager] into a client.
  */
-class GoogleDriveResult {
-    var folderId = AppUtils.EMPTY_STRING
-    var fileId = AppUtils.EMPTY_STRING
+interface FirestoreManagerDependency {
+
+    /**
+     * Callback to provide [FirestoreManager] to a client.
+     */
+    fun configureWith(firestoreManager: FirestoreManager)
 }

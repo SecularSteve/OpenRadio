@@ -16,14 +16,13 @@
 
 package com.yuriy.openradio.mobile
 
-import android.content.Context
 import com.yuriy.openradio.mobile.dependencies.DependencyRegistry
 import com.yuriy.openradio.shared.MainAppCommonUi
 
 class MainApp: MainAppCommonUi() {
 
-    override fun attachBaseContext(base: Context) {
-        super.attachBaseContext(base)
+    override fun onCreate() {
+        super.onCreate()
         DependencyRegistry.init()
     }
 }
