@@ -20,6 +20,7 @@ import android.app.Dialog
 import android.os.Bundle
 import android.widget.EditText
 import android.widget.ProgressBar
+import androidx.fragment.app.FragmentManager
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.dependencies.FirestoreManagerDependency
@@ -30,6 +31,7 @@ import com.yuriy.openradio.shared.utils.findEditText
 import com.yuriy.openradio.shared.utils.findProgressBar
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
+import java.io.Serializable
 
 /**
  * Created by Yurii Chernyshov
@@ -37,6 +39,10 @@ import com.yuriy.openradio.shared.utils.visible
  * E-Mail: chernyshov.yuriy@gmail.com
  */
 class AccountDialog : BaseDialogFragment(), FirestoreManagerDependency {
+
+    interface DialogDismissedListener : Serializable {
+        fun onDialogDismissed()
+    }
 
     private lateinit var mProgress: ProgressBar
     private lateinit var mFirestoreManager: FirestoreManager
@@ -78,8 +84,7 @@ class AccountDialog : BaseDialogFragment(), FirestoreManagerDependency {
             mEmail.text.toString(),
             mPwd.text.toString(),
             {
-                hideProgress()
-                dismiss()
+                handleAccountSuccess()
             },
             {
                 hideProgress()
@@ -97,8 +102,7 @@ class AccountDialog : BaseDialogFragment(), FirestoreManagerDependency {
             mEmail.text.toString(),
             mPwd.text.toString(),
             {
-                hideProgress()
-                dismiss()
+                handleAccountSuccess()
             },
             {
                 hideProgress()
@@ -139,15 +143,43 @@ class AccountDialog : BaseDialogFragment(), FirestoreManagerDependency {
         }
     }
 
+    private fun handleAccountSuccess() {
+        hideProgress()
+        dismiss()
+        val bundle = arguments
+        if (bundle != null) {
+            val listener = bundle.getSerializable(KEY_LISTENER) as DialogDismissedListener?
+            listener?.onDialogDismissed()
+        }
+    }
+
     companion object {
         /**
          * Tag string to use in logging message.
          */
         private val CLASS_NAME = AccountDialog::class.java.simpleName
 
+        private val KEY_LISTENER = "$CLASS_NAME-listener"
+
         /**
          * Tag string to use in dialog transactions.
          */
         val DIALOG_TAG = CLASS_NAME + "_DIALOG_TAG"
+
+        fun show(fragmentManager: FragmentManager, listener: DialogDismissedListener) {
+            if (isDialogShown(fragmentManager)) {
+                return
+            }
+            val bundle = Bundle()
+            bundle.putSerializable(KEY_LISTENER, listener)
+            val dialog = newInstance(AccountDialog::class.java.name, bundle)
+            val transaction = fragmentManager.beginTransaction()
+            dialog.show(transaction, DIALOG_TAG)
+        }
+
+        private fun isDialogShown(fragmentManager: FragmentManager): Boolean {
+            val fragment = fragmentManager.findFragmentByTag(DIALOG_TAG)
+            return fragment != null && fragment is AccountDialog
+        }
     }
 }

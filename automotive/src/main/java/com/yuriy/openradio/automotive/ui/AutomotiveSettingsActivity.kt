@@ -66,7 +66,6 @@ import com.yuriy.openradio.shared.utils.findToolbar
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.utils.visible
 import com.yuriy.openradio.shared.view.dialog.AccountDialog
-import com.yuriy.openradio.shared.view.dialog.BaseDialogFragment
 import com.yuriy.openradio.shared.view.dialog.CloudStorageDialog
 import com.yuriy.openradio.shared.view.dialog.StreamBufferingDialog
 import com.yuriy.openradio.shared.view.list.CountriesArrayAdapter
@@ -91,6 +90,7 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
     private lateinit var mAccEmailView: TextView
     private var mInitSrc: Source? = null
     private var mNewSrc: Source? = null
+    private val mAccountDialogDismissedListener = AccountDialogDismissedListenerImpl()
 
     override fun configureWith(firestoreManager: FirestoreManager) {
         mFirestoreManager = firestoreManager
@@ -333,7 +333,7 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
 
     private fun uploadRadioStations() {
         if (mFirestoreManager.isUserExist().not()) {
-            showAccountDialog()
+            AccountDialog.show(supportFragmentManager, mAccountDialogDismissedListener)
         } else {
             showAccLayout()
             handleCommand(CloudStorageDialog.Command.UPLOAD)
@@ -342,7 +342,7 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
 
     private fun downloadRadioStations() {
         if (mFirestoreManager.isUserExist().not()) {
-            showAccountDialog()
+            AccountDialog.show(supportFragmentManager, mAccountDialogDismissedListener)
         } else {
             showAccLayout()
             handleCommand(CloudStorageDialog.Command.DOWNLOAD)
@@ -375,12 +375,6 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
 
     private fun hideProgress() {
         mProgress.gone()
-    }
-
-    private fun showAccountDialog() {
-        val dialog = BaseDialogFragment.newInstance(AccountDialog::class.java.name)
-        val transaction = supportFragmentManager.beginTransaction()
-        dialog.show(transaction, AccountDialog.DIALOG_TAG)
     }
 
     private fun handleCommand(command: CloudStorageDialog.Command) {
@@ -458,6 +452,13 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
                 }
             }
             view.addView(child)
+        }
+    }
+
+    private class AccountDialogDismissedListenerImpl : AccountDialog.DialogDismissedListener {
+
+        override fun onDialogDismissed() {
+            // Do nothing.
         }
     }
 }

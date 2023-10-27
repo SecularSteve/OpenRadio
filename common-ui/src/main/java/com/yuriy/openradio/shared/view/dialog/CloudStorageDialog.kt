@@ -45,6 +45,7 @@ class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
     private lateinit var mProgress: ProgressBar
     private lateinit var mAccView: LinearLayout
     private lateinit var mAccEmailView: TextView
+    private val mAccountDialogDismissedListener = AccountDialogDismissedListenerImpl()
 
     enum class Command {
         UPLOAD, DOWNLOAD
@@ -86,7 +87,7 @@ class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
     override fun onResume() {
         super.onResume()
         if (mFirestoreManager.isUserExist().not()) {
-            showAccountDialog()
+            AccountDialog.show(parentFragmentManager, mAccountDialogDismissedListener)
         } else {
             showAccLayout()
         }
@@ -94,7 +95,7 @@ class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
 
     private fun uploadRadioStations() {
         if (mFirestoreManager.isUserExist().not()) {
-            showAccountDialog()
+            AccountDialog.show(parentFragmentManager, mAccountDialogDismissedListener)
         } else {
             showAccLayout()
             handleCommand(Command.UPLOAD)
@@ -103,7 +104,7 @@ class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
 
     private fun downloadRadioStations() {
         if (mFirestoreManager.isUserExist().not()) {
-            showAccountDialog()
+            AccountDialog.show(parentFragmentManager, mAccountDialogDismissedListener)
         } else {
             showAccLayout()
             handleCommand(Command.DOWNLOAD)
@@ -195,10 +196,11 @@ class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
         }
     }
 
-    private fun showAccountDialog() {
-        val dialog = newInstance(AccountDialog::class.java.name)
-        val transaction = parentFragmentManager.beginTransaction()
-        dialog.show(transaction, AccountDialog.DIALOG_TAG)
+    private inner class AccountDialogDismissedListenerImpl : AccountDialog.DialogDismissedListener {
+
+        override fun onDialogDismissed() {
+            showAccLayout()
+        }
     }
 
     companion object {

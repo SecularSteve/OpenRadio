@@ -60,13 +60,14 @@ project.ext {
     localbroadcastmanagerVersion = "1.1.0"
     workVersion = "2.8.1"
     media3Version = "1.2.0-beta01"
-    okhttp3Version = "4.12.0"
+    // Seems like this is max version that supports Android 17
+    okhttp3Version = "3.12.13"
 
     /**
      * Application constants
      */
     applicationId = "com.yuriy.openradio"
-    versionName = "13.0.0"
+    versionName = "14.0.1"
     versionCode = 0
 
     /**
