@@ -57,5 +57,4 @@ dependencies {
     implementation project(':common-ui')
 
     api "androidx.preference:preference-ktx:$preferenceKtxVersion"
-    api "androidx.localbroadcastmanager:localbroadcastmanager:$localbroadcastmanagerVersion"
 }
