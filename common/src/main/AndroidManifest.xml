@@ -31,6 +31,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
+    <uses-sdk/>
+
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
@@ -74,7 +76,7 @@
 
         <!-- Declare that Open Radio supports Cast. -->
         <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
-            android:value="com.yuriy.openradio.shared.cast.OpenRadioCastOptionsProvider"/>
+            android:value="androidx.media3.cast.DefaultCastOptionsProvider"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -185,18 +185,18 @@ class GeneralSettingsDialog : BaseDialogFragment(), MediaPresenterDependency, Lo
                         {
                             activity.runOnUiThread {
                                 sendLogsProgress.gone()
-                                SafeToast.showAnyThread(context, "Logs are sent")
+                                SafeToast.showAnyThread(context, context.getString(R.string.success))
                             }
                         },
                         {
                             activity.runOnUiThread { sendLogsProgress.gone() }
-                            SafeToast.showAnyThread(context, "Can't send logs")
+                            SafeToast.showAnyThread(context, context.getString(R.string.failure))
                         }
                     )
                 },
                 {
                     activity.runOnUiThread { sendLogsProgress.gone() }
-                    SafeToast.showAnyThread(context, "Can't create logs")
+                    SafeToast.showAnyThread(context, context.getString(R.string.failure))
                 }
             )
         }

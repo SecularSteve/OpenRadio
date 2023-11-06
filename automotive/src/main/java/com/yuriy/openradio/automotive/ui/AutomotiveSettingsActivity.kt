@@ -282,18 +282,24 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
                         {
                             runOnUiThread {
                                 sendLogsProgress.gone()
-                                SafeToast.showAnyThread(applicationContext, "Logs are sent")
+                                SafeToast.showAnyThread(
+                                    applicationContext,
+                                    getString(com.yuriy.openradio.shared.R.string.success)
+                                )
                             }
                         },
                         {
                             runOnUiThread { sendLogsProgress.gone() }
-                            SafeToast.showAnyThread(applicationContext, "Can't send logs")
+                            SafeToast.showAnyThread(
+                                applicationContext,
+                                getString(com.yuriy.openradio.shared.R.string.failure)
+                            )
                         }
                     )
                 },
                 {
                     runOnUiThread { sendLogsProgress.gone() }
-                    SafeToast.showAnyThread(applicationContext, "Can't create logs")
+                    SafeToast.showAnyThread(applicationContext, getString(com.yuriy.openradio.shared.R.string.failure))
                 }
             )
         }
@@ -322,6 +328,7 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
 
     override fun onPause() {
         super.onPause()
+        AccountDialog.dismiss(supportFragmentManager)
         StreamBufferingDialog.handleOnPause(
             applicationContext,
             mMinBuffer,

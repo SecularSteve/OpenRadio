@@ -177,6 +177,10 @@ class AccountDialog : BaseDialogFragment(), FirestoreManagerDependency {
             dialog.show(transaction, DIALOG_TAG)
         }
 
+        fun dismiss(fragmentManager: FragmentManager) {
+            (fragmentManager.findFragmentByTag(DIALOG_TAG) as AccountDialog?)?.dismiss()
+        }
+
         private fun isDialogShown(fragmentManager: FragmentManager): Boolean {
             val fragment = fragmentManager.findFragmentByTag(DIALOG_TAG)
             return fragment != null && fragment is AccountDialog

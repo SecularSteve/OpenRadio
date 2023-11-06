@@ -46,8 +46,10 @@ class CastLayerImpl(private val mContext: Context) : CastLayer {
                 AppLogger.e("Get Cast context exception", exception)
             }
         }
-        val result = if (task.isComplete) task.result else null
-        AppLogger.d("Get Cast context $result")
-        return result
+        task.addOnFailureListener {
+            AppLogger.e("Get Cast context failed", it)
+        }
+        AppLogger.d("Get Cast context requested")
+        return null
     }
 }

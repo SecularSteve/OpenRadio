@@ -67,7 +67,6 @@ import com.yuriy.openradio.shared.utils.IntentUtils
 import com.yuriy.openradio.shared.utils.MediaItemBuilder
 import com.yuriy.openradio.shared.utils.MediaItemHelper
 import com.yuriy.openradio.shared.utils.NetUtils
-import com.yuriy.openradio.shared.utils.PackageValidator
 import com.yuriy.openradio.shared.utils.SafeToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -106,12 +105,6 @@ class OpenRadioService : MediaLibraryService() {
     private lateinit var mSession: MediaLibrarySession
     private var mBrowser: MediaSession.ControllerInfo? = null
     private var mCurrentSearchQuery = AppUtils.EMPTY_STRING
-
-    private val mPackageValidator by lazy {
-        PackageValidator(applicationContext, R.xml.allowed_media_browser_callers)
-    }
-
-    private var mIsPackageValid = false
 
     /**
      * Track selected Radio Station.
@@ -184,11 +177,7 @@ class OpenRadioService : MediaLibraryService() {
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? {
-        return if ("android.media.session.MediaController" == controllerInfo.packageName
-            || mPackageValidator.isKnownCaller(applicationInfo, controllerInfo.packageName, controllerInfo.uid)
-        ) {
-            mSession
-        } else null
+        return mSession
     }
 
     override fun onCreate() {
@@ -245,7 +234,6 @@ class OpenRadioService : MediaLibraryService() {
     override fun onDestroy() {
         super.onDestroy()
         AppLogger.i("$TAG on destroy")
-        mIsPackageValid = false
         mUiScope.cancel("Cancel on destroy")
         mScope.cancel("Cancel on destroy")
         unregisterReceivers()
@@ -643,26 +631,17 @@ class OpenRadioService : MediaLibraryService() {
                 "$TAG [$browser] GetLibraryRoot for clientPkgName=${browser.packageName}, clientUid=${browser.uid}"
             )
             mBrowser = browser
-            // By default, all known clients are permitted to search, but only tell unknown callers
-            // about search if permitted by the [BrowseTree].
-            mIsPackageValid = mPackageValidator.isKnownCaller(applicationInfo, browser.packageName, browser.uid)
             val rootExtras = Bundle().apply {
                 putBoolean(
                     MediaConstants.BROWSER_SERVICE_EXTRAS_KEY_SEARCH_SUPPORTED,
-                    mIsPackageValid
+                    true
                 )
             }
             //mIsRestoreState = OpenRadioStore.getRestoreState(rootHints)
             val libraryParams = LibraryParams.Builder().setExtras(rootExtras).build()
-            val rootMediaItem = if (mIsPackageValid.not()) {
-                MediaItem.EMPTY
-            } else if (params?.isRecent == true) {
-                // TODO:
-                MediaItemBuilder.buildRootMediaItem()
-            } else {
-                MediaItemBuilder.buildRootMediaItem()
-            }
-            return Futures.immediateFuture(LibraryResult.ofItem(rootMediaItem, libraryParams))
+            return Futures.immediateFuture(
+                LibraryResult.ofItem(MediaItemBuilder.buildRootMediaItem(), libraryParams)
+            )
         }
 
         override fun onGetChildren(
@@ -778,9 +757,15 @@ class OpenRadioService : MediaLibraryService() {
             controller: MediaSession.ControllerInfo
         ): MediaSession.ConnectionResult {
             AppLogger.d("$TAG Connect $controller")
-            val connectionResult = super.onConnect(session, controller)
+            if (
+                session.isMediaNotificationController(controller)
+                || session.isAutomotiveController(controller)
+                || session.isAutoCompanionController(controller)
+            ) {
+                AppLogger.w("$TAG session is not notif, not automotive, not auto")
+            }
             val sessionCommands =
-                connectionResult.availableSessionCommands
+                MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS
                     .buildUpon()
                     // Add custom commands
                     .add(SessionCommand(CMD_FAVORITE_ON, Bundle()))
@@ -793,9 +778,9 @@ class OpenRadioService : MediaLibraryService() {
                     .add(SessionCommand(CMD_UPDATE_SORT_IDS, Bundle()))
                     .add(SessionCommand(CMD_UPDATE_TREE, Bundle()))
                     .build()
-            return MediaSession.ConnectionResult.accept(
-                sessionCommands, connectionResult.availablePlayerCommands
-            )
+            return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                .setAvailableSessionCommands(sessionCommands)
+                .build()
         }
 
         override fun onSetMediaItems(

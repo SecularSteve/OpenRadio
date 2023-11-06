@@ -60,16 +60,16 @@ android {
 }
 
 dependencies {
-    api "androidx.media:media:$androidxMediaVersion"
-    api group: "androidx.exifinterface", name: "exifinterface", version: "$exifinterfaceVersion"
-    ksp("androidx.room:room-compiler:$roomVersion")
-    api "androidx.room:room-runtime:$roomVersion"
-    api "androidx.room:room-ktx:$roomVersion"
-    api "androidx.work:work-runtime-ktx:$workVersion"
     api "com.android.support:multidex:$multidexVersion"
     api "com.google.android.material:material:$materialVersion"
-    api "androidx.core:core-ktx:$kotlinCoreKtx"
-    api "androidx.activity:activity-ktx:$kotlinActivityKtx"
+    implementation "androidx.media:media:$androidxMediaVersion"
+    implementation group: "androidx.exifinterface", name: "exifinterface", version: "$exifinterfaceVersion"
+    ksp("androidx.room:room-compiler:$roomVersion")
+    implementation "androidx.room:room-runtime:$roomVersion"
+    implementation "androidx.room:room-ktx:$roomVersion"
+    implementation "androidx.work:work-runtime-ktx:$workVersion"
+    implementation "androidx.core:core-ktx:$kotlinCoreKtx"
+    implementation "androidx.activity:activity-ktx:$kotlinActivityKtx"
     // Import the Firebase BoM (see: https://firebase.google.com/docs/android/learn-more#bom)
     api platform("com.google.firebase:firebase-bom:$firebaseBom")
     api ("com.google.firebase:firebase-auth-ktx") {
@@ -92,25 +92,24 @@ dependencies {
         exclude module: "play-services-measurement"
         exclude module: "play-services-measurement-sdk"
     }
-    api "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinxCoroutinesAndroid"
-    api "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxCoroutinesCore"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinxCoroutinesAndroid"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxCoroutinesCore"
     api "androidx.media3:media3-exoplayer:$media3Version"
-    api "androidx.media3:media3-datasource:$media3Version"
-    api "androidx.media3:media3-exoplayer-hls:$media3Version"
-    api "androidx.media3:media3-exoplayer-dash:$media3Version"
-    api "androidx.media3:media3-ui:$media3Version"
+    implementation "androidx.media3:media3-datasource:$media3Version"
+    implementation "androidx.media3:media3-exoplayer-hls:$media3Version"
+    implementation "androidx.media3:media3-exoplayer-dash:$media3Version"
     api "androidx.media3:media3-cast:$media3Version"
-    api "androidx.media3:media3-session:$media3Version"
-    api "com.google.android.gms:play-services-location:$googlePlayServicesLocationVersion"
+    implementation "androidx.media3:media3-session:$media3Version"
+    implementation "com.google.android.gms:play-services-location:$googlePlayServicesLocationVersion"
     // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
-    implementation("com.squareup.okhttp3:okhttp:$okhttp3Version")
+    implementation "com.squareup.okhttp3:okhttp:$okhttp3Version"
     // https://mvnrepository.com/artifact/org.jdom/jdom2
-    api group: "org.jdom", name: "jdom2", version: "$jdom2Version"
-    api "de.westnordost:countryboundaries:$countryboundariesVersion"
+    implementation group: "org.jdom", name: "jdom2", version: "$jdom2Version"
+    implementation "de.westnordost:countryboundaries:$countryboundariesVersion"
     // https://mvnrepository.com/artifact/com.google.http-client/google-http-client-apache-v2
     implementation group: 'com.google.http-client', name: 'google-http-client-apache-v2', version: '1.43.3'
 
     // https://mvnrepository.com/artifact/junit/junit
-    testApi group: "junit", name: "junit", version: "$junitVersion"
-    testApi group: "org.json", name: "json", version: "$jsonTestVersion"
+    testImplementation group: "junit", name: "junit", version: "$junitVersion"
+    testImplementation group: "org.json", name: "json", version: "$jsonTestVersion"
 }

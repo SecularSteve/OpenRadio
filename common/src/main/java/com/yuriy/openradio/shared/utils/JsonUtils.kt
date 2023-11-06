@@ -85,8 +85,26 @@ object JsonUtils {
 
     fun getIntValue(jsonObject: JSONObject, key: String, defaultValue: Int): Int {
         return if (jsonObject.has(key)) {
-            jsonObject.getInt(key)
-        } else defaultValue
+            try {
+                jsonObject.getInt(key)
+            } catch (e: Exception) {
+
+                // TODO : Verify
+
+                val str = try {
+                    jsonObject.getString(key)
+                } catch (e: Exception) {
+                    defaultValue.toString()
+                }
+                try {
+                    str.toInt()
+                } catch (e: Exception) {
+                    defaultValue
+                }
+            }
+        } else {
+            defaultValue
+        }
     }
 
     fun getBooleanValue(jsonObject: JSONObject, key: String): Boolean {

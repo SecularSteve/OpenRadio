@@ -62,7 +62,13 @@ class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
 
     override fun onDestroy() {
         super.onDestroy()
+        AccountDialog.dismiss(parentFragmentManager)
         hideProgress()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        AccountDialog.dismiss(parentFragmentManager)
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {

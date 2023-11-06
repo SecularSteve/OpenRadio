@@ -56,5 +56,5 @@ dependencies {
     implementation project(':common')
     implementation project(':common-ui')
 
-    api "androidx.preference:preference-ktx:$preferenceKtxVersion"
+    implementation "androidx.preference:preference-ktx:$preferenceKtxVersion"
 }

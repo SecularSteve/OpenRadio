@@ -100,8 +100,8 @@ class LoggingLayerImpl(private val mContext: Context) : LoggingLayer {
         try {
             Transport.send(createEmailMessage(zipFile))
             onSuccess()
-        } catch (exception: Exception) {
-            onError(exception.message.toString())
+        } catch (throwable: Throwable) {
+            onError(throwable.message.toString())
         }
     }
 
