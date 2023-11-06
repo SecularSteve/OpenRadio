@@ -256,7 +256,7 @@ class LocationService : JobIntentService() {
             COUNTRY_CODE_TO_NAME["KI"] = "Kiribati"
             COUNTRY_CODE_TO_NAME["KM"] = "Comoros"
             COUNTRY_CODE_TO_NAME["KN"] = "Saint Kitts and Nevis"
-            COUNTRY_CODE_TO_NAME["KP"] = "Korea, Democratic People's Republic of"
+            COUNTRY_CODE_TO_NAME["KP"] = "Korea, Democratic People's Republic Of"
             COUNTRY_CODE_TO_NAME["KR"] = "Korea, Republic of"
             COUNTRY_CODE_TO_NAME["KW"] = "Kuwait"
             COUNTRY_CODE_TO_NAME["KZ"] = "Kazakhstan"
