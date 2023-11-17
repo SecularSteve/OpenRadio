@@ -77,6 +77,8 @@ interface MediaPresenter {
 
     fun getCurrentMediaItem(): MediaItem?
 
+    fun getCurrentCategory(): String
+
     fun getServiceCommander(): ServiceCommander
 
     fun getCastContext(): CastContext?

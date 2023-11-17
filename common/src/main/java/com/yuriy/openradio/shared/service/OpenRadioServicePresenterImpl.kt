@@ -8,7 +8,6 @@ import com.yuriy.openradio.shared.model.media.Category
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.RadioStationManagerLayerListener
-import com.yuriy.openradio.shared.model.media.RemoteControlListener
 import com.yuriy.openradio.shared.model.media.item.MediaItemAllCategories
 import com.yuriy.openradio.shared.model.media.item.MediaItemBrowseCar
 import com.yuriy.openradio.shared.model.media.item.MediaItemChildCategories
@@ -16,6 +15,7 @@ import com.yuriy.openradio.shared.model.media.item.MediaItemCommand
 import com.yuriy.openradio.shared.model.media.item.MediaItemCountriesList
 import com.yuriy.openradio.shared.model.media.item.MediaItemCountryStations
 import com.yuriy.openradio.shared.model.media.item.MediaItemFavoritesList
+import com.yuriy.openradio.shared.model.media.item.MediaItemFeatured
 import com.yuriy.openradio.shared.model.media.item.MediaItemLocalsList
 import com.yuriy.openradio.shared.model.media.item.MediaItemNewStations
 import com.yuriy.openradio.shared.model.media.item.MediaItemPopularStations
@@ -62,8 +62,6 @@ class OpenRadioServicePresenterImpl(
     private val mCastLayer: CastLayer
 ) : OpenRadioServicePresenter {
 
-    private var mRemoteControlListener: RemoteControlListener? = null
-    private val mRemoteControlListenerProxy = RemoteControlListenerProxy()
     /**
      * Map of the Media Item commands that responsible for the Media Items List creation.
      */
@@ -86,14 +84,11 @@ class OpenRadioServicePresenterImpl(
         mMediaItemCommands[MediaId.MEDIA_ID_SEARCH_FROM_SERVICE] = MediaItemSearchFromService()
         mMediaItemCommands[MediaId.MEDIA_ID_POPULAR_STATIONS] = MediaItemPopularStations()
         mMediaItemCommands[MediaId.MEDIA_ID_NEW_STATIONS] = MediaItemNewStations()
+        mMediaItemCommands[MediaId.MEDIA_ID_FEATURED_LIST] = MediaItemFeatured()
     }
 
     override fun getMediaItemCommand(commandId: String): MediaItemCommand? {
         return mMediaItemCommands[commandId]
-    }
-
-    fun getRemoteControlListenerProxy(): RemoteControlListener {
-        return mRemoteControlListenerProxy
     }
 
     override fun getCastLayer(): CastLayer {
@@ -154,6 +149,10 @@ class OpenRadioServicePresenterImpl(
         return mModelLayer.getStations(
             mUrlLayer.getSearchUrl(query), mediaIdBuilder
         )
+    }
+
+    override fun getFeatured(): Set<RadioStation> {
+        return mModelLayer.getFeatured()
     }
 
     override fun getAllCategories(): Set<Category> {
@@ -233,28 +232,5 @@ class OpenRadioServicePresenterImpl(
 
     override fun getSleepTimerModel(): SleepTimerModel {
         return mSleepTimerModel
-    }
-
-    override fun setRemoteControlListener(value: RemoteControlListener) {
-        mRemoteControlListener = value
-    }
-
-    override fun removeRemoteControlListener() {
-        mRemoteControlListener = null
-    }
-
-    private inner class RemoteControlListenerProxy : RemoteControlListener {
-
-        override fun onMediaPlay() {
-            mRemoteControlListener?.onMediaPlay()
-        }
-
-        override fun onMediaPlayPause() {
-            mRemoteControlListener?.onMediaPlayPause()
-        }
-
-        override fun onMediaPauseStop() {
-            mRemoteControlListener?.onMediaPauseStop()
-        }
     }
 }

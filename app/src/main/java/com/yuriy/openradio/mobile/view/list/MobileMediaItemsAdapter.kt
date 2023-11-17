@@ -26,7 +26,9 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import com.xenione.libs.swipemaker.SwipeLayout
 import com.yuriy.openradio.mobile.R
+import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.presenter.MediaPresenter
+import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.MediaItemHelper
 import com.yuriy.openradio.shared.utils.gone
 import com.yuriy.openradio.shared.view.list.MediaItemViewHolder
@@ -70,7 +72,10 @@ class MobileMediaItemsAdapter(private var mContext: Context, private val mMediaP
             holder.mFavoriteCheckView.gone()
         }
         holder.mSettingsView?.setOnClickListener(OnSettingsListener(mediaItem))
-        (holder.mForegroundView as SwipeLayout).isDragDisabled(!isPlayable)
+        val category = mMediaPresenter.getCurrentCategory()
+        (holder.mForegroundView as SwipeLayout).isDragDisabled(
+            (category == MediaId.MEDIA_ID_FAVORITES_LIST || category == MediaId.MEDIA_ID_LOCAL_RADIO_STATIONS_LIST).not()
+        )
         holder.mForegroundView?.setOnClickListener(OnItemTapListener(mediaItem, position))
         var color = R.color.or_color_primary
         if (position == activeItemId) {

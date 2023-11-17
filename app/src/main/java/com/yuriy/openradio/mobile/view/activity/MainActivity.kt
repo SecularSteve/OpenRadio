@@ -27,7 +27,6 @@ import android.widget.TextView
 import androidx.annotation.MainThread
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.media3.common.MediaItem
@@ -53,7 +52,6 @@ import com.yuriy.openradio.shared.utils.UiUtils
 import com.yuriy.openradio.shared.utils.findCheckBox
 import com.yuriy.openradio.shared.utils.findFloatingActionButton
 import com.yuriy.openradio.shared.utils.findImageView
-import com.yuriy.openradio.shared.utils.findProgressBar
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.utils.findToolbar
 import com.yuriy.openradio.shared.utils.findView
@@ -63,9 +61,9 @@ import com.yuriy.openradio.shared.view.dialog.AboutDialog
 import com.yuriy.openradio.shared.view.dialog.AddStationDialog
 import com.yuriy.openradio.shared.view.dialog.BaseDialogFragment
 import com.yuriy.openradio.shared.view.dialog.BatteryOptimizationDialog
+import com.yuriy.openradio.shared.view.dialog.CloudStorageDialog
 import com.yuriy.openradio.shared.view.dialog.EqualizerDialog
 import com.yuriy.openradio.shared.view.dialog.GeneralSettingsDialog
-import com.yuriy.openradio.shared.view.dialog.CloudStorageDialog
 import com.yuriy.openradio.shared.view.dialog.NetworkDialog
 import com.yuriy.openradio.shared.view.dialog.SearchDialog
 import com.yuriy.openradio.shared.view.dialog.SleepTimerDialog
@@ -92,9 +90,9 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
     }
 
     /**
-     * Progress Bar view to indicate that data is loading.
+     * Progress view to indicate that data is loading.
      */
-    private lateinit var mProgressBar: ProgressBar
+    private lateinit var mProgress: ProgressBar
 
     /**
      * Text View to display that data has not been loaded.
@@ -106,9 +104,6 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
      */
     private val mLocalBroadcastReceiverCb: LocalBroadcastReceiverCallback
 
-    private lateinit var mPlayBtn: View
-    private lateinit var mPauseBtn: View
-    private lateinit var mProgressBarCrs: ProgressBar
     private lateinit var mMediaPresenter: MediaPresenter
     private var mSavedInstanceState = Bundle()
     private var mCastContext: CastContext? = null
@@ -236,12 +231,9 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
     private fun initUi() {
         // Set content.
         setContentView(R.layout.main_drawer)
-        mPlayBtn = findView(R.id.crs_play_btn_view)
-        mPauseBtn = findView(R.id.crs_pause_btn_view)
-        mProgressBarCrs = findViewById(R.id.crs_progress_view)
-        // Initialize progress bar
-        mProgressBar = findViewById(R.id.progress_bar_view)
-        // Initialize No Data text view
+        // Initialize progress.
+        mProgress = findViewById(R.id.progress_bar_view)
+        // Initialize No Data text view.
         mNoDataView = findTextView(R.id.no_data_view)
         val toolbar = findToolbar(R.id.toolbar)
         val drawer = findViewById<DrawerLayout>(R.id.drawer_layout)
@@ -324,23 +316,23 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
     }
 
     /**
-     * Show progress bar.
+     * Show progress.
      */
     private fun showProgressBar() {
-        if (!this::mProgressBar.isInitialized) {
+        if (!this::mProgress.isInitialized) {
             return
         }
-        mProgressBar.visible()
+        mProgress.visible()
     }
 
     /**
-     * Hide progress bar.
+     * Hide progress.
      */
     private fun hideProgressBar() {
-        if (!this::mProgressBar.isInitialized) {
+        if (!this::mProgress.isInitialized) {
             return
         }
-        mProgressBar.gone()
+        mProgress.gone()
     }
 
     /**
@@ -373,18 +365,6 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
 
     @MainThread
     private fun handlePlaybackStateChanged(state: PlaybackState) {
-        when (state.isPlaying) {
-            true -> {
-                mPlayBtn.gone()
-                mPauseBtn.visible()
-            }
-
-            false -> {
-                mPlayBtn.visible()
-                mPauseBtn.gone()
-            }
-        }
-        mProgressBarCrs.gone()
         hideProgressBar()
     }
 
@@ -400,22 +380,19 @@ class MainActivity : AppCompatActivity(), MediaPresenterDependency {
         mMediaPresenter.updateDescription(
             findTextView(R.id.crs_description_view), metadata
         )
-        findProgressBar(R.id.crs_img_progress_view).gone()
         val imgView = findImageView(R.id.crs_img_view)
         MediaItemsAdapter.updateImage(applicationContext, metadata, imgView)
-        // TODO:
-        //MediaItemsAdapter.updateBitrateView(
-        //    radioStation.getStreamBitrate(), findTextView(R.id.crs_bitrate_view), true
-        //)
+        imgView.setOnClickListener {
+            mMediaPresenter.getCurrentMediaItem()?.let {
+                mMediaPresenter.handleItemSettings(it)
+            }
+        }
         val favoriteCheckView = findCheckBox(R.id.crs_favorite_check_view)
-        favoriteCheckView.buttonDrawable = AppCompatResources.getDrawable(
-            applicationContext, com.yuriy.openradio.R.drawable.src_favorite
-        )
         favoriteCheckView.isChecked = false
-        mMediaPresenter.getCurrentMediaItem()?.apply {
+        mMediaPresenter.getCurrentMediaItem()?.let {
             MediaItemsAdapter.handleFavoriteAction(
                 favoriteCheckView,
-                mediaId,
+                it.mediaId,
                 metadata,
                 mMediaPresenter.getServiceCommander()
             )

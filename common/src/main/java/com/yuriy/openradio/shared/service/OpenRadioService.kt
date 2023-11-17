@@ -49,7 +49,6 @@ import com.yuriy.openradio.shared.extentions.isPlayEnabled
 import com.yuriy.openradio.shared.model.media.BrowseTree
 import com.yuriy.openradio.shared.model.media.MediaId
 import com.yuriy.openradio.shared.model.media.RadioStation
-import com.yuriy.openradio.shared.model.media.RemoteControlListener
 import com.yuriy.openradio.shared.model.media.getStreamUrlFixed
 import com.yuriy.openradio.shared.model.media.isInvalid
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommand
@@ -141,7 +140,6 @@ class OpenRadioService : MediaLibraryService() {
     private var mIsRestoreState = false
     private lateinit var mPresenter: OpenRadioServicePresenter
     private val mSleepTimerListener = SleepTimerListenerImpl()
-    private val mRemoteControlListener = RemoteControlListenerImpl()
 
     private val mBrowseTree: BrowseTree by lazy {
         BrowseTree()
@@ -261,7 +259,6 @@ class OpenRadioService : MediaLibraryService() {
         mNoisyAudioStreamReceiver.register(applicationContext)
         mPresenter.startNetworkMonitor(applicationContext, mNetMonitorListener)
         mPresenter.getSleepTimerModel().addSleepTimerListener(mSleepTimerListener)
-        mPresenter.setRemoteControlListener(mRemoteControlListener)
     }
 
     private fun unregisterReceivers() {
@@ -269,7 +266,6 @@ class OpenRadioService : MediaLibraryService() {
         mNoisyAudioStreamReceiver.unregister(applicationContext)
         mPresenter.stopNetworkMonitor(applicationContext)
         mPresenter.getSleepTimerModel().removeSleepTimerListener(mSleepTimerListener)
-        mPresenter.removeRemoteControlListener()
     }
 
     private fun updateFavoriteState() {
@@ -581,26 +577,40 @@ class OpenRadioService : MediaLibraryService() {
         }
     }
 
-    private inner class RemoteControlListenerImpl : RemoteControlListener {
-
-        override fun onMediaPlay() {
-            handlePlayRequest()
-        }
-
-        override fun onMediaPlayPause() {
-            togglePlayableItem()
-        }
-
-        override fun onMediaPauseStop() {
-            handlePauseRequest()
-        }
-    }
-
     private inner class ServiceCallback : MediaLibrarySession.Callback {
 
         private val mSessionCmdSuccess = Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
         private val mSessionCmdNotSupported =
             Futures.immediateFuture(SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED))
+
+        override fun onPlaybackResumption(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo
+        ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
+            AppLogger.d("$TAG [$controller] Playback Resumption")
+            mBrowser = controller
+            val mediaItemCount = mPlayer.mediaItemCount
+            if (mediaItemCount != 0) {
+                return Futures.immediateFuture(
+                    MediaSession.MediaItemsWithStartPosition(emptyList(), 0, 0)
+                )
+            }
+            return Futures.immediateFuture(
+                MediaSession.MediaItemsWithStartPosition(
+                    mPlayer.getPlaylist(), mPlayer.currentMediaItemIndex, 0
+                )
+            )
+        }
+
+        override fun onMediaButtonEvent(
+            session: MediaSession,
+            controllerInfo: MediaSession.ControllerInfo,
+            intent: Intent
+        ): Boolean {
+            AppLogger.d("$TAG [$controllerInfo] Media Button Event $intent")
+            mBrowser = controllerInfo
+            return super.onMediaButtonEvent(session, controllerInfo, intent)
+        }
 
         override fun onSubscribe(
             session: MediaLibrarySession,

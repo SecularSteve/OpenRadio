@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Copyright 2020 The "Open Radio" Project. Author: Chernyshov Yuriy
+    Copyright 2020, 2023. The "Open Radio" Project. Author: Chernyshov Yuriy
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:drawable="@drawable/ic_favorite_off" android:state_checked="false" />
-    <item android:drawable="@drawable/ic_favorite_on" android:state_checked="true" />
+    <item android:drawable="@drawable/ic_favorite_off" android:state_checked="false" android:state_focused="false" />
+    <item android:drawable="@drawable/ic_favorite_off_focused" android:state_checked="false" android:state_focused="true" />
+    <item android:drawable="@drawable/ic_favorite_on" android:state_checked="true" android:state_focused="false" />
+    <item android:drawable="@drawable/ic_favorite_on_focused" android:state_checked="true" android:state_focused="true" />
     <item android:drawable="@drawable/ic_favorite_off" />
 
 </selector>

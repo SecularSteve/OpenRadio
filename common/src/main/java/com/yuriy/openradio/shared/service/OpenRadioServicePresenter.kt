@@ -20,7 +20,6 @@ import com.yuriy.openradio.shared.model.cast.CastLayer
 import com.yuriy.openradio.shared.model.eq.EqualizerLayer
 import com.yuriy.openradio.shared.model.media.Category
 import com.yuriy.openradio.shared.model.media.RadioStation
-import com.yuriy.openradio.shared.model.media.RemoteControlListener
 import com.yuriy.openradio.shared.model.media.item.MediaItemCommand
 import com.yuriy.openradio.shared.model.net.NetworkMonitorListener
 import com.yuriy.openradio.shared.model.timer.SleepTimerModel
@@ -60,6 +59,8 @@ interface OpenRadioServicePresenter {
 
     fun getAllDeviceLocal(): Set<RadioStation>
 
+    fun getFeatured(): Set<RadioStation>
+
     fun getLastRadioStation(): RadioStation
 
     fun getEqualizerLayer(): EqualizerLayer
@@ -87,8 +88,4 @@ interface OpenRadioServicePresenter {
      * Close resources related to service provider, such as connections, streams, etc ...
      */
     fun close()
-
-    fun setRemoteControlListener(value: RemoteControlListener)
-
-    fun removeRemoteControlListener()
 }

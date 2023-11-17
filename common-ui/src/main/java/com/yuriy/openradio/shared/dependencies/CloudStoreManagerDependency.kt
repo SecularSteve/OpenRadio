@@ -16,15 +16,15 @@
 
 package com.yuriy.openradio.shared.dependencies
 
-import com.yuriy.openradio.shared.model.storage.firestore.FirestoreManager
+import com.yuriy.openradio.shared.model.storage.CloudStoreManager
 
 /**
- * [FirestoreManagerDependency] is an interface that helps to inject [FirestoreManager] into a client.
+ * [CloudStoreManagerDependency] is an interface that helps to inject [CloudStoreManager] into a client.
  */
-interface FirestoreManagerDependency {
+interface CloudStoreManagerDependency {
 
     /**
-     * Callback to provide [FirestoreManager] to a client.
+     * Callback to provide [CloudStoreManager] to a client.
      */
-    fun configureWith(firestoreManager: FirestoreManager)
+    fun configureWith(cloudStoreManager: CloudStoreManager)
 }

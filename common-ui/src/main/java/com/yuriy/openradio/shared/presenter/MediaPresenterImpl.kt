@@ -30,6 +30,7 @@ import android.os.Message
 import android.os.Messenger
 import android.view.View
 import android.widget.ImageView
+import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
@@ -253,6 +254,14 @@ class MediaPresenterImpl(
         // Unregister local receivers
         unregisterReceivers()
         LocationService.doCancelWork(mContext)
+    }
+
+    private fun updateNowPlayingView(isPlaying: Boolean) {
+        if (isPlaying) {
+            mCurrentRadioStationView?.setBackgroundColor(ContextCompat.getColor(mContext, R.color.or_color_green_dark))
+        } else {
+            mCurrentRadioStationView?.setBackgroundColor(ContextCompat.getColor(mContext, R.color.or_color_primary))
+        }
     }
 
     private fun disconnect() {
@@ -570,6 +579,10 @@ class MediaPresenterImpl(
         return mMediaRsrMgr?.currentMediaItem
     }
 
+    override fun getCurrentCategory(): String {
+        return mMediaItemsStack.last
+    }
+
     /**
      * Handles action of the Radio Station deletion.
      *
@@ -665,6 +678,7 @@ class MediaPresenterImpl(
         if (mCurrentRadioStationView?.visibility != View.VISIBLE) {
             mCurrentRadioStationView.visible()
         }
+        updateNowPlayingView(mMediaRsrMgr?.isPlaying == true)
         mListener?.handleMetadataChanged(metadata)
     }
 
@@ -693,6 +707,7 @@ class MediaPresenterImpl(
         }
 
         override fun onPlaybackStateChanged(state: PlaybackState) {
+            updateNowPlayingView(state.isPlaying)
             this@MediaPresenterImpl.mListener?.handlePlaybackStateChanged(state)
         }
 

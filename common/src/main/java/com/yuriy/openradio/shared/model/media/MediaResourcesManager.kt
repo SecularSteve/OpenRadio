@@ -207,6 +207,12 @@ class MediaResourcesManager(context: Context, className: String, private val mLi
     val currentMediaItem: MediaItem?
         get() = mPlayer?.currentMediaItem
 
+    val isPlaying: Boolean
+        get()  {
+            AppLogger.d("TRACE:${mPlayer?.isPlaying}")
+            return mPlayer?.isPlaying ?: false
+        }
+
     private fun updateNowPlaying(player: Player?) {
         val mediaItem = player?.currentMediaItem ?: MediaItem.EMPTY
         if (mediaItem == MediaItem.EMPTY) {

@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package com.yuriy.openradio.shared.model.storage.firestore
+package com.yuriy.openradio.shared.model.storage
 
 import android.app.Activity
-import android.content.Context
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
 import com.yuriy.openradio.shared.dependencies.StorageManagerDependency
-import com.yuriy.openradio.shared.model.storage.StorageManagerLayer
 import com.yuriy.openradio.shared.utils.AppLogger
 
-class FirestoreManager(private val mContext: Context) : StorageManagerDependency {
+class CloudStoreManager : StorageManagerDependency {
 
     private val mAuth = Firebase.auth
     private val mDb = Firebase.firestore
@@ -147,7 +145,7 @@ class FirestoreManager(private val mContext: Context) : StorageManagerDependency
         )
 
         // Add or update data in Firestore
-        val userRef = mDb.collection(COLLECTION_NAME).document(token)
+        val userRef = mDb.collection(COLLECTION_USERS).document(token)
         userRef.set(data)
             .addOnSuccessListener {
                 onSuccess()
@@ -164,7 +162,7 @@ class FirestoreManager(private val mContext: Context) : StorageManagerDependency
         onFailure: () -> Unit
     ) {
         // Retrieve user data from Firestore
-        val userRef = mDb.collection(COLLECTION_NAME).document(token)
+        val userRef = mDb.collection(COLLECTION_USERS).document(token)
         userRef.get()
             .addOnSuccessListener { documentSnapshot ->
                 if (documentSnapshot.exists()) {
@@ -191,7 +189,7 @@ class FirestoreManager(private val mContext: Context) : StorageManagerDependency
      * Empty constructor is needed for deserialization by Firestone SDK.
      */
     @Suppress("unused")
-    data class UserData(
+    private data class UserData(
         val favorites: String,
         val locals: String
     ) {
@@ -201,7 +199,7 @@ class FirestoreManager(private val mContext: Context) : StorageManagerDependency
     companion object {
 
         private const val TAG = "FSM"
-        private const val COLLECTION_NAME = "users"
+        private const val COLLECTION_USERS = "users"
         private const val KEY_FAV = "favorites"
         private const val KEY_LOC = "locals"
     }

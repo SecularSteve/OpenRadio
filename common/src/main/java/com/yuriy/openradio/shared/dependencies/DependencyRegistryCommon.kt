@@ -38,6 +38,8 @@ import com.yuriy.openradio.shared.model.net.NetworkLayerImpl
 import com.yuriy.openradio.shared.model.net.UrlLayer
 import com.yuriy.openradio.shared.model.net.UrlLayerRadioBrowserImpl
 import com.yuriy.openradio.shared.model.net.UrlLayerWebRadioImpl
+import com.yuriy.openradio.shared.model.parser.FeaturedParserLayer
+import com.yuriy.openradio.shared.model.parser.FeaturedParserLayerFirestone
 import com.yuriy.openradio.shared.model.parser.ParserLayer
 import com.yuriy.openradio.shared.model.parser.ParserLayerRadioBrowserImpl
 import com.yuriy.openradio.shared.model.parser.ParserLayerWebRadioImpl
@@ -137,12 +139,13 @@ object DependencyRegistryCommon {
         val countriesCache = TreeSet<Country>()
         val source = sSourcesLayer.getActiveSource()
         val parser = getParserLayer(source, countriesCache)
+        val featuredParser = FeaturedParserLayerFirestone()
         val urlLayer = getUrlLayer(source)
         val downloader = HTTPDownloaderImpl(urlLayer)
         val apiCachePersistent = PersistentApiCache(context, PersistentApiDb.DATABASE_DEFAULT_FILE_NAME)
         val apiCacheInMemory = InMemoryApiCache()
         val modelLayer = ModelLayerImpl(
-            context, parser, sNetworkLayer, downloader, apiCachePersistent, apiCacheInMemory
+            context, parser, featuredParser, sNetworkLayer, downloader, apiCachePersistent, apiCacheInMemory
         )
         val contextRef = WeakReference(context)
         sFavoritesStorage = FavoritesStorage(contextRef)

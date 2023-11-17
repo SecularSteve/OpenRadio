@@ -24,6 +24,7 @@ import androidx.media3.common.MediaMetadata
 import com.yuriy.openradio.R
 import com.yuriy.openradio.shared.model.media.Category
 import com.yuriy.openradio.shared.model.media.MediaId
+import com.yuriy.openradio.shared.model.media.MediaStream
 import com.yuriy.openradio.shared.model.media.RadioStation
 import com.yuriy.openradio.shared.model.media.getStreamBitrate
 import com.yuriy.openradio.shared.model.media.getStreamUrlFixed
@@ -102,6 +103,23 @@ object MediaItemBuilder {
                 MediaMetadata.Builder()
                     .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_RADIO_STATIONS)
                     .setTitle(context.getString(R.string.favorites_list_title))
+                    .setExtras(bundle)
+                    .setIsBrowsable(true)
+                    .setIsPlayable(false)
+                    .build()
+            )
+            .build()
+    }
+
+    fun buildFeaturedMenuItem(context: Context): MediaItem {
+        val bundle = Bundle()
+        MediaItemHelper.setDrawableId(bundle, R.drawable.ic_featured)
+        return MediaItem.Builder()
+            .setMediaId(MediaId.MEDIA_ID_FEATURED_LIST)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_RADIO_STATIONS)
+                    .setTitle(context.getString(R.string.featured_list_title))
                     .setExtras(bundle)
                     .setIsBrowsable(true)
                     .setIsPlayable(false)
@@ -285,7 +303,7 @@ object MediaItemBuilder {
 
     fun buildDefaultPlayable(): MediaItem {
         val bundle = Bundle()
-        MediaItemHelper.updateBitrateField(bundle, 128)
+        MediaItemHelper.updateBitrateField(bundle, MediaStream.BIT_RATE_DEFAULT)
         val uri = Uri.parse("http://stream.mangoradio.de")
         return MediaItem.Builder()
             .setMediaId("78012206-1aa1-11e9-a80b-52543be04c81")

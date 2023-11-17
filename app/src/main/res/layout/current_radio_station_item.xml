@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?><!--
+<?xml version="1.0" encoding="utf-8"?>
+<!--
     Copyright 2020 The "Open Radio" Project. Author: Chernyshov Yuriy
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,22 +26,10 @@
         android:layout_width="@dimen/list_item_img_width"
         android:layout_height="@dimen/list_item_img_width"
         android:layout_marginEnd="15dp"
+        android:layout_centerVertical="true"
         android:contentDescription="@string/content_description_category_icon"
         android:visibility="gone"
         app:srcCompat="@drawable/ic_child_categories" />
-
-    <ProgressBar
-        android:id="@+id/crs_img_progress_view"
-        android:layout_width="@dimen/list_item_img_width"
-        android:layout_height="@dimen/list_item_img_width"
-        android:layout_marginEnd="15dp" />
-
-    <TextView
-        android:id="@+id/crs_bitrate_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/crs_img_view"
-        android:paddingTop="5dp" />
 
     <TextView
         android:id="@+id/crs_name_view"
@@ -69,44 +58,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
         android:button="@drawable/src_favorite"
         android:checked="false" />
-
-    <ImageView
-        android:id="@+id/crs_play_btn_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/crs_favorite_check_view"
-        android:layout_alignStart="@+id/crs_favorite_check_view"
-        android:layout_alignEnd="@+id/crs_favorite_check_view"
-        android:layout_marginTop="10dp"
-        android:focusable="false"
-        android:focusableInTouchMode="false"
-        android:visibility="invisible"
-        app:srcCompat="@drawable/ic_play_arrow" />
-
-    <ImageView
-        android:id="@+id/crs_pause_btn_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/crs_favorite_check_view"
-        android:layout_alignStart="@+id/crs_favorite_check_view"
-        android:layout_alignEnd="@+id/crs_favorite_check_view"
-        android:layout_marginTop="10dp"
-        android:focusable="false"
-        android:focusableInTouchMode="false"
-        android:visibility="invisible"
-        app:srcCompat="@drawable/ic_pause" />
-
-    <ProgressBar
-        android:id="@+id/crs_progress_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/crs_favorite_check_view"
-        android:layout_alignStart="@+id/crs_favorite_check_view"
-        android:layout_alignEnd="@+id/crs_favorite_check_view"
-        android:focusable="false"
-        android:focusableInTouchMode="false"
-        android:indeterminate="true" />
 
 </RelativeLayout>

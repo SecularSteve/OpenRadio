@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The "Open Radio" Project. Author: Chernyshov Yuriy
+ * Copyright 2023 The "Open Radio" Project. Author: Chernyshov Yuriy
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.yuriy.openradio.shared.model.media
+package com.yuriy.openradio.shared.model.parser
 
-interface RemoteControlListener {
+import com.google.firebase.firestore.QueryDocumentSnapshot
+import com.yuriy.openradio.shared.model.media.RadioStation
 
-    fun onMediaPlay()
+interface FeaturedParserLayer {
 
-    fun onMediaPlayPause()
-
-    fun onMediaPauseStop()
+    fun getRadioStation(snapshot: QueryDocumentSnapshot): RadioStation
 }

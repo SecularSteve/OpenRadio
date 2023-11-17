@@ -32,7 +32,7 @@ import com.yuriy.openradio.shared.model.storage.LocationStorage
 import com.yuriy.openradio.shared.model.storage.NetworkSettingsStorage
 import com.yuriy.openradio.shared.model.storage.StorageManagerLayer
 import com.yuriy.openradio.shared.model.storage.StorageManagerLayerImpl
-import com.yuriy.openradio.shared.model.storage.firestore.FirestoreManager
+import com.yuriy.openradio.shared.model.storage.CloudStoreManager
 import com.yuriy.openradio.shared.model.timer.SleepTimerModel
 import com.yuriy.openradio.shared.presenter.MediaPresenter
 import com.yuriy.openradio.shared.presenter.MediaPresenterImpl
@@ -73,7 +73,7 @@ object DependencyRegistryCommonUi :
     private lateinit var sSourcesLayer: SourcesLayer
     private lateinit var sCastLayer: CastLayer
     private lateinit var sLoggingLayer: LoggingLayer
-    private lateinit var sFirestoreManager: FirestoreManager
+    private lateinit var sCloudStoreManager: CloudStoreManager
 
     @Volatile
     private var sInit = AtomicBoolean(false)
@@ -123,7 +123,7 @@ object DependencyRegistryCommonUi :
             sRadioStationManagerLayer
         )
         Firebase.initialize(context)
-        sFirestoreManager = FirestoreManager(context)
+        sCloudStoreManager = CloudStoreManager()
 
         sInit.set(true)
     }
@@ -176,8 +176,8 @@ object DependencyRegistryCommonUi :
         dependency.configureWith(sStorageManagerLayer)
     }
 
-    fun injectFirestoreManager(dependency: FirestoreManagerDependency) {
-        dependency.configureWith(sFirestoreManager)
+    fun injectCloudStoreManager(dependency: CloudStoreManagerDependency) {
+        dependency.configureWith(sCloudStoreManager)
     }
 
     fun inject(dependency: EditStationDialog) {

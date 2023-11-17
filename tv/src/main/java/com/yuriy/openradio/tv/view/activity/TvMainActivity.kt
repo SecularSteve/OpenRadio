@@ -40,8 +40,8 @@ import com.yuriy.openradio.shared.utils.AppLogger
 import com.yuriy.openradio.shared.utils.IntentUtils
 import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.utils.UiUtils
+import com.yuriy.openradio.shared.utils.findCheckBox
 import com.yuriy.openradio.shared.utils.findImageView
-import com.yuriy.openradio.shared.utils.findProgressBar
 import com.yuriy.openradio.shared.utils.findTextView
 import com.yuriy.openradio.shared.utils.findView
 import com.yuriy.openradio.shared.utils.gone
@@ -62,12 +62,10 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
     /**
      * Progress Bar view to indicate that data is loading.
      */
-    private lateinit var mProgressBar: ProgressBar
+    private lateinit var mProgress: ProgressBar
 
     private lateinit var mMediaPresenter: MediaPresenter
     private lateinit var mTvMainActivityPresenter: TvMainActivityPresenter
-    private lateinit var mPlayBtn: View
-    private lateinit var mPauseBtn: View
     private var mSavedInstanceState = Bundle()
 
     /**
@@ -113,9 +111,7 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
         DependencyRegistryTv.inject(this)
         DependencyRegistryCommonUi.inject(this)
 
-        mProgressBar = findViewById(R.id.progress_bar_tv_view)
-        mPlayBtn = findView(R.id.tv_crs_play_btn_view)
-        mPauseBtn = findView(R.id.tv_crs_pause_btn_view)
+        mProgress = findViewById(R.id.progress_tv_view)
 
         mLauncher = IntentUtils.registerForActivityResultIntrl(
             this, ::onActivityResultCallback
@@ -159,8 +155,8 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
      * Show progress bar.
      */
     private fun showProgressBar() {
-        if (this::mProgressBar.isInitialized) {
-            mProgressBar.visible()
+        if (this::mProgress.isInitialized) {
+            mProgress.visible()
         }
     }
 
@@ -168,8 +164,8 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
      * Hide progress bar.
      */
     private fun hideProgressBar() {
-        if (this::mProgressBar.isInitialized) {
-            mProgressBar.gone()
+        if (this::mProgress.isInitialized) {
+            mProgress.gone()
         }
     }
 
@@ -185,17 +181,6 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
 
     @MainThread
     private fun handlePlaybackStateChanged(state: PlaybackState) {
-        when (state.isPlaying) {
-            true -> {
-                mPlayBtn.gone()
-                mPauseBtn.visible()
-            }
-
-            false -> {
-                mPlayBtn.visible()
-                mPauseBtn.gone()
-            }
-        }
         hideProgressBar()
     }
 
@@ -262,13 +247,23 @@ class TvMainActivity : FragmentActivity(), MediaPresenterDependency {
         mMediaPresenter.updateDescription(
             findTextView(R.id.tv_crs_description_view), metadata
         )
-        findProgressBar(R.id.tv_crs_img_progress_view).gone()
         val imgView = findImageView(R.id.tv_crs_img_view)
         MediaItemsAdapter.updateImage(applicationContext, metadata, imgView)
         MediaItemsAdapter.updateBitrateView(
             radioStation.getStreamBitrate(),
             findTextView(R.id.tv_crs_bitrate_view), true
         )
+
+        val favoriteCheckView = findCheckBox(R.id.tv_crs_favorite_check_view)
+        favoriteCheckView.isChecked = false
+        mMediaPresenter.getCurrentMediaItem()?.let {
+            MediaItemsAdapter.handleFavoriteAction(
+                favoriteCheckView,
+                it.mediaId,
+                metadata,
+                mMediaPresenter.getServiceCommander()
+            )
+        }
     }
 
     private fun handleChildrenLoaded(

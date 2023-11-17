@@ -23,8 +23,8 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
-import com.yuriy.openradio.shared.dependencies.FirestoreManagerDependency
-import com.yuriy.openradio.shared.model.storage.firestore.FirestoreManager
+import com.yuriy.openradio.shared.dependencies.CloudStoreManagerDependency
+import com.yuriy.openradio.shared.model.storage.CloudStoreManager
 import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.utils.findImageButton
 import com.yuriy.openradio.shared.utils.findLinearLayout
@@ -39,9 +39,9 @@ import com.yuriy.openradio.shared.utils.visible
  * On 12/20/14
  * E-Mail: chernyshov.yuriy@gmail.com
  */
-class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
+class CloudStorageDialog : BaseDialogFragment(), CloudStoreManagerDependency {
 
-    private lateinit var mFirestoreManager: FirestoreManager
+    private lateinit var mCloudStoreManager: CloudStoreManager
     private lateinit var mProgress: ProgressBar
     private lateinit var mAccView: LinearLayout
     private lateinit var mAccEmailView: TextView
@@ -51,13 +51,13 @@ class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
         UPLOAD, DOWNLOAD
     }
 
-    override fun configureWith(firestoreManager: FirestoreManager) {
-        mFirestoreManager = firestoreManager
+    override fun configureWith(cloudStoreManager: CloudStoreManager) {
+        mCloudStoreManager = cloudStoreManager
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        DependencyRegistryCommonUi.injectFirestoreManager(this)
+        DependencyRegistryCommonUi.injectCloudStoreManager(this)
     }
 
     override fun onDestroy() {
@@ -92,7 +92,7 @@ class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
 
     override fun onResume() {
         super.onResume()
-        if (mFirestoreManager.isUserExist().not()) {
+        if (mCloudStoreManager.isUserExist().not()) {
             AccountDialog.show(parentFragmentManager, mAccountDialogDismissedListener)
         } else {
             showAccLayout()
@@ -100,7 +100,7 @@ class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
     }
 
     private fun uploadRadioStations() {
-        if (mFirestoreManager.isUserExist().not()) {
+        if (mCloudStoreManager.isUserExist().not()) {
             AccountDialog.show(parentFragmentManager, mAccountDialogDismissedListener)
         } else {
             showAccLayout()
@@ -109,7 +109,7 @@ class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
     }
 
     private fun downloadRadioStations() {
-        if (mFirestoreManager.isUserExist().not()) {
+        if (mCloudStoreManager.isUserExist().not()) {
             AccountDialog.show(parentFragmentManager, mAccountDialogDismissedListener)
         } else {
             showAccLayout()
@@ -119,11 +119,11 @@ class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
 
     private fun handleCommand(command: Command) {
         showProgress()
-        mFirestoreManager.getToken(
+        mCloudStoreManager.getToken(
             {
                 when (command) {
                     Command.UPLOAD -> {
-                        mFirestoreManager.upload(
+                        mCloudStoreManager.upload(
                             it,
                             {
                                 hideProgress()
@@ -141,7 +141,7 @@ class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
                     }
 
                     Command.DOWNLOAD -> {
-                        mFirestoreManager.download(
+                        mCloudStoreManager.download(
                             it,
                             {
                                 hideProgress()
@@ -167,8 +167,8 @@ class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
     }
 
     private fun signOut() {
-        if (mFirestoreManager.isUserExist()) {
-            mFirestoreManager.signOut()
+        if (mCloudStoreManager.isUserExist()) {
+            mCloudStoreManager.signOut()
             hideAccLayout()
         }
     }
@@ -191,7 +191,7 @@ class CloudStorageDialog : BaseDialogFragment(), FirestoreManagerDependency {
         val activity = activity ?: return
         activity.runOnUiThread {
             mAccView.visible()
-            mAccEmailView.text = mFirestoreManager.getUserEmail()
+            mAccEmailView.text = mCloudStoreManager.getUserEmail()
         }
     }
 

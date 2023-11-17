@@ -23,8 +23,8 @@ import android.widget.ProgressBar
 import androidx.fragment.app.FragmentManager
 import com.yuriy.openradio.shared.R
 import com.yuriy.openradio.shared.dependencies.DependencyRegistryCommonUi
-import com.yuriy.openradio.shared.dependencies.FirestoreManagerDependency
-import com.yuriy.openradio.shared.model.storage.firestore.FirestoreManager
+import com.yuriy.openradio.shared.dependencies.CloudStoreManagerDependency
+import com.yuriy.openradio.shared.model.storage.CloudStoreManager
 import com.yuriy.openradio.shared.utils.SafeToast
 import com.yuriy.openradio.shared.utils.findButton
 import com.yuriy.openradio.shared.utils.findEditText
@@ -38,24 +38,24 @@ import java.io.Serializable
  * At Android Studio
  * E-Mail: chernyshov.yuriy@gmail.com
  */
-class AccountDialog : BaseDialogFragment(), FirestoreManagerDependency {
+class AccountDialog : BaseDialogFragment(), CloudStoreManagerDependency {
 
     interface DialogDismissedListener : Serializable {
         fun onDialogDismissed()
     }
 
     private lateinit var mProgress: ProgressBar
-    private lateinit var mFirestoreManager: FirestoreManager
+    private lateinit var mCloudStoreManager: CloudStoreManager
     private lateinit var mEmail: EditText
     private lateinit var mPwd: EditText
 
-    override fun configureWith(firestoreManager: FirestoreManager) {
-        mFirestoreManager = firestoreManager
+    override fun configureWith(cloudStoreManager: CloudStoreManager) {
+        mCloudStoreManager = cloudStoreManager
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        DependencyRegistryCommonUi.injectFirestoreManager(this)
+        DependencyRegistryCommonUi.injectCloudStoreManager(this)
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -79,7 +79,7 @@ class AccountDialog : BaseDialogFragment(), FirestoreManagerDependency {
 
     private fun createUser() {
         showProgress()
-        mFirestoreManager.createUser(
+        mCloudStoreManager.createUser(
             requireActivity(),
             mEmail.text.toString(),
             mPwd.text.toString(),
@@ -97,7 +97,7 @@ class AccountDialog : BaseDialogFragment(), FirestoreManagerDependency {
 
     private fun signIn() {
         showProgress()
-        mFirestoreManager.signIn(
+        mCloudStoreManager.signIn(
             requireActivity(),
             mEmail.text.toString(),
             mPwd.text.toString(),
@@ -114,7 +114,7 @@ class AccountDialog : BaseDialogFragment(), FirestoreManagerDependency {
     }
 
     private fun resetPwd() {
-        mFirestoreManager.sendPasswordReset(
+        mCloudStoreManager.sendPasswordReset(
             mEmail.text.toString(),
             {
                 SafeToast.showAnyThread(

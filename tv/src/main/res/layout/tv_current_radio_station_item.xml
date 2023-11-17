@@ -1,5 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-    Copyright 2020 The "Open Radio" Project. Author: Chernyshov Yuriy
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright 2020, 2023. The "Open Radio" Project. Author: Chernyshov Yuriy
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +19,7 @@
     android:id="@+id/tv_category_list_root_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/tv_current_playing_rs_bg"
+    android:nextFocusRight="@id/tv_crs_favorite_check_view"
     android:padding="@dimen/activity_vertical_margin">
 
     <ImageView
@@ -29,16 +30,9 @@
         app:srcCompat="@drawable/ic_radio_station_empty"
         android:visibility="gone"/>
 
-    <ProgressBar
-        android:id="@+id/tv_crs_img_progress_view"
-        android:layout_width="@dimen/list_item_img_width"
-        android:layout_height="@dimen/list_item_img_width"
-        android:layout_marginEnd="15dp" />
-
     <TextView
         android:id="@+id/tv_crs_bitrate_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/text_style"
         android:layout_below="@+id/tv_crs_img_view"
         android:paddingTop="5dp" />
 
@@ -70,41 +64,9 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:button="@drawable/src_favorite"
-        android:checked="false"
-        android:visibility="gone" />
-
-    <ImageView
-        android:id="@+id/tv_crs_play_btn_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/tv_ic_play_btn_bg" />
-
-    <ImageView
-        android:id="@+id/tv_crs_pause_btn_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        android:layout_marginTop="10dp"
-        android:visibility="invisible"
-        android:background="@drawable/tv_ic_pause_btn_bg" />
-
-    <TextView
-        android:id="@+id/tv_crs_buffered_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/tv_crs_description_view"
-        android:layout_alignStart="@+id/tv_crs_description_view"
-        android:paddingTop="10dp" />
-
-    <View
-        android:id="@+id/tv_last_played_separator_item_view"
-        android:layout_below="@id/tv_crs_buffered_view"
-        android:layout_width="wrap_content"
-        android:layout_height="1dp"
-        android:background="@android:color/white"/>
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:checked="false" />
 
 </RelativeLayout>
