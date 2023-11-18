@@ -66,11 +66,6 @@ class CloudStorageDialog : BaseDialogFragment(), CloudStoreManagerDependency {
         hideProgress()
     }
 
-    override fun onPause() {
-        super.onPause()
-        AccountDialog.dismiss(parentFragmentManager)
-    }
-
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val view = inflater.inflate(
             R.layout.dialog_cloud_storage,

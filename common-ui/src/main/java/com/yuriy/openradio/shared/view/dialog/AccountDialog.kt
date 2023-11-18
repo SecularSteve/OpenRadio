@@ -166,15 +166,14 @@ class AccountDialog : BaseDialogFragment(), CloudStoreManagerDependency {
          */
         val DIALOG_TAG = CLASS_NAME + "_DIALOG_TAG"
 
-        fun show(fragmentManager: FragmentManager, listener: DialogDismissedListener) {
-            if (isDialogShown(fragmentManager)) {
+        fun show(parentFragmentManager: FragmentManager, listener: DialogDismissedListener) {
+            if (isDialogShown(parentFragmentManager)) {
                 return
             }
             val bundle = Bundle()
             bundle.putSerializable(KEY_LISTENER, listener)
             val dialog = newInstance(AccountDialog::class.java.name, bundle)
-            val transaction = fragmentManager.beginTransaction()
-            dialog.show(transaction, DIALOG_TAG)
+            dialog.show(parentFragmentManager, DIALOG_TAG)
         }
 
         fun dismiss(fragmentManager: FragmentManager) {
