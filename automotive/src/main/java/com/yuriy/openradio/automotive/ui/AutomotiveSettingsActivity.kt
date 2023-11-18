@@ -314,6 +314,7 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
 
     override fun onDestroy() {
         super.onDestroy()
+        AccountDialog.dismiss(supportFragmentManager)
         hideProgress()
         // In case a user selected a new source but did not restart.
         if (mInitSrc != null && mInitSrc != mNewSrc) {
@@ -328,7 +329,6 @@ class AutomotiveSettingsActivity : AppCompatActivity(), MediaPresenterDependency
 
     override fun onPause() {
         super.onPause()
-        AccountDialog.dismiss(supportFragmentManager)
         StreamBufferingDialog.handleOnPause(
             applicationContext,
             mMinBuffer,
